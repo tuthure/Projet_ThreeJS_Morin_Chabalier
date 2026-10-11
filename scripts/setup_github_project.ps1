@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Script d'automatisation pour la configuration du dépôt GitHub R507 Three.js Blockchain.
     Valide l'intégralité du Jalon 1 (Milestones, Issues, GitHub Project Kanban, Push).
@@ -134,7 +134,7 @@ Définir le scénario pédagogique guidé reliant les 7 notions obligatoires du 
 **Notions liées** : Notions 1 à 7, Choix de modélisation  
 **Critère de succès** : Fiches complètes et validées par le binôme.
 "@
-        assignees = "achabalier14"
+        assignees = "albanchab14"
         labels = "documentation,cadrage,pedagogie"
     },
     @{
@@ -170,7 +170,7 @@ Fournir une expérience utilisateur ergonomique combinant un parcours cinématiq
 **Notions liées** : UX, Navigation, Interaction  
 **Critère de succès** : Navigation intuitive sans perte de repères spatiaux.
 "@
-        assignees = "achabalier14"
+        assignees = "albanchab14"
         labels = "threejs,interaction,ux"
     },
     @{
@@ -188,7 +188,7 @@ Automatiser le build Vite et la mise en production sur GitHub Pages pour assurer
 **Notions liées** : Déploiement en ligne, DevOps  
 **Critère de succès** : Build automatique et démo accessible sur `https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/`.
 "@
-        assignees = "achabalier14"
+        assignees = "albanchab14"
         labels = "ci/cd,devops,deployment"
     }
 )

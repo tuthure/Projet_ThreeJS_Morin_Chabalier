@@ -1,4 +1,4 @@
-# BUT MMI 3e année — R507
+﻿# BUT MMI 3e année — R507
 
 ## Projet Three.js — Visualisation pédagogique de la blockchain
 
@@ -10,7 +10,7 @@
 
 | Champ | Contenu |
 |:---|:---|
-| Groupe | Arthur Morin ([@tuthure](https://github.com/tuthure)), Alban Chabalier ([@achabalier14](https://github.com/achabalier14)) |
+| Groupe | Arthur Morin ([@tuthure](https://github.com/tuthure)), Alban Chabalier ([@albanchab14](https://github.com/albanchab14)) |
 | Semaine | 1 |
 | Dates couvertes | 1er octobre au 9 octobre 2026 |
 | Membres présents | Arthur Morin, Alban Chabalier |

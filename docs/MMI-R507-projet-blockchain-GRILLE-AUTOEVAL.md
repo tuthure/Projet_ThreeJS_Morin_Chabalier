@@ -1,4 +1,4 @@
-# BUT MMI 3e année — R507
+﻿# BUT MMI 3e année — R507
 
 ## Projet Three.js — Visualisation pédagogique de la blockchain
 

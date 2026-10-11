@@ -1,4 +1,4 @@
-# BUT MMI 3e année — R507
+﻿# BUT MMI 3e année — R507
 
 ## Projet Three.js — Visualisation pédagogique de la blockchain
 
@@ -13,7 +13,7 @@ Ce document détaillé est le **livrable officiel** consacré aux choix de modé
 | Champ | Contenu |
 |:---|:---|
 | Groupe | Morin, Alban Chabalier |
-| Membres et rôles | **Arthur Morin** ([@tuthure](https://github.com/tuthure)) : Lead Développeur 3D & Architecte Scène (Three.js)<br>**Alban Chabalier** ([@achabalier14](https://github.com/achabalier14)) : Lead Développeur Logique / Interaction & Chef de Projet |
+| Membres et rôles | **Arthur Morin** ([@tuthure](https://github.com/tuthure)) : Lead Développeur 3D & Architecte Scène (Three.js)<br>**Alban Chabalier** ([@albanchab14](https://github.com/albanchab14)) : Lead Développeur Logique / Interaction & Chef de Projet |
 | Public cible | Utilisateur non initié (étudiants hors filière informatique, grand public curieux) |
 | Lien vers la démo | https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/ |
 | Lien vers GitHub Projects | https://github.com/users/tuthure/projects/1 ou https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier/projects |

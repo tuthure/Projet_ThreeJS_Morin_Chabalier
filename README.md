@@ -1,4 +1,4 @@
-# Visualisation pédagogique de la blockchain 🌐⛓️
+﻿# Visualisation pédagogique de la blockchain 🌐⛓️
 
 Projet d'expérience web 3D interactive développé avec **Three.js** dans le cadre de la ressource **R507** (3e année de BUT Métiers du Multimédia et de l'Internet — Parcours Développement Web & Dispositifs Interactifs).
 
@@ -11,7 +11,7 @@ Cours de référence : [Three.js Lessons — J. Azé](https://j-aze.github.io/th
 | Membre | Identifiant GitHub | Rôle principal |
 | :--- | :--- | :--- |
 | **Arthur Morin** | [@tuthure](https://github.com/tuthure) | Lead Développeur 3D & Architecte Scène (Three.js) |
-| **Alban Chabalier** | [@achabalier14](https://github.com/achabalier14) | Lead Développeur Logique / Interaction & Chef de Projet |
+| **Alban Chabalier** | [@albanchab14](https://github.com/albanchab14) | Lead Développeur Logique / Interaction & Chef de Projet |
 
 ---
 
