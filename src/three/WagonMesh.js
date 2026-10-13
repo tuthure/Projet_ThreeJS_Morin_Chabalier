@@ -1,13 +1,37 @@
 import * as THREE from 'three';
 
 /**
- * Represente la structure 3D procedurale d'un wagon du convoi ferroviaire blinde.
+ * Fonction deterministe qui convertit une empreinte de hash en une couleur HSL vibrante et contrastée.
+ * Permet a un non-initie de verifier visuellement l'egalite de deux hashs :
+ * Si deux anneaux ou plaques ont la meme couleur, les empreintes sont identiques.
+ * @param {string} hash - Chaine de hash ou previousHash.
+ * @returns {THREE.Color} Couleur Three.js calculee.
+ */
+export function hashToColor(hash) {
+  if (!hash || hash === '0' || hash === '') {
+    // Teinte bleue cyan par defaut pour l'origine (Genesis previousHash)
+    return new THREE.Color(0x38bdf8);
+  }
+  let val = 0;
+  for (let i = 0; i < hash.length; i++) {
+    val = (val * 31 + hash.charCodeAt(i)) >>> 0;
+  }
+  const hue = (val % 360) / 360;
+  const color = new THREE.Color();
+  // Saturation elevee et luminosite moyenne pour des teintes intenses et franches
+  color.setHSL(hue, 0.85, 0.55);
+  return color;
+}
+
+/**
+ * Represente la structure 3D procedurale d'un wagon du convoi ferroviaire.
  * Metaphore : Un wagon aux parois transparentes transportant les transactions.
- * Chaque wagon incarne un bloc de la blockchain avec 4 composants majeurs :
- * 1. Les conteneurs visibles a l'interieur (Transactions)
- * 2. L'attelage magnetique avant (previousHash)
- * 3. La plaque gravee au laser (hash du bloc)
- * 4. La molette mecanique crantee sur le flanc (nonce)
+ * Composants majeurs :
+ * 1. Les marchandises diversifiees visibles a l'interieur (conteneurs nervures, caisses, bonbonnes)
+ * 2. L'attelage avant et plaque associee (previousHash avec code couleur dedie)
+ * 3. L'attelage arriere et plaque associee (hash avec code couleur dedie)
+ * 4. La molette crantee du Nonce avec son cadran numerote
+ * 5. Anneaux lumineux aux extremites dont les couleurs concordent lorsque la liaison est valide
  */
 export class WagonMesh extends THREE.Group {
   /**
@@ -22,32 +46,44 @@ export class WagonMesh extends THREE.Group {
     this.spacing = options.spacing || 3.8;
     this.isValid = true;
 
-    // References de materiaux pour modifications d'etat en temps reel
+    // Couleurs cryptographiques deterministes associees aux empreintes
+    this.colorHash = hashToColor(this.block.hash);
+    this.colorPrevHash = hashToColor(this.block.previousHash);
+
+    // References de materiaux pour modifications d'etat dynamiques
     this.containerMaterials = [];
     this.glassMaterials = [];
     this.edgeMaterials = [];
-    this.badgeCanvases = [];
-    this.badgeTextures = [];
 
-    // References d'objets pour animations (molette, attelage)
-    this.nonceWheel = null;
-    this.couplerGroup = null;
-    this.couplerBeam = null;
+    // Badges textures et canevas
+    this.badges = {
+      prev: { canvas: null, texture: null },
+      hash: { canvas: null, texture: null },
+      center: { canvas: null, texture: null },
+      nonce: { canvas: null, texture: null }
+    };
+
+    // References d'anneaux et d'attelage pour synchronisation visuelle
+    this.frontRingMaterial = null;
+    this.rearRingMaterial = null;
     this.couplerBeamMaterial = null;
+    this.couplerGroup = null;
+    this.nonceWheel = null;
     this.beaconMaterial = null;
 
     // Identifiants pour le raycaster et l'inspection interactive
     this.userData.blockData = this.block;
     this.userData.wagonMesh = this;
 
-    // 1. Construction procedurale des composants du wagon
+    // 1. Assemblage procedurale du wagon
     this.buildChassis();
     this.buildWheels();
     this.buildCargoInterior();
     this.buildTranslucentCanopy();
-    this.buildNonceWheel();
-    this.buildHashPlate();
+    this.buildRearSocket();
     this.buildCoupler();
+    this.buildNonceMechanism();
+    this.buildSeparatedPlates();
     this.buildStatusBeacon();
 
     // 2. Application de l'etat initial (valide)
@@ -55,7 +91,7 @@ export class WagonMesh extends THREE.Group {
   }
 
   /**
-   * Construit la plateforme et le chassis metallique blinde.
+   * Construit la plateforme et le plancher du chassis metallique.
    */
   buildChassis() {
     const chassisGeometry = new THREE.BoxGeometry(2.6, 0.22, 1.28);
@@ -79,8 +115,8 @@ export class WagonMesh extends THREE.Group {
     bumper.position.y = -0.09;
     this.add(bumper);
 
-    // Plaques de plancher striees
-    const deckGeometry = new THREE.BoxGeometry(2.4, 0.04, 1.15);
+    // Plancher strie a l'interieur
+    const deckGeometry = new THREE.BoxGeometry(2.35, 0.03, 1.15);
     const deckMaterial = new THREE.MeshStandardMaterial({
       color: 0x334155,
       metalness: 0.7,
@@ -92,7 +128,7 @@ export class WagonMesh extends THREE.Group {
   }
 
   /**
-   * Construit les 4 essieux, roues d'acier et boites d'essieux.
+   * Construit les 4 essieux et roues metalliques.
    */
   buildWheels() {
     const wheelGeometry = new THREE.CylinderGeometry(0.24, 0.24, 0.14, 24);
@@ -145,8 +181,11 @@ export class WagonMesh extends THREE.Group {
   }
 
   /**
-   * Construit l'interieur du wagon : les marchandises transportees (Transactions).
-   * Visibles a travers les parois translucides.
+   * Construit des marchandises variees, riches et tangibles a l'interieur du wagon :
+   * - Conteneur maritime nervure (grand colis principal)
+   * - Caisses modulaires en bois et acier empilees avec sangles
+   * - Bonbonnes cylindriques d'energie (jetons cryptographiques)
+   * - Coffre-fort dore pour le bloc Genesis
    */
   buildCargoInterior() {
     this.cargoGroup = new THREE.Group();
@@ -157,7 +196,7 @@ export class WagonMesh extends THREE.Group {
       const vaultGeo = new THREE.BoxGeometry(1.8, 0.75, 0.9);
       const vaultMat = new THREE.MeshStandardMaterial({
         color: 0x0f172a,
-        metalness: 0.8,
+        metalness: 0.85,
         roughness: 0.2,
         emissive: 0x0284c7,
         emissiveIntensity: 0.3
@@ -168,12 +207,12 @@ export class WagonMesh extends THREE.Group {
       vault.position.set(0, 0.52, 0);
       this.cargoGroup.add(vault);
 
-      // Sceau dore central du bloc Genesis
-      const emblemGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.04, 20);
+      // Sceau dore central du coffre Genesis
+      const emblemGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.05, 24);
       const emblemMat = new THREE.MeshStandardMaterial({
         color: 0xf59e0b,
-        metalness: 0.9,
-        roughness: 0.2,
+        metalness: 0.95,
+        roughness: 0.15,
         emissive: 0xd97706,
         emissiveIntensity: 0.4
       });
@@ -181,41 +220,117 @@ export class WagonMesh extends THREE.Group {
       emblem.rotation.x = Math.PI / 2;
       emblem.position.set(0, 0.52, 0.46);
       this.cargoGroup.add(emblem);
-    } else {
-      // Wagons standards : 2 a 3 conteneurs / caisses de fret representant les transactions
-      const crateConfigs = [
-        { x: -0.62, y: 0.48, z: 0, size: [0.85, 0.7, 0.85], color: 0x0284c7 },
-        { x: 0.62, y: 0.48, z: 0, size: [0.85, 0.7, 0.85], color: 0x2563eb }
-      ];
 
-      crateConfigs.forEach((cfg) => {
-        const crateGeo = new THREE.BoxGeometry(...cfg.size);
-        const crateMat = new THREE.MeshStandardMaterial({
-          color: cfg.color,
-          metalness: 0.5,
-          roughness: 0.35,
-          emissive: cfg.color,
-          emissiveIntensity: 0.25
-        });
-        this.containerMaterials.push(crateMat);
-
-        const crate = new THREE.Mesh(crateGeo, crateMat);
-        crate.position.set(cfg.x, cfg.y, cfg.z);
-        this.cargoGroup.add(crate);
-
-        // Cerclages metalliques renforces sur les caisses de marchandises
-        const strapGeo = new THREE.BoxGeometry(cfg.size[0] + 0.02, 0.06, cfg.size[2] + 0.02);
-        const strapMat = new THREE.MeshStandardMaterial({
-          color: 0x64748b,
+      // Lingots / barres securisees au sommet du coffre
+      for (let i = -1; i <= 1; i++) {
+        const barGeo = new THREE.BoxGeometry(0.35, 0.1, 0.15);
+        const barMat = new THREE.MeshStandardMaterial({
+          color: 0xfbbf24,
           metalness: 0.9,
-          roughness: 0.2
+          roughness: 0.2,
+          emissive: 0xb45309,
+          emissiveIntensity: 0.3
         });
-        const strap1 = new THREE.Mesh(strapGeo, strapMat);
-        strap1.position.set(cfg.x, cfg.y + 0.18, cfg.z);
-        const strap2 = new THREE.Mesh(strapGeo, strapMat);
-        strap2.position.set(cfg.x, cfg.y - 0.18, cfg.z);
-        this.cargoGroup.add(strap1);
-        this.cargoGroup.add(strap2);
+        const bar = new THREE.Mesh(barGeo, barMat);
+        bar.position.set(i * 0.45, 0.94, 0);
+        this.cargoGroup.add(bar);
+      }
+    } else {
+      // 1. Grand conteneur maritime nervure (cote gauche, x = -0.55)
+      const containerGeo = new THREE.BoxGeometry(0.85, 0.68, 0.85);
+      const containerMat = new THREE.MeshStandardMaterial({
+        color: 0xf97316, // Orange fret haute visibilite
+        metalness: 0.65,
+        roughness: 0.3,
+        emissive: 0xc2410c,
+        emissiveIntensity: 0.25
+      });
+      this.containerMaterials.push(containerMat);
+
+      const containerMesh = new THREE.Mesh(containerGeo, containerMat);
+      containerMesh.position.set(-0.55, 0.5, 0);
+      this.cargoGroup.add(containerMesh);
+
+      // Rainures de tole ondulee horizontales sur le conteneur
+      for (let yOffset = -0.2; yOffset <= 0.2; yOffset += 0.12) {
+        const ribGeo = new THREE.BoxGeometry(0.87, 0.03, 0.87);
+        const ribMat = new THREE.MeshStandardMaterial({
+          color: 0xea580c,
+          metalness: 0.8,
+          roughness: 0.25
+        });
+        const rib = new THREE.Mesh(ribGeo, ribMat);
+        rib.position.set(-0.55, 0.5 + yOffset, 0);
+        this.cargoGroup.add(rib);
+      }
+
+      // 2. Palette de caisses empilees en bois/acier (centre droit, x = 0.3)
+      // Caisse inferieure
+      const crateBottomGeo = new THREE.BoxGeometry(0.55, 0.4, 0.7);
+      const crateBottomMat = new THREE.MeshStandardMaterial({
+        color: 0xd97706, // Bois dore industriel
+        metalness: 0.3,
+        roughness: 0.7,
+        emissive: 0x92400e,
+        emissiveIntensity: 0.2
+      });
+      this.containerMaterials.push(crateBottomMat);
+      const crateBottom = new THREE.Mesh(crateBottomGeo, crateBottomMat);
+      crateBottom.position.set(0.28, 0.36, 0);
+      this.cargoGroup.add(crateBottom);
+
+      // Caisse superieure legere decalee
+      const crateTopGeo = new THREE.BoxGeometry(0.48, 0.32, 0.58);
+      const crateTopMat = new THREE.MeshStandardMaterial({
+        color: 0xb45309,
+        metalness: 0.35,
+        roughness: 0.65,
+        emissive: 0x78350f,
+        emissiveIntensity: 0.2
+      });
+      this.containerMaterials.push(crateTopMat);
+      const crateTop = new THREE.Mesh(crateTopGeo, crateTopMat);
+      crateTop.position.set(0.3, 0.72, 0.04);
+      this.cargoGroup.add(crateTop);
+
+      // Sangles metalliques de retenue sur les caisses
+      const strapGeo = new THREE.BoxGeometry(0.5, 0.72, 0.03);
+      const strapMat = new THREE.MeshStandardMaterial({
+        color: 0x475569,
+        metalness: 0.9,
+        roughness: 0.3
+      });
+      const strap = new THREE.Mesh(strapGeo, strapMat);
+      strap.position.set(0.29, 0.54, 0.36);
+      this.cargoGroup.add(strap);
+
+      // 3. Deux bonbonnes / canisters cylindriques d'energie (jetons, x = 0.85)
+      [-0.26, 0.26].forEach((zPos) => {
+        const canisterGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.55, 16);
+        const canisterMat = new THREE.MeshStandardMaterial({
+          color: 0x0284c7, // Bleu cobalt haute technologie
+          metalness: 0.8,
+          roughness: 0.2,
+          emissive: 0x0369a1,
+          emissiveIntensity: 0.35
+        });
+        this.containerMaterials.push(canisterMat);
+
+        const canister = new THREE.Mesh(canisterGeo, canisterMat);
+        canister.position.set(0.85, 0.44, zPos);
+        this.cargoGroup.add(canister);
+
+        // Anneau neon central sur chaque bonbonne
+        const ringGeo = new THREE.TorusGeometry(0.15, 0.02, 8, 20);
+        const ringMat = new THREE.MeshStandardMaterial({
+          color: 0x38bdf8,
+          emissive: 0x38bdf8,
+          emissiveIntensity: 1.2
+        });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = Math.PI / 2;
+        ring.position.set(0.85, 0.44, zPos);
+        this.cargoGroup.add(ring);
       });
     }
 
@@ -224,15 +339,13 @@ export class WagonMesh extends THREE.Group {
 
   /**
    * Construit la verriere protectrice transparente du wagon.
-   * Permet a tout observateur de voir les transactions transportees sans pouvoir les modifier.
    */
   buildTranslucentCanopy() {
-    // Parois en verre blinde translucide
     const glassGeometry = new THREE.BoxGeometry(2.35, 0.95, 1.18);
     const glassMaterial = new THREE.MeshStandardMaterial({
       color: 0x38bdf8,
       transparent: true,
-      opacity: 0.32,
+      opacity: 0.28,
       metalness: 0.1,
       roughness: 0.15,
       depthWrite: false
@@ -243,7 +356,7 @@ export class WagonMesh extends THREE.Group {
     canopy.position.set(0, 0.6, 0);
     this.add(canopy);
 
-    // Armature metallique aux aretes (montants structurels)
+    // Arêtes lumineuses cyan marquant les volumes du wagon
     const edgesGeo = new THREE.EdgesGeometry(glassGeometry);
     const edgeMaterial = new THREE.LineBasicMaterial({
       color: 0x38bdf8,
@@ -254,7 +367,7 @@ export class WagonMesh extends THREE.Group {
     const edgeSegments = new THREE.LineSegments(edgesGeo, edgeMaterial);
     canopy.add(edgeSegments);
 
-    // Montants verticaux aux 4 coins
+    // Montants verticaux d'acier aux 4 coins
     const pillarGeo = new THREE.BoxGeometry(0.06, 0.95, 0.06);
     const pillarMat = new THREE.MeshStandardMaterial({
       color: 0x1e293b,
@@ -275,139 +388,50 @@ export class WagonMesh extends THREE.Group {
   }
 
   /**
-   * Construit la molette mecanique crantee du Nonce sur le flanc du wagon.
-   * Represente la valeur d'ajustement modifiee lors de la preuve de travail (minage).
+   * Construit la prise d'attelage arriere du wagon (Socket du Hash propre).
+   * L'anneau arriere prend la couleur deterministe associee a son propre hash (colorHash).
+   * Le wagon suivant viendra y emboiter son anneau avant qui prendra la meme couleur !
    */
-  buildNonceWheel() {
-    this.nonceWheelGroup = new THREE.Group();
+  buildRearSocket() {
+    this.rearSocketGroup = new THREE.Group();
 
-    // Support de la molette sur le flanc du chassis
-    const mountGeo = new THREE.BoxGeometry(0.35, 0.32, 0.08);
-    const mountMat = new THREE.MeshStandardMaterial({
-      color: 0x0f172a,
+    // Bras arriere metallique
+    const armGeo = new THREE.BoxGeometry(0.18, 0.16, 0.32);
+    const armMat = new THREE.MeshStandardMaterial({
+      color: 0x334155,
       metalness: 0.9,
       roughness: 0.3
     });
-    const mount = new THREE.Mesh(mountGeo, mountMat);
-    mount.position.set(-0.45, 0.24, 0.62);
-    this.nonceWheelGroup.add(mount);
+    const arm = new THREE.Mesh(armGeo, armMat);
+    arm.position.set(-1.38, 0, 0);
+    this.rearSocketGroup.add(arm);
 
-    // Molette rotative crantee (engrenage en bronze/acier)
-    const wheelGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.06, 18);
-    const wheelMat = new THREE.MeshStandardMaterial({
-      color: 0xf59e0b,
-      metalness: 0.9,
-      roughness: 0.25,
-      emissive: 0xb45309,
-      emissiveIntensity: 0.3
-    });
-    this.nonceWheel = new THREE.Mesh(wheelGeo, wheelMat);
-    this.nonceWheel.rotation.x = Math.PI / 2;
-    this.nonceWheel.position.set(-0.45, 0.24, 0.67);
-    this.nonceWheelGroup.add(this.nonceWheel);
-
-    // Axe central et cadran numerote
-    const axisGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.08, 12);
-    const axisMat = new THREE.MeshStandardMaterial({
-      color: 0x475569,
-      metalness: 0.95,
+    // Anneau de prise arriere : prend la couleur exacte du hash du bloc !
+    const ringGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.08, 24);
+    this.rearRingMaterial = new THREE.MeshStandardMaterial({
+      color: this.colorHash,
+      emissive: this.colorHash,
+      emissiveIntensity: 1.4,
+      metalness: 0.3,
       roughness: 0.2
     });
-    const axis = new THREE.Mesh(axisGeo, axisMat);
-    axis.rotation.x = Math.PI / 2;
-    axis.position.set(-0.45, 0.24, 0.68);
-    this.nonceWheelGroup.add(axis);
+    const ring = new THREE.Mesh(ringGeo, this.rearRingMaterial);
+    ring.rotation.z = Math.PI / 2;
+    ring.position.set(-1.48, 0, 0);
+    this.rearSocketGroup.add(ring);
 
-    this.add(this.nonceWheelGroup);
+    this.add(this.rearSocketGroup);
   }
 
   /**
-   * Construit la plaque d'empreinte gravee au laser (Hash du bloc).
-   * Affichee sur le flanc du wagon avec son identifiant hexadecimal.
-   */
-  buildHashPlate() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 256;
-    this.badgeCanvases.push(canvas);
-
-    const texture = new THREE.CanvasTexture(canvas);
-    this.badgeTextures.push(texture);
-
-    // Plaque metallique support
-    const plateGeo = new THREE.PlaneGeometry(0.95, 0.52);
-    const plateMat = new THREE.MeshBasicMaterial({
-      map: texture,
-      transparent: true,
-      side: THREE.DoubleSide
-    });
-
-    const plateMesh = new THREE.Mesh(plateGeo, plateMat);
-    plateMesh.position.set(0.35, 0.6, 0.605);
-    this.add(plateMesh);
-  }
-
-  /**
-   * Reecrit le contenu textuel et graphique de la plaque d'empreinte (HUD sur le wagon).
-   */
-  renderBadgeTexture() {
-    for (let i = 0; i < this.badgeCanvases.length; i++) {
-      const canvas = this.badgeCanvases[i];
-      const ctx = canvas.getContext('2d');
-      const texture = this.badgeTextures[i];
-
-      // Fond du cadran
-      ctx.fillStyle = this.isValid ? '#071524' : '#2b0707';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Bordure technique luminescente
-      ctx.strokeStyle = this.isValid ? '#00f5d4' : '#ef4444';
-      ctx.lineWidth = 10;
-      ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
-
-      // Titre du bloc
-      ctx.font = 'bold 36px monospace';
-      ctx.fillStyle = this.isValid ? '#38bdf8' : '#f87171';
-      const label = this.block.index === 0
-        ? 'WAGON #0 [GENESIS]'
-        : `WAGON #${this.block.index} [BLOC]`;
-      ctx.fillText(label, 24, 52);
-
-      // Statut de validation
-      ctx.font = 'bold 24px monospace';
-      ctx.fillStyle = this.isValid ? '#10b981' : '#ef4444';
-      ctx.fillText(
-        `ETAT : ${this.isValid ? 'VALIDE (ATTACHE)' : 'CORROMPU (RUPTURE)'}`,
-        24,
-        92
-      );
-
-      // Hash du bloc (empreinte)
-      ctx.font = '22px monospace';
-      ctx.fillStyle = '#f1f5f9';
-      ctx.fillText(`HASH : ${this.block.hash.substring(0, 16)}...`, 24, 134);
-
-      // Previous Hash (attelage d'avant)
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillText(`PREV : ${this.block.previousHash.substring(0, 16)}...`, 24, 172);
-
-      // Nonce
-      ctx.font = '20px monospace';
-      ctx.fillStyle = '#f59e0b';
-      ctx.fillText(`NONCE : ${this.block.nonce}`, 24, 212);
-
-      texture.needsUpdate = true;
-    }
-  }
-
-  /**
-   * Construit l'attelage cryptographique (coupler) reliant ce wagon au wagon precedent.
-   * Correspond visuellement a la liaison previousHash.
+   * Construit l'attelage cryptographique avant reliant ce wagon au precedent (previousHash).
+   * L'anneau avant prend la couleur exacte du previousHash, qui correspond a celle de l'anneau
+   * arriere du wagon precedent !
    */
   buildCoupler() {
     this.couplerGroup = new THREE.Group();
 
-    // Le wagon Genesis (wagon de tete) n'a pas de predecesseur auquel s'accrocher
+    // Le wagon Genesis (wagon de tete) n'a pas de predecesseur auquel s'atteler
     if (this.block.index === 0) {
       const frontAnchorGeo = new THREE.BoxGeometry(0.18, 0.18, 0.4);
       const frontAnchorMat = new THREE.MeshStandardMaterial({
@@ -421,7 +445,7 @@ export class WagonMesh extends THREE.Group {
       return;
     }
 
-    // Calcul de la portee de l'attelage sur l'intervalle spacing
+    // Calcul de l'intervalle entre les deux wagons
     const linkLength = Math.max(0.6, this.spacing - 2.6);
     const linkCenterX = 1.3 + linkLength / 2;
 
@@ -436,11 +460,11 @@ export class WagonMesh extends THREE.Group {
     this.couplerSleeve.rotation.z = Math.PI / 2;
     this.couplerGroup.add(this.couplerSleeve);
 
-    // Faisceau lumineux d'attelage (flux cryptographique securise)
+    // Faisceau lumineux central (prend la couleur du previousHash)
     const beamGeo = new THREE.CylinderGeometry(0.065, 0.065, linkLength + 0.04, 16);
     this.couplerBeamMaterial = new THREE.MeshStandardMaterial({
-      color: 0x10b981,
-      emissive: 0x10b981,
+      color: this.colorPrevHash,
+      emissive: this.colorPrevHash,
       emissiveIntensity: 1.6,
       metalness: 0.2,
       roughness: 0.1
@@ -449,20 +473,27 @@ export class WagonMesh extends THREE.Group {
     this.couplerBeam.rotation.z = Math.PI / 2;
     this.couplerGroup.add(this.couplerBeam);
 
-    // Anneaux magnetiques de verrouillage
-    const ringGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.09, 16);
-    const ringMat = new THREE.MeshStandardMaterial({
-      color: 0x64748b,
-      metalness: 0.95,
+    // Anneau avant (crochet) : prend la couleur du previousHash (identique a l'anneau arriere du wagon d'avant !)
+    const frontRingGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.08, 24);
+    this.frontRingMaterial = new THREE.MeshStandardMaterial({
+      color: this.colorPrevHash,
+      emissive: this.colorPrevHash,
+      emissiveIntensity: 1.5,
+      metalness: 0.3,
       roughness: 0.2
     });
 
-    [-linkLength / 2, linkLength / 2].forEach((xOffset) => {
-      const ring = new THREE.Mesh(ringGeo, ringMat);
-      ring.rotation.z = Math.PI / 2;
-      ring.position.x = xOffset;
-      this.couplerGroup.add(ring);
-    });
+    // Anneau cote wagon courant (base avant)
+    const ringBase = new THREE.Mesh(frontRingGeo, this.frontRingMaterial);
+    ringBase.rotation.z = Math.PI / 2;
+    ringBase.position.x = -linkLength / 2;
+    this.couplerGroup.add(ringBase);
+
+    // Anneau cote wagon precedent (embout de contact)
+    const ringTip = new THREE.Mesh(frontRingGeo, this.frontRingMaterial);
+    ringTip.rotation.z = Math.PI / 2;
+    ringTip.position.x = linkLength / 2;
+    this.couplerGroup.add(ringTip);
 
     this.couplerGroup.position.set(linkCenterX, 0, 0);
     this.defaultCouplerPosition = this.couplerGroup.position.clone();
@@ -470,7 +501,125 @@ export class WagonMesh extends THREE.Group {
   }
 
   /**
-   * Construit une balise de signalisation sur le toit du wagon.
+   * Construit la molette mecanique crantee du Nonce sur le flanc du chassis.
+   */
+  buildNonceMechanism() {
+    this.nonceGroup = new THREE.Group();
+
+    // Support technique monte sur le chassis
+    const mountGeo = new THREE.BoxGeometry(0.32, 0.28, 0.08);
+    const mountMat = new THREE.MeshStandardMaterial({
+      color: 0x0f172a,
+      metalness: 0.9,
+      roughness: 0.3
+    });
+    const mount = new THREE.Mesh(mountGeo, mountMat);
+    mount.position.set(0, 0.2, 0.63);
+    this.nonceGroup.add(mount);
+
+    // Molette rotative crantee en bronze/or (engrenage du nonce)
+    const wheelGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.06, 18);
+    const wheelMat = new THREE.MeshStandardMaterial({
+      color: 0xf59e0b,
+      metalness: 0.95,
+      roughness: 0.2,
+      emissive: 0xb45309,
+      emissiveIntensity: 0.3
+    });
+    this.nonceWheel = new THREE.Mesh(wheelGeo, wheelMat);
+    this.nonceWheel.rotation.x = Math.PI / 2;
+    this.nonceWheel.position.set(0, 0.2, 0.68);
+    this.nonceGroup.add(this.nonceWheel);
+
+    // Cadran digital du Nonce juste au-dessus de la molette
+    const nonceCanvas = document.createElement('canvas');
+    nonceCanvas.width = 256;
+    nonceCanvas.height = 96;
+    this.badges.nonce.canvas = nonceCanvas;
+    const nonceTex = new THREE.CanvasTexture(nonceCanvas);
+    this.badges.nonce.texture = nonceTex;
+
+    const dialPlateGeo = new THREE.PlaneGeometry(0.55, 0.2);
+    const dialPlateMat = new THREE.MeshBasicMaterial({
+      map: nonceTex,
+      transparent: true,
+      side: THREE.DoubleSide
+    });
+    const dialPlate = new THREE.Mesh(dialPlateGeo, dialPlateMat);
+    dialPlate.position.set(0, 0.36, 0.645);
+    this.nonceGroup.add(dialPlate);
+
+    this.add(this.nonceGroup);
+  }
+
+  /**
+   * Construit les etiquettes et plaques SEPAREES sur le wagon :
+   * 1. Plaque AVANT (previousHash) a droite pres de l'attelage avant
+   * 2. Plaque ARRIERE (hash) a gauche pres de l'attelage arriere
+   * 3. Plaque CENTRALE (Marchandises / Transactions) sur la verriere
+   */
+  buildSeparatedPlates() {
+    this.platesGroup = new THREE.Group();
+
+    // 1. Plaque AVANT : PREV HASH (cote x = +0.8, pres de l'attelage entrant)
+    const prevCanvas = document.createElement('canvas');
+    prevCanvas.width = 384;
+    prevCanvas.height = 192;
+    this.badges.prev.canvas = prevCanvas;
+    const prevTex = new THREE.CanvasTexture(prevCanvas);
+    this.badges.prev.texture = prevTex;
+
+    const prevPlateGeo = new THREE.PlaneGeometry(0.72, 0.36);
+    const prevPlateMat = new THREE.MeshBasicMaterial({
+      map: prevTex,
+      transparent: true,
+      side: THREE.DoubleSide
+    });
+    const prevPlate = new THREE.Mesh(prevPlateGeo, prevPlateMat);
+    prevPlate.position.set(0.78, 0.58, 0.605);
+    this.platesGroup.add(prevPlate);
+
+    // 2. Plaque ARRIERE : HASH DU BLOC (cote x = -0.8, pres de l'attelage sortant)
+    const hashCanvas = document.createElement('canvas');
+    hashCanvas.width = 384;
+    hashCanvas.height = 192;
+    this.badges.hash.canvas = hashCanvas;
+    const hashTex = new THREE.CanvasTexture(hashCanvas);
+    this.badges.hash.texture = hashTex;
+
+    const hashPlateGeo = new THREE.PlaneGeometry(0.72, 0.36);
+    const hashPlateMat = new THREE.MeshBasicMaterial({
+      map: hashTex,
+      transparent: true,
+      side: THREE.DoubleSide
+    });
+    const hashPlate = new THREE.Mesh(hashPlateGeo, hashPlateMat);
+    hashPlate.position.set(-0.78, 0.58, 0.605);
+    this.platesGroup.add(hashPlate);
+
+    // 3. Plaque CENTRALE : MARCHANDISES (Transactions) au centre de la verriere
+    const centerCanvas = document.createElement('canvas');
+    centerCanvas.width = 440;
+    centerCanvas.height = 200;
+    this.badges.center.canvas = centerCanvas;
+    const centerTex = new THREE.CanvasTexture(centerCanvas);
+    this.badges.center.texture = centerTex;
+
+    const centerPlateGeo = new THREE.PlaneGeometry(0.82, 0.38);
+    const centerPlateMat = new THREE.MeshBasicMaterial({
+      map: centerTex,
+      transparent: true,
+      side: THREE.DoubleSide
+    });
+    const centerPlate = new THREE.Mesh(centerPlateGeo, centerPlateMat);
+    centerPlate.position.set(0, 0.72, 0.605);
+    this.platesGroup.add(centerPlate);
+
+    this.add(this.platesGroup);
+  }
+
+  /**
+   * Construit la balise lumineuse d'etat sur le toit du wagon.
    */
   buildStatusBeacon() {
     const beaconBaseGeo = new THREE.CylinderGeometry(0.08, 0.1, 0.06, 12);
@@ -497,7 +646,126 @@ export class WagonMesh extends THREE.Group {
   }
 
   /**
-   * Fait tourner la molette du Nonce (utilise lors des animations de minage).
+   * Met a jour les 4 plaques graphiques independantes sur le wagon.
+   */
+  renderPlates() {
+    const prevHex = `#${this.colorPrevHash.getHexString()}`;
+    const hashHex = `#${this.colorHash.getHexString()}`;
+
+    // 1. Plaque AVANT : PREV HASH (avec la couleur de l'attelage avant)
+    if (this.badges.prev.canvas) {
+      const c = this.badges.prev.canvas;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = this.isValid ? '#061321' : '#2b0707';
+      ctx.fillRect(0, 0, c.width, c.height);
+
+      ctx.strokeStyle = this.isValid ? prevHex : '#ef4444';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(4, 4, c.width - 8, c.height - 8);
+
+      // Titre
+      ctx.fillStyle = this.isValid ? prevHex : '#f87171';
+      ctx.font = 'bold 28px monospace';
+      ctx.fillText('◀ PREV HASH', 20, 48);
+
+      // Valeur
+      ctx.fillStyle = '#f1f5f9';
+      ctx.font = 'bold 24px monospace';
+      const prevVal = this.block.previousHash.length > 12
+        ? `${this.block.previousHash.substring(0, 12)}...`
+        : this.block.previousHash;
+      ctx.fillText(prevVal, 20, 100);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '20px monospace';
+      ctx.fillText(this.block.index === 0 ? '(Origine Genesis)' : '(Sceau wagon avant)', 20, 146);
+
+      this.badges.prev.texture.needsUpdate = true;
+    }
+
+    // 2. Plaque ARRIERE : HASH DU BLOC (avec sa couleur propre de hash)
+    if (this.badges.hash.canvas) {
+      const c = this.badges.hash.canvas;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = this.isValid ? '#061321' : '#2b0707';
+      ctx.fillRect(0, 0, c.width, c.height);
+
+      ctx.strokeStyle = this.isValid ? hashHex : '#ef4444';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(4, 4, c.width - 8, c.height - 8);
+
+      // Titre
+      ctx.fillStyle = this.isValid ? hashHex : '#f87171';
+      ctx.font = 'bold 28px monospace';
+      ctx.fillText('HASH DU BLOC ▶', 20, 48);
+
+      // Valeur
+      ctx.fillStyle = '#f1f5f9';
+      ctx.font = 'bold 24px monospace';
+      const hashVal = `${this.block.hash.substring(0, 12)}...`;
+      ctx.fillText(hashVal, 20, 100);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '20px monospace';
+      ctx.fillText('(Sceau a transmettre)', 20, 146);
+
+      this.badges.hash.texture.needsUpdate = true;
+    }
+
+    // 3. Plaque CENTRALE : MARCHANDISES (Transactions transportees)
+    if (this.badges.center.canvas) {
+      const c = this.badges.center.canvas;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = this.isValid ? '#091c2f' : '#330808';
+      ctx.fillRect(0, 0, c.width, c.height);
+
+      ctx.strokeStyle = this.isValid ? '#00f5d4' : '#ef4444';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(4, 4, c.width - 8, c.height - 8);
+
+      ctx.fillStyle = this.isValid ? '#38bdf8' : '#f87171';
+      ctx.font = 'bold 30px monospace';
+      ctx.fillText(`WAGON #${this.block.index}`, 20, 48);
+
+      let summary = typeof this.block.data === 'string'
+        ? this.block.data.replace(/\s+/g, ' ')
+        : JSON.stringify(this.block.data);
+      if (summary.length > 22) {
+        summary = `${summary.substring(0, 22)}...`;
+      }
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = '22px monospace';
+      ctx.fillText(`TX: ${summary}`, 20, 100);
+
+      ctx.fillStyle = this.isValid ? '#10b981' : '#ef4444';
+      ctx.font = 'bold 20px monospace';
+      ctx.fillText(this.isValid ? 'ETAT : VALIDE' : 'ETAT : CORROMPU', 20, 148);
+
+      this.badges.center.texture.needsUpdate = true;
+    }
+
+    // 4. Cadran du NONCE
+    if (this.badges.nonce.canvas) {
+      const c = this.badges.nonce.canvas;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#050c18';
+      ctx.fillRect(0, 0, c.width, c.height);
+
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 5;
+      ctx.strokeRect(2, 2, c.width - 4, c.height - 4);
+
+      ctx.fillStyle = '#f59e0b';
+      ctx.font = 'bold 30px monospace';
+      ctx.fillText(`NONCE: ${this.block.nonce}`, 18, 58);
+
+      this.badges.nonce.texture.needsUpdate = true;
+    }
+  }
+
+  /**
+   * Fait tourner la molette du Nonce lors des operations de minage.
    * @param {number} angle - Angle en radians a ajouter a la rotation.
    */
   rotateNonceWheel(angle) {
@@ -507,8 +775,7 @@ export class WagonMesh extends THREE.Group {
   }
 
   /**
-   * Retourne les coordonnees 3D precises des 4 composants cles du wagon
-   * pour relier les pastilles d'annotations et reperes pedagogiques (Sequence 1).
+   * Retourne les coordonnees 3D precises des 4 composants cles du wagon.
    * @returns {object} Coordonnees locales des 4 elements majeurs.
    */
   getAnnotationPoints() {
@@ -516,37 +783,37 @@ export class WagonMesh extends THREE.Group {
       // 1. Les marchandises / transactions au centre
       transactions: new THREE.Vector3(0, 0.55, 0),
       // 2. La molette du Nonce sur le flanc
-      nonce: new THREE.Vector3(-0.45, 0.24, 0.67),
-      // 3. La plaque gravee du Hash
-      hash: new THREE.Vector3(0.35, 0.6, 0.62),
-      // 4. L'attelage avant (previousHash)
-      previousHash: this.block.index === 0
-        ? new THREE.Vector3(1.36, 0, 0)
-        : new THREE.Vector3(this.spacing / 2, 0, 0)
+      nonce: new THREE.Vector3(0, 0.2, 0.68),
+      // 3. La plaque gravee du Hash arriere
+      hash: new THREE.Vector3(-0.78, 0.58, 0.61),
+      // 4. L'attelage avant et plaque previousHash
+      previousHash: new THREE.Vector3(0.78, 0.58, 0.61)
     };
   }
 
   /**
    * Met a jour l'etat visuel du wagon selon la validite de la blockchain.
-   * Si valide : emission douce cyan/vert, attelage magnetique verrouille et actif.
-   * Si corrompu : virage en rouge d'alerte, attelage desactive ou brise physiquement.
+   * Si valide : emission douce, couleurs cryptographiques vives, anneaux concordants.
+   * Si corrompu : rouge d'alerte, faisceau eteint, anneaux discordants.
    * @param {boolean} isValid - Statut de validite du bloc.
    */
   updateStatus(isValid) {
     this.isValid = isValid;
 
+    // Recalcule les couleurs cryptographiques
+    this.colorHash = hashToColor(this.block.hash);
+    this.colorPrevHash = hashToColor(this.block.previousHash);
+
     if (isValid) {
-      // 1. Conteneurs de marchandises en etat securise
+      // 1. Conteneurs de marchandises en etat normal
       this.containerMaterials.forEach((mat) => {
-        mat.color.setHex(this.block.index === 0 ? 0x0f172a : 0x0284c7);
-        mat.emissive.setHex(0x0284c7);
         mat.emissiveIntensity = 0.25;
       });
 
-      // 2. Verriere et aretes en cyan serein
+      // 2. Verriere et aretes en cyan
       this.glassMaterials.forEach((mat) => {
         mat.color.setHex(0x38bdf8);
-        mat.opacity = 0.32;
+        mat.opacity = 0.28;
       });
       this.edgeMaterials.forEach((mat) => {
         mat.color.setHex(0x38bdf8);
@@ -559,25 +826,37 @@ export class WagonMesh extends THREE.Group {
         this.beaconMaterial.emissiveIntensity = 1.4;
       }
 
-      // 4. Attelage magnetique actif et aligne
+      // 4. Anneau arriere (couleur propre du Hash)
+      if (this.rearRingMaterial) {
+        this.rearRingMaterial.color.copy(this.colorHash);
+        this.rearRingMaterial.emissive.copy(this.colorHash);
+        this.rearRingMaterial.emissiveIntensity = 1.4;
+      }
+
+      // 5. Anneau avant et attelage (couleur du previousHash, concordant avec l'anneau arriere du precedent)
+      if (this.frontRingMaterial) {
+        this.frontRingMaterial.color.copy(this.colorPrevHash);
+        this.frontRingMaterial.emissive.copy(this.colorPrevHash);
+        this.frontRingMaterial.emissiveIntensity = 1.5;
+      }
+
       if (this.couplerGroup && this.couplerBeamMaterial) {
         this.couplerGroup.visible = true;
         this.couplerGroup.position.copy(this.defaultCouplerPosition);
         this.couplerGroup.rotation.z = 0;
 
-        this.couplerBeamMaterial.color.setHex(0x10b981);
-        this.couplerBeamMaterial.emissive.setHex(0x10b981);
+        this.couplerBeamMaterial.color.copy(this.colorPrevHash);
+        this.couplerBeamMaterial.emissive.copy(this.colorPrevHash);
         this.couplerBeamMaterial.emissiveIntensity = 1.6;
       }
     } else {
-      // 1. Conteneurs en alerte rouge critique
+      // 1. Conteneurs en alerte rouge
       this.containerMaterials.forEach((mat) => {
-        mat.color.setHex(0x450a0a);
         mat.emissive.setHex(0xef4444);
         mat.emissiveIntensity = 0.65;
       });
 
-      // 2. Verriere et aretes en rouge vif d'alerte
+      // 2. Verriere en alerte rouge
       this.glassMaterials.forEach((mat) => {
         mat.color.setHex(0xef4444);
         mat.opacity = 0.55;
@@ -586,14 +865,26 @@ export class WagonMesh extends THREE.Group {
         mat.color.setHex(0xf87171);
       });
 
-      // 3. Balise de toit rouge clignotante
+      // 3. Balise de toit rouge
       if (this.beaconMaterial) {
         this.beaconMaterial.color.setHex(0xef4444);
         this.beaconMaterial.emissive.setHex(0xdc2626);
         this.beaconMaterial.emissiveIntensity = 2.0;
       }
 
-      // 4. Rupture physique de l'attelage (affaissement et decrochage)
+      // 4. Anneau arriere vire au rouge d'alerte
+      if (this.rearRingMaterial) {
+        this.rearRingMaterial.color.setHex(0xef4444);
+        this.rearRingMaterial.emissive.setHex(0xdc2626);
+        this.rearRingMaterial.emissiveIntensity = 1.8;
+      }
+
+      // 5. Rupture physique de l'attelage
+      if (this.frontRingMaterial) {
+        this.frontRingMaterial.color.setHex(0x7f1d1d);
+        this.frontRingMaterial.emissive.setHex(0x7f1d1d);
+      }
+
       if (this.couplerGroup && this.couplerBeamMaterial) {
         this.couplerGroup.position.y = this.defaultCouplerPosition.y - 0.22;
         this.couplerGroup.rotation.z = -0.18;
@@ -604,7 +895,7 @@ export class WagonMesh extends THREE.Group {
       }
     }
 
-    // Rafraichit l'affichage de la plaque d'empreinte
-    this.renderBadgeTexture();
+    // Rafraichit les 4 plaques graphiques independantes
+    this.renderPlates();
   }
 }
