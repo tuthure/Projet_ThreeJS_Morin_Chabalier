@@ -10,9 +10,44 @@ import { TrainConvoy, WAGON_SPACING } from './train.js';
  */
 
 // ============================================================================
-// 1. Scene, Canvas et Moteur de Rendu Three.js
+// 1. Elements du DOM et Interface Utilisateur (HUD 2D & Sidebar d'Inspection)
 // ============================================================================
 const canvas = document.querySelector('#webgl');
+
+// HUD superieur (En-tete, sequence et indicateurs)
+const sequenceTitleEl = document.getElementById('sequence-title');
+const sequenceDescEl = document.getElementById('sequence-desc');
+const chainStatusPill = document.getElementById('chain-status-pill');
+const chainStatusText = document.getElementById('chain-status-text');
+const fpsCounterEl = document.getElementById('fps-counter');
+
+// HUD inferieur (Navigation des 7 notions)
+const stepButtons = document.querySelectorAll('.step-btn');
+const btnPrev = document.getElementById('btn-prev');
+const btnNext = document.getElementById('btn-next');
+
+// Actions rapides
+const btnAddBlock = document.getElementById('btn-add-block');
+const btnCorruptBlock = document.getElementById('btn-corrupt-block');
+const btnRestoreChain = document.getElementById('btn-restore-chain');
+
+// Panneau lateral droit d'inspection (Drawer)
+const sidebarEl = document.getElementById('inspection-sidebar');
+const btnCloseSidebar = document.getElementById('btn-close-sidebar');
+const sidebarTitleEl = document.getElementById('sidebar-wagon-title');
+const fieldIndex = document.getElementById('field-index');
+const fieldData = document.getElementById('field-data');
+const fieldPrevHash = document.getElementById('field-prev-hash');
+const fieldHash = document.getElementById('field-hash');
+const fieldNonce = document.getElementById('field-nonce');
+const fieldStatus = document.getElementById('field-status');
+const fieldStatusText = document.getElementById('field-status-text');
+const btnRecalculate = document.getElementById('btn-recalculate');
+const btnResetBlock = document.getElementById('btn-reset-block');
+
+// ============================================================================
+// 2. Scene, Canvas et Moteur de Rendu Three.js
+// ============================================================================
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x070b14);
 scene.fog = new THREE.FogExp2(0x070b14, 0.018);
@@ -37,7 +72,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.1;
 
 // ============================================================================
-// 2. Eclairage cinematique
+// 3. Eclairage cinematique
 // ============================================================================
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(ambientLight);
@@ -55,7 +90,7 @@ fillLight.position.set(0, 8, -8);
 scene.add(fillLight);
 
 // ============================================================================
-// 3. Decor ferroviaire (Rails metalliques et traverses)
+// 4. Decor ferroviaire (Rails metalliques et traverses)
 // ============================================================================
 function setupEnvironment() {
   const envGroup = new THREE.Group();
@@ -77,7 +112,7 @@ function setupEnvironment() {
   groundMesh.position.y = -0.52;
   envGroup.add(groundMesh);
 
-  // Rails longitudinaux le long de l'axe X (espacement de 1.32 adapte aux roues des wagons)
+  // Rails longitudinaux le long de l'axe X (espacement de 1.32 adapte aux essieux)
   const railLength = 90;
   const railDistance = 1.32;
   const railGeometry = new THREE.BoxGeometry(railLength, 0.12, 0.08);
@@ -117,7 +152,7 @@ function setupEnvironment() {
 setupEnvironment();
 
 // ============================================================================
-// 4. Initialisation du Convoi Ferroviaire (TrainConvoy)
+// 5. Initialisation du Convoi Ferroviaire (TrainConvoy)
 // ============================================================================
 const trainConvoy = new TrainConvoy(scene, {
   spacing: WAGON_SPACING,
@@ -147,7 +182,7 @@ trainConvoy.init([
 ]);
 
 // ============================================================================
-// 5. Controleur de Camera et Interactions
+// 6. Controleur de Camera et Interactions
 // ============================================================================
 let inspectedBlockIndex = 0;
 
@@ -157,7 +192,7 @@ const cameraController = new CameraController(camera, renderer.domElement, (bloc
 cameraController.setInteractiveObjects(trainConvoy.getWagonMeshes());
 
 // ============================================================================
-// 6. Navigation Pedagogique des 7 Notions
+// 7. Navigation Pedagogique des 7 Notions
 // ============================================================================
 const sequencesInfo = [
   {
@@ -233,52 +268,21 @@ const sequencesInfo = [
 
 let currentStep = 1;
 
-// ============================================================================
-// 7. Interface Utilisateur HUD 2D et Sidebar d'Inspection
-// ============================================================================
-const sequenceTitleEl = document.getElementById('sequence-title');
-const sequenceDescEl = document.getElementById('sequence-desc');
-const stepButtons = document.querySelectorAll('.step-btn');
-const btnPrev = document.getElementById('btn-prev');
-const btnNext = document.getElementById('btn-next');
-
-const chainStatusPill = document.getElementById('chain-status-pill');
-const chainStatusText = document.getElementById('chain-status-text');
-
-// Elements de la Sidebar
-const sidebarEl = document.getElementById('inspection-sidebar');
-const btnCloseSidebar = document.getElementById('btn-close-sidebar');
-const sidebarTitleEl = document.getElementById('sidebar-wagon-title');
-const fieldIndex = document.getElementById('field-index');
-const fieldData = document.getElementById('field-data');
-const fieldPrevHash = document.getElementById('field-prev-hash');
-const fieldHash = document.getElementById('field-hash');
-const fieldNonce = document.getElementById('field-nonce');
-const fieldStatus = document.getElementById('field-status');
-const fieldStatusText = document.getElementById('field-status-text');
-const btnRecalculate = document.getElementById('btn-recalculate');
-const btnResetBlock = document.getElementById('btn-reset-block');
-
-// Boutons d'actions rapides
-const btnAddBlock = document.getElementById('btn-add-block');
-const btnCorruptBlock = document.getElementById('btn-corrupt-block');
-const btnRestoreChain = document.getElementById('btn-restore-chain');
-
 function setSequence(stepNumber) {
   currentStep = Math.max(1, Math.min(stepNumber, 7));
   const seq = sequencesInfo[currentStep - 1];
 
   // Mise a jour textuelle du HUD
-  sequenceTitleEl.textContent = seq.title;
-  sequenceDescEl.textContent = seq.desc;
+  if (sequenceTitleEl) sequenceTitleEl.textContent = seq.title;
+  if (sequenceDescEl) sequenceDescEl.textContent = seq.desc;
 
   // Mise a jour de la barre d'etapes
   stepButtons.forEach((btn) => {
     btn.classList.toggle('active', parseInt(btn.dataset.step) === currentStep);
   });
 
-  btnPrev.disabled = currentStep === 1;
-  btnNext.disabled = currentStep === 7;
+  if (btnPrev) btnPrev.disabled = currentStep === 1;
+  if (btnNext) btnNext.disabled = currentStep === 7;
 
   // Deplacement de la camera vers le point de vue scenarise
   const camPos = seq.getCamPos();
@@ -300,38 +304,50 @@ stepButtons.forEach((btn) => {
   });
 });
 
-btnPrev.addEventListener('click', () => {
-  if (currentStep > 1) setSequence(currentStep - 1);
-});
+if (btnPrev) {
+  btnPrev.addEventListener('click', () => {
+    if (currentStep > 1) setSequence(currentStep - 1);
+  });
+}
 
-btnNext.addEventListener('click', () => {
-  if (currentStep < 7) setSequence(currentStep + 1);
-});
+if (btnNext) {
+  btnNext.addEventListener('click', () => {
+    if (currentStep < 7) setSequence(currentStep + 1);
+  });
+}
 
-// Ouverture et remplissage de la Sidebar
+// ============================================================================
+// 8. Panneau Lateral d'Inspection (Sidebar / Drawer)
+// ============================================================================
 function openInspectionSidebar(block) {
+  if (!block) return;
   inspectedBlockIndex = block.index;
 
   const wagonLabel = block.index === 0 ? 'Bloc Genesis' : `Bloc #${block.index}`;
-  sidebarTitleEl.textContent = `Wagon #${block.index} (${wagonLabel})`;
+  if (sidebarTitleEl) sidebarTitleEl.textContent = `Wagon #${block.index} (${wagonLabel})`;
 
-  fieldIndex.value = block.index;
-  fieldData.value = typeof block.data === 'string'
-    ? block.data
-    : JSON.stringify(block.data, null, 2);
-  fieldPrevHash.value = block.previousHash || '0000000000000000';
-  fieldHash.value = block.hash;
-  fieldNonce.value = block.nonce;
+  if (fieldIndex) fieldIndex.value = block.index;
+  if (fieldData) {
+    fieldData.value = typeof block.data === 'string'
+      ? block.data
+      : JSON.stringify(block.data, null, 2);
+  }
+  if (fieldPrevHash) fieldPrevHash.value = block.previousHash || '0000000000000000';
+  if (fieldHash) fieldHash.value = block.hash;
+  if (fieldNonce) fieldNonce.value = block.nonce;
 
   const validityList = trainConvoy.blockchain.getBlockValidityList();
   const isValid = validityList[block.index] ?? false;
   updateSidebarStatus(isValid);
 
-  sidebarEl.classList.add('open');
-  sidebarEl.setAttribute('aria-hidden', 'false');
+  if (sidebarEl) {
+    sidebarEl.classList.add('open');
+    sidebarEl.setAttribute('aria-hidden', 'false');
+  }
 }
 
 function updateSidebarStatus(isValid) {
+  if (!fieldStatus || !fieldStatusText) return;
   if (isValid) {
     fieldStatus.className = 'status-indicator valid';
     fieldStatusText.textContent = 'Attelage magnetique actif (valide)';
@@ -341,52 +357,60 @@ function updateSidebarStatus(isValid) {
   }
 }
 
-btnCloseSidebar.addEventListener('click', () => {
-  sidebarEl.classList.remove('open');
-  sidebarEl.setAttribute('aria-hidden', 'true');
-});
+if (btnCloseSidebar) {
+  btnCloseSidebar.addEventListener('click', () => {
+    if (sidebarEl) {
+      sidebarEl.classList.remove('open');
+      sidebarEl.setAttribute('aria-hidden', 'true');
+    }
+  });
+}
 
-// ============================================================================
-// 8. Falsification en direct via le champ de donnees
-// ============================================================================
-fieldData.addEventListener('input', () => {
-  const block = trainConvoy.getBlock(inspectedBlockIndex);
-  if (!block) return;
+// Falsification en direct via edition du champ de transactions
+if (fieldData) {
+  fieldData.addEventListener('input', () => {
+    const block = trainConvoy.getBlock(inspectedBlockIndex);
+    if (!block) return;
 
-  let parsedData = fieldData.value;
-  try {
-    parsedData = JSON.parse(fieldData.value);
-  } catch {
-    parsedData = fieldData.value;
-  }
+    let parsedData = fieldData.value;
+    try {
+      parsedData = JSON.parse(fieldData.value);
+    } catch {
+      parsedData = fieldData.value;
+    }
 
-  // Falsifie deliberement les donnees sans recalculer le hash
-  trainConvoy.corruptBlock(inspectedBlockIndex, parsedData);
+    // Falsifie les donnees sans recalculer le hash
+    trainConvoy.corruptBlock(inspectedBlockIndex, parsedData);
 
-  const validityList = trainConvoy.blockchain.getBlockValidityList();
-  const isValid = validityList[inspectedBlockIndex] ?? false;
-  updateSidebarStatus(isValid);
-});
+    const validityList = trainConvoy.blockchain.getBlockValidityList();
+    const isValid = validityList[inspectedBlockIndex] ?? false;
+    updateSidebarStatus(isValid);
+  });
+}
 
-// Bouton Valider / recalculer (minage / re-scellement de la chaine)
-btnRecalculate.addEventListener('click', () => {
-  const result = trainConvoy.recalculateAndMineBlock(inspectedBlockIndex, 1);
-  if (!result) return;
+// Bouton Valider / recalculer (minage et propagation du scellement)
+if (btnRecalculate) {
+  btnRecalculate.addEventListener('click', () => {
+    const result = trainConvoy.recalculateAndMineBlock(inspectedBlockIndex, 1);
+    if (!result) return;
 
-  const updatedBlock = result.block;
-  fieldHash.value = updatedBlock.hash;
-  fieldNonce.value = updatedBlock.nonce;
-  updateSidebarStatus(true);
-});
+    const updatedBlock = result.block;
+    if (fieldHash) fieldHash.value = updatedBlock.hash;
+    if (fieldNonce) fieldNonce.value = updatedBlock.nonce;
+    updateSidebarStatus(true);
+  });
+}
 
 // Bouton Reinitialiser le wagon
-btnResetBlock.addEventListener('click', () => {
-  trainConvoy.resetBlock(inspectedBlockIndex);
-  const block = trainConvoy.getBlock(inspectedBlockIndex);
-  if (block) {
-    openInspectionSidebar(block);
-  }
-});
+if (btnResetBlock) {
+  btnResetBlock.addEventListener('click', () => {
+    trainConvoy.resetBlock(inspectedBlockIndex);
+    const block = trainConvoy.getBlock(inspectedBlockIndex);
+    if (block) {
+      openInspectionSidebar(block);
+    }
+  });
+}
 
 // ============================================================================
 // 9. Actions Rapides du HUD
@@ -441,7 +465,7 @@ if (btnRestoreChain) {
 
 // Mise a jour visuelle des indicateurs du HUD lors des mutations de chaine
 function handleChainStateChange(summary) {
-  if (chainStatusPill && chainStatusText) {
+  if (chainStatusPill && chainStatusText && summary) {
     if (summary.isValid) {
       chainStatusPill.className = 'stat-pill status-ok';
       chainStatusText.textContent = `Chaine valide (${summary.totalWagons} wagons)`;
@@ -452,8 +476,8 @@ function handleChainStateChange(summary) {
   }
 
   // Si le panneau est ouvert, rafraichit l'indicateur d'etat du bloc courant
-  const validityList = summary.validityList;
-  if (sidebarEl.classList.contains('open') && validityList) {
+  const validityList = summary?.validityList;
+  if (sidebarEl && sidebarEl.classList.contains('open') && validityList) {
     const currentIsValid = validityList[inspectedBlockIndex] ?? false;
     updateSidebarStatus(currentIsValid);
   }
@@ -462,7 +486,6 @@ function handleChainStateChange(summary) {
 // ============================================================================
 // 10. Indicateur de performances FPS
 // ============================================================================
-const fpsCounterEl = document.getElementById('fps-counter');
 let frameCount = 0;
 let lastFpsTime = performance.now();
 
