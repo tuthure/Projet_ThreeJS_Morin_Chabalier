@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 /**
- * Fonction deterministe qui convertit une empreinte de hash en une couleur HSL vibrante et contrastée.
+ * Fonction deterministe qui convertit une empreinte de hash en une couleur HSL vibrante et contrastee.
  * Permet a un non-initie de verifier visuellement l'egalite de deux hashs :
  * Si deux anneaux ou plaques ont la meme couleur, les empreintes sont identiques.
  * @param {string} hash - Chaine de hash ou previousHash.
@@ -9,7 +9,7 @@ import * as THREE from 'three';
  */
 export function hashToColor(hash) {
   if (!hash || hash === '0' || hash === '') {
-    // Teinte bleue cyan par defaut pour l'origine (Genesis previousHash)
+    // Teinte cyan par defaut pour l'origine (Genesis previousHash)
     return new THREE.Color(0x38bdf8);
   }
   let val = 0;
@@ -18,7 +18,6 @@ export function hashToColor(hash) {
   }
   const hue = (val % 360) / 360;
   const color = new THREE.Color();
-  // Saturation elevee et luminosite moyenne pour des teintes intenses et franches
   color.setHSL(hue, 0.85, 0.55);
   return color;
 }
@@ -26,12 +25,11 @@ export function hashToColor(hash) {
 /**
  * Represente la structure 3D procedurale d'un wagon du convoi ferroviaire.
  * Metaphore : Un wagon aux parois transparentes transportant les transactions.
- * Composants majeurs :
- * 1. Les marchandises diversifiees visibles a l'interieur (conteneurs nervures, caisses, bonbonnes)
- * 2. L'attelage avant et plaque associee (previousHash avec code couleur dedie)
- * 3. L'attelage arriere et plaque associee (hash avec code couleur dedie)
- * 4. La molette crantee du Nonce avec son cadran numerote
- * 5. Anneaux lumineux aux extremites dont les couleurs concordent lorsque la liaison est valide
+ * Agencement des informations pedagogiques :
+ * - Etiquette centrale sur la verriere : Numero de bloc, HASH ACTUEL, Marchandises (TX), Nonce et Statut.
+ * - Etiquette du PREVIOUS HASH : Montee directement sur la face arriere / transversale du wagon (vers l'attelage).
+ * - Molette mecanique du Nonce sur le flanc avec cadran numerote.
+ * - Anneaux cryptographiques aux extremites dont les couleurs correspondent quand la liaison est valide.
  */
 export class WagonMesh extends THREE.Group {
   /**
@@ -46,7 +44,7 @@ export class WagonMesh extends THREE.Group {
     this.spacing = options.spacing || 3.8;
     this.isValid = true;
 
-    // Couleurs cryptographiques deterministes associees aux empreintes
+    // Couleurs cryptographiques deterministes deduites des empreintes
     this.colorHash = hashToColor(this.block.hash);
     this.colorPrevHash = hashToColor(this.block.previousHash);
 
@@ -57,10 +55,9 @@ export class WagonMesh extends THREE.Group {
 
     // Badges textures et canevas
     this.badges = {
-      prev: { canvas: null, texture: null },
-      hash: { canvas: null, texture: null },
-      center: { canvas: null, texture: null },
-      nonce: { canvas: null, texture: null }
+      center: { canvas: null, texture: null }, // Etiquette centrale (Hash actuel, TX, statut)
+      prev: { canvas: null, texture: null },   // Etiquette face transversale/arriere (previousHash)
+      nonce: { canvas: null, texture: null }   // Cadran numerote molette
     };
 
     // References d'anneaux et d'attelage pour synchronisation visuelle
@@ -83,7 +80,7 @@ export class WagonMesh extends THREE.Group {
     this.buildRearSocket();
     this.buildCoupler();
     this.buildNonceMechanism();
-    this.buildSeparatedPlates();
+    this.buildPlates();
     this.buildStatusBeacon();
 
     // 2. Application de l'etat initial (valide)
@@ -181,8 +178,8 @@ export class WagonMesh extends THREE.Group {
   }
 
   /**
-   * Construit des marchandises variees, riches et tangibles a l'interieur du wagon :
-   * - Conteneur maritime nervure (grand colis principal)
+   * Construit des marchandises variees et riches a l'interieur du wagon :
+   * - Conteneur maritime nervure (grand colis principal orange)
    * - Caisses modulaires en bois et acier empilees avec sangles
    * - Bonbonnes cylindriques d'energie (jetons cryptographiques)
    * - Coffre-fort dore pour le bloc Genesis
@@ -265,10 +262,9 @@ export class WagonMesh extends THREE.Group {
       }
 
       // 2. Palette de caisses empilees en bois/acier (centre droit, x = 0.3)
-      // Caisse inferieure
       const crateBottomGeo = new THREE.BoxGeometry(0.55, 0.4, 0.7);
       const crateBottomMat = new THREE.MeshStandardMaterial({
-        color: 0xd97706, // Bois dore industriel
+        color: 0xd97706,
         metalness: 0.3,
         roughness: 0.7,
         emissive: 0x92400e,
@@ -279,7 +275,6 @@ export class WagonMesh extends THREE.Group {
       crateBottom.position.set(0.28, 0.36, 0);
       this.cargoGroup.add(crateBottom);
 
-      // Caisse superieure legere decalee
       const crateTopGeo = new THREE.BoxGeometry(0.48, 0.32, 0.58);
       const crateTopMat = new THREE.MeshStandardMaterial({
         color: 0xb45309,
@@ -390,7 +385,6 @@ export class WagonMesh extends THREE.Group {
   /**
    * Construit la prise d'attelage arriere du wagon (Socket du Hash propre).
    * L'anneau arriere prend la couleur deterministe associee a son propre hash (colorHash).
-   * Le wagon suivant viendra y emboiter son anneau avant qui prendra la meme couleur !
    */
   buildRearSocket() {
     this.rearSocketGroup = new THREE.Group();
@@ -425,13 +419,12 @@ export class WagonMesh extends THREE.Group {
 
   /**
    * Construit l'attelage cryptographique avant reliant ce wagon au precedent (previousHash).
-   * L'anneau avant prend la couleur exacte du previousHash, qui correspond a celle de l'anneau
-   * arriere du wagon precedent !
+   * L'anneau avant prend la couleur exacte du previousHash, concordant avec l'anneau arriere du precedent.
    */
   buildCoupler() {
     this.couplerGroup = new THREE.Group();
 
-    // Le wagon Genesis (wagon de tete) n'a pas de predecesseur auquel s'atteler
+    // Le wagon Genesis n'a pas de predecesseur auquel s'atteler
     if (this.block.index === 0) {
       const frontAnchorGeo = new THREE.BoxGeometry(0.18, 0.18, 0.4);
       const frontAnchorMat = new THREE.MeshStandardMaterial({
@@ -445,7 +438,6 @@ export class WagonMesh extends THREE.Group {
       return;
     }
 
-    // Calcul de l'intervalle entre les deux wagons
     const linkLength = Math.max(0.6, this.spacing - 2.6);
     const linkCenterX = 1.3 + linkLength / 2;
 
@@ -473,7 +465,7 @@ export class WagonMesh extends THREE.Group {
     this.couplerBeam.rotation.z = Math.PI / 2;
     this.couplerGroup.add(this.couplerBeam);
 
-    // Anneau avant (crochet) : prend la couleur du previousHash (identique a l'anneau arriere du wagon d'avant !)
+    // Anneaux avant (crochet) : prennent la couleur du previousHash
     const frontRingGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.08, 24);
     this.frontRingMaterial = new THREE.MeshStandardMaterial({
       color: this.colorPrevHash,
@@ -483,13 +475,11 @@ export class WagonMesh extends THREE.Group {
       roughness: 0.2
     });
 
-    // Anneau cote wagon courant (base avant)
     const ringBase = new THREE.Mesh(frontRingGeo, this.frontRingMaterial);
     ringBase.rotation.z = Math.PI / 2;
     ringBase.position.x = -linkLength / 2;
     this.couplerGroup.add(ringBase);
 
-    // Anneau cote wagon precedent (embout de contact)
     const ringTip = new THREE.Mesh(frontRingGeo, this.frontRingMaterial);
     ringTip.rotation.z = Math.PI / 2;
     ringTip.position.x = linkLength / 2;
@@ -553,15 +543,33 @@ export class WagonMesh extends THREE.Group {
   }
 
   /**
-   * Construit les etiquettes et plaques SEPAREES sur le wagon :
-   * 1. Plaque AVANT (previousHash) a droite pres de l'attelage avant
-   * 2. Plaque ARRIERE (hash) a gauche pres de l'attelage arriere
-   * 3. Plaque CENTRALE (Marchandises / Transactions) sur la verriere
+   * Construit les etiquettes conformement a la demande :
+   * 1. Etiquette centrale sur le flanc : contient le numero du bloc, le HASH ACTUEL, les TX et le statut.
+   * 2. Etiquette PREVIOUS HASH : montee directement sur la face transversale/arriere du wagon (vers l'attelage).
    */
-  buildSeparatedPlates() {
+  buildPlates() {
     this.platesGroup = new THREE.Group();
 
-    // 1. Plaque AVANT : PREV HASH (cote x = +0.8, pres de l'attelage entrant)
+    // 1. ETIQUETTE CENTRALE (Flanc de la verriere +Z)
+    const centerCanvas = document.createElement('canvas');
+    centerCanvas.width = 512;
+    centerCanvas.height = 256;
+    this.badges.center.canvas = centerCanvas;
+    const centerTex = new THREE.CanvasTexture(centerCanvas);
+    this.badges.center.texture = centerTex;
+
+    const centerPlateGeo = new THREE.PlaneGeometry(1.15, 0.58);
+    const centerPlateMat = new THREE.MeshBasicMaterial({
+      map: centerTex,
+      transparent: true,
+      side: THREE.DoubleSide
+    });
+    const centerPlate = new THREE.Mesh(centerPlateGeo, centerPlateMat);
+    centerPlate.position.set(0, 0.62, 0.605);
+    this.platesGroup.add(centerPlate);
+
+    // 2. ETIQUETTE PREVIOUS HASH (Montee sur la face transversale/arriere vers l'attelage, x = +1.185)
+    // Inclinee legerement a 15 deg vers la camera pour rester parfaitement lisible sous tous les angles
     const prevCanvas = document.createElement('canvas');
     prevCanvas.width = 384;
     prevCanvas.height = 192;
@@ -569,51 +577,17 @@ export class WagonMesh extends THREE.Group {
     const prevTex = new THREE.CanvasTexture(prevCanvas);
     this.badges.prev.texture = prevTex;
 
-    const prevPlateGeo = new THREE.PlaneGeometry(0.72, 0.36);
+    const prevPlateGeo = new THREE.PlaneGeometry(0.78, 0.42);
     const prevPlateMat = new THREE.MeshBasicMaterial({
       map: prevTex,
       transparent: true,
       side: THREE.DoubleSide
     });
     const prevPlate = new THREE.Mesh(prevPlateGeo, prevPlateMat);
-    prevPlate.position.set(0.78, 0.58, 0.605);
+    // Positionnee sur la face transversale arriere (au niveau de la jonction d'attelage)
+    prevPlate.rotation.y = Math.PI / 2 - 0.22;
+    prevPlate.position.set(1.185, 0.62, 0.12);
     this.platesGroup.add(prevPlate);
-
-    // 2. Plaque ARRIERE : HASH DU BLOC (cote x = -0.8, pres de l'attelage sortant)
-    const hashCanvas = document.createElement('canvas');
-    hashCanvas.width = 384;
-    hashCanvas.height = 192;
-    this.badges.hash.canvas = hashCanvas;
-    const hashTex = new THREE.CanvasTexture(hashCanvas);
-    this.badges.hash.texture = hashTex;
-
-    const hashPlateGeo = new THREE.PlaneGeometry(0.72, 0.36);
-    const hashPlateMat = new THREE.MeshBasicMaterial({
-      map: hashTex,
-      transparent: true,
-      side: THREE.DoubleSide
-    });
-    const hashPlate = new THREE.Mesh(hashPlateGeo, hashPlateMat);
-    hashPlate.position.set(-0.78, 0.58, 0.605);
-    this.platesGroup.add(hashPlate);
-
-    // 3. Plaque CENTRALE : MARCHANDISES (Transactions) au centre de la verriere
-    const centerCanvas = document.createElement('canvas');
-    centerCanvas.width = 440;
-    centerCanvas.height = 200;
-    this.badges.center.canvas = centerCanvas;
-    const centerTex = new THREE.CanvasTexture(centerCanvas);
-    this.badges.center.texture = centerTex;
-
-    const centerPlateGeo = new THREE.PlaneGeometry(0.82, 0.38);
-    const centerPlateMat = new THREE.MeshBasicMaterial({
-      map: centerTex,
-      transparent: true,
-      side: THREE.DoubleSide
-    });
-    const centerPlate = new THREE.Mesh(centerPlateGeo, centerPlateMat);
-    centerPlate.position.set(0, 0.72, 0.605);
-    this.platesGroup.add(centerPlate);
 
     this.add(this.platesGroup);
   }
@@ -646,13 +620,63 @@ export class WagonMesh extends THREE.Group {
   }
 
   /**
-   * Met a jour les 4 plaques graphiques independantes sur le wagon.
+   * Reecrit le contenu des plaques graphiques sur le wagon.
    */
   renderPlates() {
     const prevHex = `#${this.colorPrevHash.getHexString()}`;
     const hashHex = `#${this.colorHash.getHexString()}`;
 
-    // 1. Plaque AVANT : PREV HASH (avec la couleur de l'attelage avant)
+    // 1. ETIQUETTE CENTRALE : BLOC, HASH ACTUEL, MARCHANDISES, STATUT
+    if (this.badges.center.canvas) {
+      const c = this.badges.center.canvas;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = this.isValid ? '#071524' : '#2b0707';
+      ctx.fillRect(0, 0, c.width, c.height);
+
+      ctx.strokeStyle = this.isValid ? '#00f5d4' : '#ef4444';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(4, 4, c.width - 8, c.height - 8);
+
+      // Titre
+      ctx.fillStyle = this.isValid ? '#38bdf8' : '#f87171';
+      ctx.font = 'bold 30px monospace';
+      const label = this.block.index === 0
+        ? 'WAGON #0 [GENESIS]'
+        : `WAGON #${this.block.index} [BLOC]`;
+      ctx.fillText(label, 20, 44);
+
+      // HASH ACTUEL DU BLOC (avec couleur cryptographique dediee)
+      ctx.fillStyle = this.isValid ? hashHex : '#f87171';
+      ctx.font = 'bold 22px monospace';
+      ctx.fillText(`HASH : ${this.block.hash.substring(0, 16)}...`, 20, 84);
+
+      // MARCHANDISES / TRANSACTIONS
+      ctx.fillStyle = '#f1f5f9';
+      ctx.font = '20px monospace';
+      let summary = typeof this.block.data === 'string'
+        ? this.block.data.replace(/\s+/g, ' ')
+        : JSON.stringify(this.block.data);
+      if (summary.length > 24) summary = `${summary.substring(0, 24)}...`;
+      ctx.fillText(`TX   : ${summary}`, 20, 122);
+
+      // NONCE
+      ctx.fillStyle = '#f59e0b';
+      ctx.font = '20px monospace';
+      ctx.fillText(`NONCE: ${this.block.nonce}`, 20, 158);
+
+      // STATUT
+      ctx.fillStyle = this.isValid ? '#10b981' : '#ef4444';
+      ctx.font = 'bold 20px monospace';
+      ctx.fillText(
+        this.isValid ? 'ETAT : VALIDE (ATTACHE)' : 'ETAT : CORROMPU (RUPTURE)',
+        20,
+        198
+      );
+
+      this.badges.center.texture.needsUpdate = true;
+    }
+
+    // 2. ETIQUETTE PREVIOUS HASH (Sur la face transversale/arriere, a la jonction de l'attelage)
     if (this.badges.prev.canvas) {
       const c = this.badges.prev.canvas;
       const ctx = c.getContext('2d');
@@ -677,75 +701,13 @@ export class WagonMesh extends THREE.Group {
       ctx.fillText(prevVal, 20, 100);
 
       ctx.fillStyle = '#94a3b8';
-      ctx.font = '20px monospace';
+      ctx.font = '18px monospace';
       ctx.fillText(this.block.index === 0 ? '(Origine Genesis)' : '(Sceau wagon avant)', 20, 146);
 
       this.badges.prev.texture.needsUpdate = true;
     }
 
-    // 2. Plaque ARRIERE : HASH DU BLOC (avec sa couleur propre de hash)
-    if (this.badges.hash.canvas) {
-      const c = this.badges.hash.canvas;
-      const ctx = c.getContext('2d');
-      ctx.fillStyle = this.isValid ? '#061321' : '#2b0707';
-      ctx.fillRect(0, 0, c.width, c.height);
-
-      ctx.strokeStyle = this.isValid ? hashHex : '#ef4444';
-      ctx.lineWidth = 8;
-      ctx.strokeRect(4, 4, c.width - 8, c.height - 8);
-
-      // Titre
-      ctx.fillStyle = this.isValid ? hashHex : '#f87171';
-      ctx.font = 'bold 28px monospace';
-      ctx.fillText('HASH DU BLOC ▶', 20, 48);
-
-      // Valeur
-      ctx.fillStyle = '#f1f5f9';
-      ctx.font = 'bold 24px monospace';
-      const hashVal = `${this.block.hash.substring(0, 12)}...`;
-      ctx.fillText(hashVal, 20, 100);
-
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '20px monospace';
-      ctx.fillText('(Sceau a transmettre)', 20, 146);
-
-      this.badges.hash.texture.needsUpdate = true;
-    }
-
-    // 3. Plaque CENTRALE : MARCHANDISES (Transactions transportees)
-    if (this.badges.center.canvas) {
-      const c = this.badges.center.canvas;
-      const ctx = c.getContext('2d');
-      ctx.fillStyle = this.isValid ? '#091c2f' : '#330808';
-      ctx.fillRect(0, 0, c.width, c.height);
-
-      ctx.strokeStyle = this.isValid ? '#00f5d4' : '#ef4444';
-      ctx.lineWidth = 8;
-      ctx.strokeRect(4, 4, c.width - 8, c.height - 8);
-
-      ctx.fillStyle = this.isValid ? '#38bdf8' : '#f87171';
-      ctx.font = 'bold 30px monospace';
-      ctx.fillText(`WAGON #${this.block.index}`, 20, 48);
-
-      let summary = typeof this.block.data === 'string'
-        ? this.block.data.replace(/\s+/g, ' ')
-        : JSON.stringify(this.block.data);
-      if (summary.length > 22) {
-        summary = `${summary.substring(0, 22)}...`;
-      }
-
-      ctx.fillStyle = '#f8fafc';
-      ctx.font = '22px monospace';
-      ctx.fillText(`TX: ${summary}`, 20, 100);
-
-      ctx.fillStyle = this.isValid ? '#10b981' : '#ef4444';
-      ctx.font = 'bold 20px monospace';
-      ctx.fillText(this.isValid ? 'ETAT : VALIDE' : 'ETAT : CORROMPU', 20, 148);
-
-      this.badges.center.texture.needsUpdate = true;
-    }
-
-    // 4. Cadran du NONCE
+    // 3. Cadran du NONCE
     if (this.badges.nonce.canvas) {
       const c = this.badges.nonce.canvas;
       const ctx = c.getContext('2d');
@@ -784,17 +746,15 @@ export class WagonMesh extends THREE.Group {
       transactions: new THREE.Vector3(0, 0.55, 0),
       // 2. La molette du Nonce sur le flanc
       nonce: new THREE.Vector3(0, 0.2, 0.68),
-      // 3. La plaque gravee du Hash arriere
-      hash: new THREE.Vector3(-0.78, 0.58, 0.61),
-      // 4. L'attelage avant et plaque previousHash
-      previousHash: new THREE.Vector3(0.78, 0.58, 0.61)
+      // 3. Le Hash actuel sur l'etiquette centrale
+      hash: new THREE.Vector3(0, 0.62, 0.61),
+      // 4. L'attelage avant et plaque previousHash sur la face transversale
+      previousHash: new THREE.Vector3(1.185, 0.62, 0.12)
     };
   }
 
   /**
    * Met a jour l'etat visuel du wagon selon la validite de la blockchain.
-   * Si valide : emission douce, couleurs cryptographiques vives, anneaux concordants.
-   * Si corrompu : rouge d'alerte, faisceau eteint, anneaux discordants.
    * @param {boolean} isValid - Statut de validite du bloc.
    */
   updateStatus(isValid) {
@@ -833,7 +793,7 @@ export class WagonMesh extends THREE.Group {
         this.rearRingMaterial.emissiveIntensity = 1.4;
       }
 
-      // 5. Anneau avant et attelage (couleur du previousHash, concordant avec l'anneau arriere du precedent)
+      // 5. Anneau avant et attelage (couleur du previousHash)
       if (this.frontRingMaterial) {
         this.frontRingMaterial.color.copy(this.colorPrevHash);
         this.frontRingMaterial.emissive.copy(this.colorPrevHash);
@@ -895,7 +855,7 @@ export class WagonMesh extends THREE.Group {
       }
     }
 
-    // Rafraichit les 4 plaques graphiques independantes
+    // Rafraichit les plaques graphiques
     this.renderPlates();
   }
 }
