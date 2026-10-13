@@ -1,13 +1,15 @@
-# Configuration du depot GitHub R507 Three.js Blockchain
-# Validation du Jalon 1 (Milestones, Issues, GitHub Project)
+# Configuration et synchronisation des 25 issues du projet R507 Three.js Blockchain
+# Metaphore : Le Convoi Ferroviaire Blinde
 
 param(
-    [string]$Repo = "tuthure/Projet_ThreeJS_Morin_Chabalier"
+    [string]$Repo = "tuthure/Projet_ThreeJS_Morin_Chabalier",
+    [string]$ProjectOwner = "tuthure",
+    [int]$ProjectNumber = 1
 )
 
 $ErrorActionPreference = "Continue"
 
-Write-Host "Configuration du depot GitHub : $Repo"
+Write-Host "Verification et configuration du depot GitHub : $Repo"
 
 # Verification de GitHub CLI
 if (-not (Get-Command "gh" -ErrorAction SilentlyContinue)) {
@@ -19,81 +21,49 @@ if (-not (Get-Command "gh" -ErrorAction SilentlyContinue)) {
     }
 }
 
-# Verification de l'authentification
-$authCheck = gh auth status 2>&1
-if ($LASTEXITCODE -ne 0 -and -not $env:GH_TOKEN) {
-    Write-Warning "Non authentifie sur GitHub CLI. Renseignez la variable GH_TOKEN ou lancez 'gh auth login'."
-    exit 1
+if (-not $env:GH_TOKEN) {
+    $env:GH_TOKEN = [System.Environment]::GetEnvironmentVariable("GH_TOKEN", "User")
 }
 
-# 1. Milestones du calendrier officiel
-Write-Host "Verification et creation des Milestones..."
-$milestonesDef = @(
-    @{
-        title = "Cadrage, groupes, depot et GitHub Projects crees"
-        due_on = "2026-10-09T17:00:00Z"
-        description = "Groupes de 2 ou 3, depot, GitHub Projects et premieres issues."
-    },
-    @{
-        title = "Livraison du projet"
-        due_on = "2026-11-15T23:59:00Z"
-        description = "Github, Github project et demo finale."
-    },
-    @{
-        title = "Repetition finale"
-        due_on = "2026-11-19T11:00:00Z"
-        description = "Repetition finale entre les differents groupes (9h30-11h)."
-    },
-    @{
-        title = "Soutenance"
-        due_on = "2026-11-19T12:30:00Z"
-        description = "Soutenance de 20 min par groupe (11h-12h30)."
-    }
+# Liste des 25 issues officielles avec leurs colonnes cibles
+$issuesConfig = @(
+    # 1. Phase Cadrage (Milestone 1)
+    @{ number = 1; title = "Définir les rôles de l'équipe"; column = "Terminé"; milestone = "Cadrage, groupes, dépôt et GitHub Projects créés"; assignees = @("achabalier14", "tuthure") },
+    @{ number = 2; title = "Créer le board GitHub Projects et ses colonnes"; column = "Terminé"; milestone = "Cadrage, groupes, dépôt et GitHub Projects créés"; assignees = @("tuthure") },
+    @{ number = 3; title = "Choisir le public cible, la métaphore principale et le fil rouge"; column = "Terminé"; milestone = "Cadrage, groupes, dépôt et GitHub Projects créés"; assignees = @("achabalier14") },
+    @{ number = 4; title = "Compléter le document de cadrage (MMI-R507-projet-blockchain-CHOIX-MODELISATION.md)"; column = "À vérifier"; milestone = "Cadrage, groupes, dépôt et GitHub Projects créés"; assignees = @("achabalier14") },
+    @{ number = 5; title = "Rédiger la fiche de suivi - Semaine 1"; column = "À vérifier"; milestone = "Cadrage, groupes, dépôt et GitHub Projects créés"; assignees = @("achabalier14") },
+    @{ number = 6; title = "Initialisation du dépôt (Vite + Three.js + workflow Pages)"; column = "En cours"; milestone = "Cadrage, groupes, dépôt et GitHub Projects créés"; assignees = @("tuthure") },
+
+    # 2. Phase Développement & Notions (Milestone 2)
+    @{ number = 7; title = "Notion 1 - Structure d'un bloc (données, hash, parentHash, nonce)"; column = "À faire"; milestone = "Livraison du projet"; assignees = @("tuthure") },
+    @{ number = 8; title = "Notion 2 - Chaînage cryptographique et effet avalanche"; column = "À faire"; milestone = "Livraison du projet"; assignees = @("tuthure") },
+    @{ number = 9; title = "Notion 3 - Immutabilité et détection de falsification"; column = "À faire"; milestone = "Livraison du projet"; assignees = @("achabalier14") },
+    @{ number = 10; title = "Notion 4 - Réseau, décentralisation et copies distribuées"; column = "À faire"; milestone = "Livraison du projet"; assignees = @("tuthure") },
+    @{ number = 11; title = "Notion 5 - Validation et minage, preuve de travail"; column = "À faire"; milestone = "Livraison du projet"; assignees = @("achabalier14") },
+    @{ number = 12; title = "Notion 6 - Comparaison des mécanismes de consensus (PoW vs PoS)"; column = "Backlog"; milestone = "Livraison du projet"; assignees = @("achabalier14") },
+    @{ number = 13; title = "Notion 7 - Cycle de vie d'une transaction et illustration d'attaque"; column = "Backlog"; milestone = "Livraison du projet"; assignees = @("tuthure") },
+    @{ number = 14; title = "Storyboard du parcours complet et mise en scène du train"; column = "À faire"; milestone = "Livraison du projet"; assignees = @("achabalier14") },
+    @{ number = 15; title = "Caméra, navigation et transitions entre séquences"; column = "À faire"; milestone = "Livraison du projet"; assignees = @("tuthure") },
+    @{ number = 16; title = "Charte visuelle, interface HUD et accessibilité"; column = "Backlog"; milestone = "Livraison du projet"; assignees = @("achabalier14") },
+    @{ number = 17; title = "Tests utilisateurs - session 1 (2 personnes extérieures)"; column = "Backlog"; milestone = "Livraison du projet"; assignees = @("achabalier14", "tuthure") },
+    @{ number = 18; title = "Tests utilisateurs - session 2 (après retours et corrections)"; column = "Backlog"; milestone = "Livraison du projet"; assignees = @("achabalier14", "tuthure") },
+    @{ number = 19; title = "Mesure des performances : assurer 30 FPS sur poste de TP"; column = "Backlog"; milestone = "Livraison du projet"; assignees = @("tuthure") },
+    @{ number = 20; title = "Finaliser le document officiel CHOIX-MODELISATION.md"; column = "Backlog"; milestone = "Livraison du projet"; assignees = @("achabalier14") },
+    @{ number = 21; title = "Finaliser le README du projet"; column = "Backlog"; milestone = "Livraison du projet"; assignees = @("achabalier14") },
+
+    # 3. Phase Soutenance (Milestone 4)
+    @{ number = 22; title = "Remplir la grille d'auto-évaluation (MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md)"; column = "Backlog"; milestone = "Soutenance"; assignees = @("achabalier14", "tuthure") },
+    @{ number = 23; title = "Préparer le support de soutenance pour la présentation de 20 min"; column = "Backlog"; milestone = "Soutenance"; assignees = @("achabalier14", "tuthure") },
+    @{ number = 24; title = "Réalisation d'une vidéo de démonstration de secours (Plan B)"; column = "Backlog"; milestone = "Soutenance"; assignees = @("tuthure") },
+    @{ number = 25; title = "Répétition générale de la soutenance"; column = "Backlog"; milestone = "Soutenance"; assignees = @("achabalier14", "tuthure") }
 )
 
-foreach ($m in $milestonesDef) {
-    gh api "repos/$Repo/milestones" -X POST `
-        -f title="$($m.title)" `
-        -f due_on="$($m.due_on)" `
-        -f description="$($m.description)" 2>$null
+Write-Host "Synchronisation des items avec le GitHub Project : $ProjectOwner/projects/$ProjectNumber"
+foreach ($item in $issuesConfig) {
+    $url = "https://github.com/$Repo/issues/$($item.number)"
+    Write-Host "Traitement issue #$($item.number) ($($item.title)) -> Colonne: $($item.column)"
+    gh project item-add $ProjectNumber --owner $ProjectOwner --url $url 2>$null
 }
 
-# 2. Issues granulaires associees au Jalon 1
-Write-Host "Verification et creation des issues initiales..."
-$issuesDef = @(
-    @{
-        title = "feat(threejs): Initialisation de la scene Three.js et integration Vite"
-        body = "Initialisation du projet front-end sous Vite avec Three.js. Mise en place de la scene, camera perspective, renderer WebGL, eclairage, boucle requestAnimationFrame et premier wagon temoin."
-        assignees = "tuthure"
-    },
-    @{
-        title = "docs(pedagogie): Cadrage documentaire et fil rouge du convoi ferroviaire blinde"
-        body = "Redaction de CHOIX-MODELISATION.md avec adaptation des 7 notions a la metaphore du train infini (wagons, attelages magnetiques, voies paralleles, motrice PoW), grille d'autoevaluation et fiche de suivi hebdo semaine 1."
-        assignees = "achabalier14"
-    },
-    @{
-        title = "design(storyboard): Conception visuelle et modelisation 3D des wagons du convoi ferroviaire"
-        body = "Conception du convoi ferroviaire blinde : modelisation des wagons (blocs), des marchandises (transactions) et des attelages magnetiques (hashs cryptographiques). Definition de la charte de couleurs et des etats visuels."
-        assignees = "tuthure"
-    },
-    @{
-        title = "feat(controls): Implementation de la navigation camera et des interactions HUD"
-        body = "Mise en place des controles de camera (OrbitControls et transitions guidees) avec boutons HUD pour parcourir les notions pedagogiques du train."
-        assignees = "achabalier14"
-    },
-    @{
-        title = "ci(deploy): Configuration du workflow de deploiement automatise GitHub Pages"
-        body = "Automatisation du build et du deploiement en ligne sur GitHub Pages via GitHub Actions."
-        assignees = "achabalier14"
-    }
-)
-
-foreach ($iss in $issuesDef) {
-    gh issue create --repo "$Repo" `
-        --title "$($iss.title)" `
-        --body "$($iss.body)" `
-        --milestone "Cadrage, groupes, depot et GitHub Projects crees" `
-        --assignee "$($iss.assignees)" 2>$null
-}
-
-Write-Host "Configuration terminee avec succes."
+Write-Host "Synchronisation terminee."
