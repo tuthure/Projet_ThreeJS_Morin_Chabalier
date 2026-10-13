@@ -11,15 +11,32 @@ export class Blockchain {
   }
 
   /**
+   * Genere un nonce aleatoire unique compris entre 0 et 999 sans doublon sur la chaine.
+   * @returns {number}
+   */
+  generateUniqueNonce() {
+    const used = new Set(this.chain ? this.chain.map((b) => b.nonce) : []);
+    let nonce;
+    let attempts = 0;
+    do {
+      nonce = Math.floor(Math.random() * 1000);
+      attempts++;
+    } while (used.has(nonce) && attempts < 2000);
+    return nonce;
+  }
+
+  /**
    * Genere le premier bloc du convoi (Bloc Genesis).
    * @returns {Block}
    */
   createGenesisBlock() {
+    const nonce = this.generateUniqueNonce();
     return new Block(
       0,
       Date.now(),
       { type: 'GENESIS', label: 'Origine du convoi', transactions: 0 },
-      '0'
+      '0',
+      nonce
     );
   }
 
@@ -40,7 +57,8 @@ export class Blockchain {
     const latestBlock = this.getLatestBlock();
     const newIndex = this.chain.length;
     const newTimestamp = Date.now();
-    const newBlock = new Block(newIndex, newTimestamp, data, latestBlock.hash);
+    const nonce = this.generateUniqueNonce();
+    const newBlock = new Block(newIndex, newTimestamp, data, latestBlock.hash, nonce);
 
     this.chain.push(newBlock);
     return newBlock;

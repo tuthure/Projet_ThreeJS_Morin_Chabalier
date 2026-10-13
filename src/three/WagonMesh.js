@@ -491,7 +491,8 @@ export class WagonMesh extends THREE.Group {
   }
 
   /**
-   * Construit la molette mecanique crantee du Nonce sur le flanc du chassis.
+   * Construit la molette mecanique marron du Nonce sur le flanc du chassis.
+   * Le nombre du nonce est directement imprime sur la face de la molette.
    */
   buildNonceMechanism() {
     this.nonceGroup = new THREE.Group();
@@ -507,37 +508,38 @@ export class WagonMesh extends THREE.Group {
     mount.position.set(0, 0.2, 0.63);
     this.nonceGroup.add(mount);
 
-    // Molette rotative crantee en bronze/or (engrenage du nonce)
-    const wheelGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.06, 18);
+    // Molette rotative crantee marron metallique
+    const wheelGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.06, 24);
     const wheelMat = new THREE.MeshStandardMaterial({
-      color: 0xf59e0b,
-      metalness: 0.95,
-      roughness: 0.2,
-      emissive: 0xb45309,
-      emissiveIntensity: 0.3
+      color: 0x78350f, // Marron bronze industriel
+      metalness: 0.8,
+      roughness: 0.35,
+      emissive: 0x451a03,
+      emissiveIntensity: 0.25
     });
     this.nonceWheel = new THREE.Mesh(wheelGeo, wheelMat);
     this.nonceWheel.rotation.x = Math.PI / 2;
     this.nonceWheel.position.set(0, 0.2, 0.68);
     this.nonceGroup.add(this.nonceWheel);
 
-    // Cadran digital du Nonce juste au-dessus de la molette
+    // Disque circulaire imprime DIRECTEMENT sur la face avant de la molette marron
     const nonceCanvas = document.createElement('canvas');
     nonceCanvas.width = 256;
-    nonceCanvas.height = 96;
+    nonceCanvas.height = 256;
     this.badges.nonce.canvas = nonceCanvas;
     const nonceTex = new THREE.CanvasTexture(nonceCanvas);
     this.badges.nonce.texture = nonceTex;
 
-    const dialPlateGeo = new THREE.PlaneGeometry(0.55, 0.2);
-    const dialPlateMat = new THREE.MeshBasicMaterial({
+    const dialDiscGeo = new THREE.CircleGeometry(0.148, 32);
+    const dialDiscMat = new THREE.MeshBasicMaterial({
       map: nonceTex,
       transparent: true,
       side: THREE.DoubleSide
     });
-    const dialPlate = new THREE.Mesh(dialPlateGeo, dialPlateMat);
-    dialPlate.position.set(0, 0.36, 0.645);
-    this.nonceGroup.add(dialPlate);
+    const dialDisc = new THREE.Mesh(dialDiscGeo, dialDiscMat);
+    dialDisc.position.set(0, 0.031, 0);
+    dialDisc.rotation.x = -Math.PI / 2;
+    this.nonceWheel.add(dialDisc);
 
     this.add(this.nonceGroup);
   }
@@ -568,26 +570,28 @@ export class WagonMesh extends THREE.Group {
     centerPlate.position.set(0, 0.62, 0.605);
     this.platesGroup.add(centerPlate);
 
-    // 2. ETIQUETTE PREVIOUS HASH (Montee sur la face transversale/arriere vers l'attelage, x = +1.185)
-    // Inclinee legerement a 15 deg vers la camera pour rester parfaitement lisible sous tous les angles
-    const prevCanvas = document.createElement('canvas');
-    prevCanvas.width = 384;
-    prevCanvas.height = 192;
-    this.badges.prev.canvas = prevCanvas;
-    const prevTex = new THREE.CanvasTexture(prevCanvas);
-    this.badges.prev.texture = prevTex;
+    // 2. ETIQUETTE PREVIOUS HASH (Montee sur la face transversale arriere vers l'attelage)
+    // Seuls les wagons qui ont un predecesseur (index > 0) ont une plaque PREV HASH
+    if (this.block.index > 0) {
+      const prevCanvas = document.createElement('canvas');
+      prevCanvas.width = 384;
+      prevCanvas.height = 192;
+      this.badges.prev.canvas = prevCanvas;
+      const prevTex = new THREE.CanvasTexture(prevCanvas);
+      this.badges.prev.texture = prevTex;
 
-    const prevPlateGeo = new THREE.PlaneGeometry(0.78, 0.42);
-    const prevPlateMat = new THREE.MeshBasicMaterial({
-      map: prevTex,
-      transparent: true,
-      side: THREE.DoubleSide
-    });
-    const prevPlate = new THREE.Mesh(prevPlateGeo, prevPlateMat);
-    // Positionnee sur la face transversale arriere (au niveau de la jonction d'attelage)
-    prevPlate.rotation.y = Math.PI / 2 - 0.22;
-    prevPlate.position.set(1.185, 0.62, 0.12);
-    this.platesGroup.add(prevPlate);
+      const prevPlateGeo = new THREE.PlaneGeometry(0.78, 0.42);
+      const prevPlateMat = new THREE.MeshBasicMaterial({
+        map: prevTex,
+        transparent: true,
+        side: THREE.DoubleSide
+      });
+      const prevPlate = new THREE.Mesh(prevPlateGeo, prevPlateMat);
+      // Parfaitement droite et orthogonale : alignee sur la face arriere du wagon
+      prevPlate.rotation.set(0, Math.PI / 2, 0);
+      prevPlate.position.set(1.185, 0.62, 0);
+      this.platesGroup.add(prevPlate);
+    }
 
     this.add(this.platesGroup);
   }
@@ -676,7 +680,7 @@ export class WagonMesh extends THREE.Group {
       this.badges.center.texture.needsUpdate = true;
     }
 
-    // 2. ETIQUETTE PREVIOUS HASH (Sur la face transversale/arriere, a la jonction de l'attelage)
+    // 2. ETIQUETTE PREVIOUS HASH (Sur la face transversale arriere, a la jonction de l'attelage)
     if (this.badges.prev.canvas) {
       const c = this.badges.prev.canvas;
       const ctx = c.getContext('2d');
@@ -702,25 +706,48 @@ export class WagonMesh extends THREE.Group {
 
       ctx.fillStyle = '#94a3b8';
       ctx.font = '18px monospace';
-      ctx.fillText(this.block.index === 0 ? '(Origine Genesis)' : '(Sceau wagon avant)', 20, 146);
+      ctx.fillText('(Sceau wagon avant)', 20, 146);
 
       this.badges.prev.texture.needsUpdate = true;
     }
 
-    // 3. Cadran du NONCE
+    // 3. Cadran circulaire imprime DIRECTEMENT sur la molette marron
     if (this.badges.nonce.canvas) {
       const c = this.badges.nonce.canvas;
       const ctx = c.getContext('2d');
-      ctx.fillStyle = '#050c18';
-      ctx.fillRect(0, 0, c.width, c.height);
+      ctx.clearRect(0, 0, c.width, c.height);
 
-      ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 5;
-      ctx.strokeRect(2, 2, c.width - 4, c.height - 4);
+      // Fond circulaire de la molette marron
+      ctx.beginPath();
+      ctx.arc(128, 128, 122, 0, Math.PI * 2);
+      ctx.fillStyle = '#451a03'; // Brun chaud metallique
+      ctx.fill();
 
-      ctx.fillStyle = '#f59e0b';
-      ctx.font = 'bold 30px monospace';
-      ctx.fillText(`NONCE: ${this.block.nonce}`, 18, 58);
+      // Bordure doree industrielle
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 14;
+      ctx.stroke();
+
+      // Crans mecaniques autour du bord
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
+        const x1 = 128 + Math.cos(a) * 110;
+        const y1 = 128 + Math.sin(a) * 110;
+        const x2 = 128 + Math.cos(a) * 96;
+        const y2 = 128 + Math.sin(a) * 96;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      }
+
+      // Nombre du Nonce au centre de la molette (net et sans doublons)
+      ctx.fillStyle = '#fef08a';
+      ctx.font = 'bold 78px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(this.block.nonce), 128, 128);
 
       this.badges.nonce.texture.needsUpdate = true;
     }
@@ -745,11 +772,11 @@ export class WagonMesh extends THREE.Group {
       // 1. Les marchandises / transactions au centre
       transactions: new THREE.Vector3(0, 0.55, 0),
       // 2. La molette du Nonce sur le flanc
-      nonce: new THREE.Vector3(0, 0.2, 0.68),
+      nonce: new THREE.Vector3(0, 0.2, 0.71),
       // 3. Le Hash actuel sur l'etiquette centrale
       hash: new THREE.Vector3(0, 0.62, 0.61),
       // 4. L'attelage avant et plaque previousHash sur la face transversale
-      previousHash: new THREE.Vector3(1.185, 0.62, 0.12)
+      previousHash: new THREE.Vector3(1.185, 0.62, 0)
     };
   }
 
