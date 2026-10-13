@@ -1,26 +1,29 @@
 import * as THREE from 'three';
 import { CameraController } from './cameraController.js';
+import { TrainConvoy, WAGON_SPACING } from './train.js';
 
 /**
- * Visualisation pedagogique de la blockchain - Convoi Ferroviaire
- * Pôle Alban Chabalier : UX/UI (HUD Overlay), Controleur camera, Notions 1 a 3
+ * Visualisation pedagogique de la blockchain - Le Convoi Ferroviaire
+ * Integration binome :
+ * - Alban Chabalier : UX/UI (HUD Overlay), Controleur camera, Scenarisation des 7 notions
+ * - Arthur Morin : Architecture Three.js, Modelisation procedurale des wagons, Logique de chaine
  */
 
 // ============================================================================
-// 1. Scene, Canvas et Moteur de Rendu
+// 1. Scene, Canvas et Moteur de Rendu Three.js
 // ============================================================================
 const canvas = document.querySelector('#webgl');
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0b0f19);
-scene.fog = new THREE.FogExp2(0x0b0f19, 0.025);
+scene.background = new THREE.Color(0x070b14);
+scene.fog = new THREE.FogExp2(0x070b14, 0.018);
 
 const sizes = {
   width: window.innerWidth,
   height: window.innerHeight
 };
 
-const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 0.1, 100);
-camera.position.set(5.5, 3.5, 6.5);
+const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 0.1, 1000);
+camera.position.set(4.5, 3.2, 7.5);
 scene.add(camera);
 
 const renderer = new THREE.WebGLRenderer({
@@ -30,29 +33,54 @@ const renderer = new THREE.WebGLRenderer({
 });
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
 
 // ============================================================================
-// 2. Eclairage de la scene
+// 2. Eclairage cinematique
 // ============================================================================
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(ambientLight);
 
-const keyLight = new THREE.DirectionalLight(0x38bdf8, 2.2);
-keyLight.position.set(6, 10, 8);
+const keyLight = new THREE.DirectionalLight(0x7dd3fc, 2.0);
+keyLight.position.set(12, 16, 10);
 scene.add(keyLight);
 
-const fillLight = new THREE.DirectionalLight(0xf59e0b, 0.8);
-fillLight.position.set(-8, -2, -6);
+const rimLight = new THREE.DirectionalLight(0xf59e0b, 0.7);
+rimLight.position.set(-12, -4, -10);
+scene.add(rimLight);
+
+const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.9);
+fillLight.position.set(0, 8, -8);
 scene.add(fillLight);
 
 // ============================================================================
-// 3. Decor ferroviaire (Rails et traverses)
+// 3. Decor ferroviaire (Rails metalliques et traverses)
 // ============================================================================
-function createTracks() {
-  const tracksGroup = new THREE.Group();
+function setupEnvironment() {
+  const envGroup = new THREE.Group();
 
-  // Rails metalliques le long de l'axe X
-  const railGeometry = new THREE.BoxGeometry(32, 0.08, 0.08);
+  // Grille au sol industrielle
+  const gridHelper = new THREE.GridHelper(90, 90, 0x1e293b, 0x0f172a);
+  gridHelper.position.y = -0.5;
+  envGroup.add(gridHelper);
+
+  // Plan de sol sombre
+  const groundGeometry = new THREE.PlaneGeometry(90, 90);
+  const groundMaterial = new THREE.MeshStandardMaterial({
+    color: 0x050811,
+    roughness: 0.95,
+    metalness: 0.1
+  });
+  const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+  groundMesh.rotation.x = -Math.PI / 2;
+  groundMesh.position.y = -0.52;
+  envGroup.add(groundMesh);
+
+  // Rails longitudinaux le long de l'axe X (espacement de 1.32 adapte aux roues des wagons)
+  const railLength = 90;
+  const railDistance = 1.32;
+  const railGeometry = new THREE.BoxGeometry(railLength, 0.12, 0.08);
   const railMaterial = new THREE.MeshStandardMaterial({
     color: 0x94a3b8,
     metalness: 0.9,
@@ -60,347 +88,162 @@ function createTracks() {
   });
 
   const railLeft = new THREE.Mesh(railGeometry, railMaterial);
-  railLeft.position.set(4, -0.62, 0.7);
-  tracksGroup.add(railLeft);
+  railLeft.position.set(-12, -0.32, -railDistance / 2);
+  envGroup.add(railLeft);
 
   const railRight = new THREE.Mesh(railGeometry, railMaterial);
-  railRight.position.set(4, -0.62, -0.7);
-  tracksGroup.add(railRight);
+  railRight.position.set(-12, -0.32, railDistance / 2);
+  envGroup.add(railRight);
 
-  // Traverses de chemin de fer regulieres
-  const sleeperGeometry = new THREE.BoxGeometry(0.35, 0.08, 1.9);
+  // Traverses de voie ferree regulieres
+  const sleeperCount = 80;
+  const sleeperSpacing = 1.1;
+  const sleeperGeometry = new THREE.BoxGeometry(0.3, 0.08, 1.9);
   const sleeperMaterial = new THREE.MeshStandardMaterial({
-    color: 0x1e293b,
-    metalness: 0.2,
-    roughness: 0.8
+    color: 0x1f2937,
+    roughness: 0.85,
+    metalness: 0.2
   });
 
-  for (let x = -10; x <= 18; x += 0.8) {
+  const startX = -12 - (sleeperCount * sleeperSpacing) / 2;
+  for (let i = 0; i < sleeperCount; i++) {
     const sleeper = new THREE.Mesh(sleeperGeometry, sleeperMaterial);
-    sleeper.position.set(x, -0.68, 0);
-    tracksGroup.add(sleeper);
+    sleeper.position.set(startX + i * sleeperSpacing, -0.42, 0);
+    envGroup.add(sleeper);
   }
 
-  // Grille de sol subtile
-  const gridHelper = new THREE.GridHelper(36, 36, 0x1e293b, 0x0f172a);
-  gridHelper.position.y = -0.72;
-  tracksGroup.add(gridHelper);
-
-  scene.add(tracksGroup);
+  scene.add(envGroup);
 }
-createTracks();
+setupEnvironment();
 
 // ============================================================================
-// 4. Modele et construction des Wagons du Convoi
+// 4. Initialisation du Convoi Ferroviaire (TrainConvoy)
 // ============================================================================
-const initialBlocksData = [
-  {
-    index: 0,
-    label: 'Bloc Genesis',
-    data: 'Genese du convoi ferroviaire. Emission initiale de 50 jetons.',
-    previousHash: '0000000000000000',
-    hash: '0000a89f41b2c3d4',
-    nonce: 1042,
-    isValid: true
-  },
-  {
-    index: 1,
-    label: 'Wagon #1',
-    data: 'Alice -> Bob : 2.5 BTC\nFrais de convoi : 0.001 BTC',
-    previousHash: '0000a89f41b2c3d4',
-    hash: '0000c14b88f921ea',
-    nonce: 4912,
-    isValid: true
-  },
-  {
-    index: 2,
-    label: 'Wagon #2',
-    data: 'Bob -> Charlie : 1.0 BTC\nDavid -> Eva : 0.4 BTC',
-    previousHash: '0000c14b88f921ea',
-    hash: '0000f28e57ad1942',
-    nonce: 7301,
-    isValid: true
-  },
-  {
-    index: 3,
-    label: 'Wagon #3',
-    data: 'Charlie -> David : 0.8 BTC\nEva -> Alice : 0.2 BTC',
-    previousHash: '0000f28e57ad1942',
-    hash: '000094bc72de0051',
-    nonce: 3120,
-    isValid: true
-  }
-];
-
-const wagonSpacing = 4.2;
-const wagonGroups = [];
-const couplers = [];
-
-function buildWagonMesh(blockData, posX) {
-  const group = new THREE.Group();
-  group.position.x = posX;
-  group.userData.blockData = blockData;
-
-  // 1. Corps principal du wagon (chassis blindé)
-  const bodyGeometry = new THREE.BoxGeometry(2.4, 1.3, 1.3);
-  const bodyMaterial = new THREE.MeshStandardMaterial({
-    color: 0x1e293b,
-    metalness: 0.7,
-    roughness: 0.35
-  });
-  const bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
-  bodyMesh.position.y = 0;
-  group.add(bodyMesh);
-
-  // Aretes neon du wagon
-  const edgesGeometry = new THREE.EdgesGeometry(bodyGeometry);
-  const edgesMaterial = new THREE.LineBasicMaterial({ color: 0x38bdf8 });
-  const edgesMesh = new THREE.LineSegments(edgesGeometry, edgesMaterial);
-  group.add(edgesMesh);
-
-  // 2. Conteneur central transparent (marchandises / transactions visibles)
-  const cargoGeometry = new THREE.BoxGeometry(1.6, 0.7, 1.1);
-  const cargoMaterial = new THREE.MeshStandardMaterial({
-    color: 0x0284c7,
-    metalness: 0.3,
-    roughness: 0.2,
-    transparent: true,
-    opacity: 0.65
-  });
-  const cargoMesh = new THREE.Mesh(cargoGeometry, cargoMaterial);
-  cargoMesh.position.y = 0.1;
-  group.add(cargoMesh);
-
-  // 3. Plaque avant gravée (previousHash)
-  const frontPlateGeom = new THREE.BoxGeometry(0.1, 0.5, 0.8);
-  const frontPlateMat = new THREE.MeshStandardMaterial({
-    color: 0x334155,
-    metalness: 0.8,
-    roughness: 0.3
-  });
-  const frontPlate = new THREE.Mesh(frontPlateGeom, frontPlateMat);
-  frontPlate.position.set(-1.22, 0, 0);
-  group.add(frontPlate);
-
-  // 4. Plaque arriere gravée (hash propre)
-  const rearPlate = new THREE.Mesh(frontPlateGeom, frontPlateMat);
-  rearPlate.position.set(1.22, 0, 0);
-  group.add(rearPlate);
-
-  // 5. Cadran a molette du Nonce sur le flanc
-  const nonceGeom = new THREE.CylinderGeometry(0.2, 0.2, 0.1, 16);
-  const nonceMat = new THREE.MeshStandardMaterial({
-    color: 0xf59e0b,
-    metalness: 0.9,
-    roughness: 0.2
-  });
-  const nonceDial = new THREE.Mesh(nonceGeom, nonceMat);
-  nonceDial.rotation.x = Math.PI / 2;
-  nonceDial.position.set(0, -0.2, 0.68);
-  group.add(nonceDial);
-
-  // 6. Roues et essieux
-  const wheelGeom = new THREE.CylinderGeometry(0.25, 0.25, 0.15, 16);
-  const wheelMat = new THREE.MeshStandardMaterial({
-    color: 0x475569,
-    metalness: 0.8,
-    roughness: 0.4
-  });
-
-  const wheelCoords = [
-    [-0.75, -0.65, 0.7],
-    [0.75, -0.65, 0.7],
-    [-0.75, -0.65, -0.7],
-    [0.75, -0.65, -0.7]
-  ];
-
-  wheelCoords.forEach(([wx, wy, wz]) => {
-    const wheel = new THREE.Mesh(wheelGeom, wheelMat);
-    wheel.rotation.x = Math.PI / 2;
-    wheel.position.set(wx, wy, wz);
-    group.add(wheel);
-  });
-
-  // Reference interne pour les mises a jour visuelles
-  group.userData.elements = {
-    bodyMesh,
-    cargoMesh,
-    edgesMesh
-  };
-
-  return group;
-}
-
-// Construction des 4 wagons initiaux
-initialBlocksData.forEach((data, i) => {
-  const posX = i * wagonSpacing;
-  const wagon = buildWagonMesh(data, posX);
-  scene.add(wagon);
-  wagonGroups.push(wagon);
+const trainConvoy = new TrainConvoy(scene, {
+  spacing: WAGON_SPACING,
+  onStateChange: handleChainStateChange
 });
 
-// Construction des attelages magnetiques entre wagons consecutifs
-function buildCouplers() {
-  for (let i = 0; i < wagonGroups.length - 1; i++) {
-    const couplerGroup = new THREE.Group();
-    const startX = i * wagonSpacing + 1.25;
-    const endX = (i + 1) * wagonSpacing - 1.25;
-    const length = endX - startX;
-    const midX = (startX + endX) / 2;
-
-    // Faisceau d'energie magnetique cylindrique
-    const beamGeometry = new THREE.CylinderGeometry(0.12, 0.12, length, 16);
-    const beamMaterial = new THREE.MeshStandardMaterial({
-      color: 0x10b981,
-      emissive: 0x059669,
-      emissiveIntensity: 0.8,
-      metalness: 0.5,
-      roughness: 0.2,
-      transparent: true,
-      opacity: 0.9
-    });
-    const beamMesh = new THREE.Mesh(beamGeometry, beamMaterial);
-    beamMesh.rotation.z = Math.PI / 2;
-    couplerGroup.add(beamMesh);
-
-    // Halo lumineux directionnel
-    const light = new THREE.PointLight(0x10b981, 1.2, 3);
-    couplerGroup.add(light);
-
-    couplerGroup.position.set(midX, 0, 0);
-    scene.add(couplerGroup);
-
-    couplers.push({
-      group: couplerGroup,
-      mesh: beamMesh,
-      light,
-      sourceIndex: i,
-      targetIndex: i + 1
-    });
+// Initialisation avec 3 wagons de transactions s'ajoutant au Genesis (#0)
+trainConvoy.init([
+  {
+    emetteur: 'Arthur',
+    destinataire: 'Alban',
+    montant: 15,
+    unite: 'MMI-Coin'
+  },
+  {
+    emetteur: 'Alban',
+    destinataire: 'Equipe-R507',
+    montant: 30,
+    unite: 'MMI-Coin'
+  },
+  {
+    emetteur: 'Quai-Central',
+    destinataire: 'Station-Nord',
+    montant: 8,
+    unite: 'MMI-Coin'
   }
-}
-buildCouplers();
+]);
 
 // ============================================================================
-// 5. Mise a jour visuelle de la chaine (Attelages et Falsification)
+// 5. Controleur de Camera et Interactions
 // ============================================================================
-function updateChainVisualState() {
-  let hasCorruption = false;
+let inspectedBlockIndex = 0;
 
-  wagonGroups.forEach((wagon, i) => {
-    const data = wagon.userData.blockData;
-    const elements = wagon.userData.elements;
-
-    if (!data.isValid || hasCorruption) {
-      hasCorruption = true;
-      // Wagon corrompu / invalide
-      elements.cargoMesh.material.color.setHex(0xef4444);
-      elements.edgesMesh.material.color.setHex(0xef4444);
-    } else {
-      // Wagon conforme
-      elements.cargoMesh.material.color.setHex(0x0284c7);
-      elements.edgesMesh.material.color.setHex(0x38bdf8);
-    }
-  });
-
-  // Mise a jour des faisceaux magnetiques
-  let breakSubsequent = false;
-  couplers.forEach((coupler) => {
-    const sourceWagon = wagonGroups[coupler.sourceIndex];
-    if (!sourceWagon.userData.blockData.isValid || breakSubsequent) {
-      breakSubsequent = true;
-      coupler.mesh.material.color.setHex(0xef4444);
-      coupler.mesh.material.emissive.setHex(0xb91c1c);
-      coupler.mesh.scale.set(0.6, 1, 0.6);
-      coupler.light.color.setHex(0xef4444);
-    } else {
-      coupler.mesh.material.color.setHex(0x10b981);
-      coupler.mesh.material.emissive.setHex(0x059669);
-      coupler.mesh.scale.set(1, 1, 1);
-      coupler.light.color.setHex(0x10b981);
-    }
-  });
-}
+const cameraController = new CameraController(camera, renderer.domElement, (blockData) => {
+  openInspectionSidebar(blockData);
+});
+cameraController.setInteractiveObjects(trainConvoy.getWagonMeshes());
 
 // ============================================================================
-// 6. Navigation cinematographique et Waypoints des 7 Notions
+// 6. Navigation Pedagogique des 7 Notions
 // ============================================================================
 const sequencesInfo = [
   {
     step: 1,
     title: "Sequence 1 : Structure d'un bloc",
-    desc: "Anatomie d'un wagon : compartiment de transactions, plaque de hash, connecteur previousHash et cadran du nonce.",
-    camPos: new THREE.Vector3(0, 1.8, 3.8),
-    camTarget: new THREE.Vector3(0, 0, 0),
+    desc: "Anatomie d'un wagon : coffre de transactions, plaque gravée SHA-256, connecteur previousHash et molette de Nonce.",
+    getCamPos: () => new THREE.Vector3(1.6, 2.0, 4.4),
+    getCamTarget: () => new THREE.Vector3(0, 0.4, 0),
     wagonIndex: 0
   },
   {
     step: 2,
     title: "Sequence 2 : Chainage cryptographique",
-    desc: "L'attelage magnetique relie le wagon precedent au suivant. Le hash du bloc N-1 est scelle dans l'entete du bloc N.",
-    camPos: new THREE.Vector3(2.1, 1.6, 3.4),
-    camTarget: new THREE.Vector3(2.1, 0, 0),
+    desc: "L'attelage magnetique scelle le wagon precedent au suivant. Chaque bloc integre l'empreinte du wagon qui le precede.",
+    getCamPos: () => new THREE.Vector3(-1.0, 1.8, 3.8),
+    getCamTarget: () => new THREE.Vector3(-1.9, 0.3, 0),
     wagonIndex: 1
   },
   {
     step: 3,
     title: "Sequence 3 : Immutabilite et falsification",
-    desc: "Modifiez les transactions dans le panneau : la rupture de l'attelage magnetique desolidarise instantanement les wagons suivants.",
-    camPos: new THREE.Vector3(4.8, 2.6, 5.2),
-    camTarget: new THREE.Vector3(4.2, 0, 0),
+    desc: "Modifiez les transactions dans le panneau lateral : la rupture de l'attelage magnetique invalide instantanement tous les wagons suivants.",
+    getCamPos: () => new THREE.Vector3(-2.2, 2.2, 4.8),
+    getCamTarget: () => new THREE.Vector3(-3.8, 0.4, 0),
     wagonIndex: 1
   },
   {
     step: 4,
     title: "Sequence 4 : Reseau et decentralisation",
-    desc: "Vue elargie du convoi : plusieurs voies paralleles hebergent la meme chaine sans autorite centrale.",
-    camPos: new THREE.Vector3(6.3, 4.5, 9.5),
-    camTarget: new THREE.Vector3(6.3, 0, 0),
+    desc: "Vue elargie du convoi : chaque participant au reseau conserve une copie conforme de l'integralite du convoi ferroviaire.",
+    getCamPos: () => {
+      const center = trainConvoy.getTrainCenter();
+      return new THREE.Vector3(center.x, 6.0, 13.5);
+    },
+    getCamTarget: () => trainConvoy.getTrainCenter(),
     wagonIndex: 2
   },
   {
     step: 5,
     title: "Sequence 5 : Validation et minage (PoW)",
-    desc: "Resolution mecanique du Nonce : la machinerie tourne pour trouver une empreinte valide sous la difficulte requise.",
-    camPos: new THREE.Vector3(12.5, 2.4, 4.2),
-    camTarget: new THREE.Vector3(12.6, 0, 0),
+    desc: "Resolution mecanique du Nonce : les machines scellent le bloc pour que son hash respecte la regle de difficulte.",
+    getCamPos: () => {
+      const lastIndex = trainConvoy.wagonMeshes.length - 1;
+      const pos = trainConvoy.getWagonPosition(lastIndex);
+      return new THREE.Vector3(pos.x + 2.0, 2.2, 4.2);
+    },
+    getCamTarget: () => {
+      const lastIndex = trainConvoy.wagonMeshes.length - 1;
+      return trainConvoy.getWagonPosition(lastIndex);
+    },
     wagonIndex: 3
   },
   {
     step: 6,
-    title: "Sequence 6 : Comparaison de consensus (PoW vs PoS)",
-    desc: "Confrontation entre effort thermique mecanique (PoW) et caution d'aiguillage sequestree (PoS).",
-    camPos: new THREE.Vector3(6.3, 5.0, 11.0),
-    camTarget: new THREE.Vector3(6.3, 0, 0),
-    wagonIndex: 2
+    title: "Sequence 6 : Comparaison des consensus (PoW vs PoS)",
+    desc: "Confrontation energetique : la preuve de travail consomme de la puissance de calcul, la preuve d'enjeu sequestre des garanties.",
+    getCamPos: () => {
+      const center = trainConvoy.getTrainCenter();
+      return new THREE.Vector3(center.x + 2.0, 7.5, 15.0);
+    },
+    getCamTarget: () => trainConvoy.getTrainCenter(),
+    wagonIndex: 1
   },
   {
     step: 7,
-    title: "Sequence 7 : Cycle de vie et double depense",
-    desc: "Trajectoire d'une transaction du quai au wagon, et rejet univoque de toute tentative de double depense.",
-    camPos: new THREE.Vector3(6.3, 6.5, 13.5),
-    camTarget: new THREE.Vector3(6.3, 0, 0),
+    title: "Sequence 7 : Cycle de vie et illustration d'attaque",
+    desc: "Trajectoire d'une transaction du quai d'embarquement jusqu'a son scellement definitif et rejet des tentatives de double depense.",
+    getCamPos: () => new THREE.Vector3(3.5, 3.5, 8.5),
+    getCamTarget: () => trainConvoy.getTrainCenter(),
     wagonIndex: 0
   }
 ];
 
 let currentStep = 1;
-let selectedBlockData = null;
-
-// Initialisation du controleur de camera
-const cameraController = new CameraController(camera, renderer.domElement, (blockData) => {
-  openInspectionSidebar(blockData);
-});
-cameraController.setInteractiveObjects(wagonGroups);
 
 // ============================================================================
-// 7. Gestion de l'interface HUD Overlay
+// 7. Interface Utilisateur HUD 2D et Sidebar d'Inspection
 // ============================================================================
 const sequenceTitleEl = document.getElementById('sequence-title');
 const sequenceDescEl = document.getElementById('sequence-desc');
 const stepButtons = document.querySelectorAll('.step-btn');
 const btnPrev = document.getElementById('btn-prev');
 const btnNext = document.getElementById('btn-next');
+
+const chainStatusPill = document.getElementById('chain-status-pill');
+const chainStatusText = document.getElementById('chain-status-text');
 
 // Elements de la Sidebar
 const sidebarEl = document.getElementById('inspection-sidebar');
@@ -416,15 +259,20 @@ const fieldStatusText = document.getElementById('field-status-text');
 const btnRecalculate = document.getElementById('btn-recalculate');
 const btnResetBlock = document.getElementById('btn-reset-block');
 
+// Boutons d'actions rapides
+const btnAddBlock = document.getElementById('btn-add-block');
+const btnCorruptBlock = document.getElementById('btn-corrupt-block');
+const btnRestoreChain = document.getElementById('btn-restore-chain');
+
 function setSequence(stepNumber) {
   currentStep = Math.max(1, Math.min(stepNumber, 7));
   const seq = sequencesInfo[currentStep - 1];
 
-  // Mise a jour textuelle
+  // Mise a jour textuelle du HUD
   sequenceTitleEl.textContent = seq.title;
   sequenceDescEl.textContent = seq.desc;
 
-  // Mise a jour des boutons
+  // Mise a jour de la barre d'etapes
   stepButtons.forEach((btn) => {
     btn.classList.toggle('active', parseInt(btn.dataset.step) === currentStep);
   });
@@ -432,16 +280,20 @@ function setSequence(stepNumber) {
   btnPrev.disabled = currentStep === 1;
   btnNext.disabled = currentStep === 7;
 
-  // Deplacement fluide de la camera vers le waypoint de la sequence
-  cameraController.moveTo(seq.camPos, seq.camTarget, 1.2);
+  // Deplacement de la camera vers le point de vue scenarise
+  const camPos = seq.getCamPos();
+  const camTarget = seq.getCamTarget();
+  cameraController.moveTo(camPos, camTarget, 1.2);
 
-  // Ouvre automatiquement le panneau d'inspection sur le wagon ciblé
-  if (seq.wagonIndex !== null && wagonGroups[seq.wagonIndex]) {
-    openInspectionSidebar(wagonGroups[seq.wagonIndex].userData.blockData);
+  // Ouvre le panneau sur le wagon associe si pertinent
+  if (seq.wagonIndex !== null) {
+    const targetBlock = trainConvoy.getBlock(seq.wagonIndex);
+    if (targetBlock) {
+      openInspectionSidebar(targetBlock);
+    }
   }
 }
 
-// Ecoute des clics sur la barre de navigation
 stepButtons.forEach((btn) => {
   btn.addEventListener('click', () => {
     setSequence(parseInt(btn.dataset.step));
@@ -457,16 +309,24 @@ btnNext.addEventListener('click', () => {
 });
 
 // Ouverture et remplissage de la Sidebar
-function openInspectionSidebar(blockData) {
-  selectedBlockData = blockData;
-  sidebarTitleEl.textContent = `Wagon #${blockData.index} (${blockData.label})`;
-  fieldIndex.value = blockData.index;
-  fieldData.value = blockData.data;
-  fieldPrevHash.value = blockData.previousHash;
-  fieldHash.value = blockData.hash;
-  fieldNonce.value = blockData.nonce;
+function openInspectionSidebar(block) {
+  inspectedBlockIndex = block.index;
 
-  updateSidebarStatus(blockData.isValid);
+  const wagonLabel = block.index === 0 ? 'Bloc Genesis' : `Bloc #${block.index}`;
+  sidebarTitleEl.textContent = `Wagon #${block.index} (${wagonLabel})`;
+
+  fieldIndex.value = block.index;
+  fieldData.value = typeof block.data === 'string'
+    ? block.data
+    : JSON.stringify(block.data, null, 2);
+  fieldPrevHash.value = block.previousHash || '0000000000000000';
+  fieldHash.value = block.hash;
+  fieldNonce.value = block.nonce;
+
+  const validityList = trainConvoy.blockchain.getBlockValidityList();
+  const isValid = validityList[block.index] ?? false;
+  updateSidebarStatus(isValid);
+
   sidebarEl.classList.add('open');
   sidebarEl.setAttribute('aria-hidden', 'false');
 }
@@ -486,66 +346,121 @@ btnCloseSidebar.addEventListener('click', () => {
   sidebarEl.setAttribute('aria-hidden', 'true');
 });
 
-// Simulation de falsification lors de l'edition du champ de donnees
+// ============================================================================
+// 8. Falsification en direct via le champ de donnees
+// ============================================================================
 fieldData.addEventListener('input', () => {
-  if (!selectedBlockData) return;
+  const block = trainConvoy.getBlock(inspectedBlockIndex);
+  if (!block) return;
 
-  const originalText = initialBlocksData[selectedBlockData.index].data;
-  const isChanged = fieldData.value !== originalText;
-
-  if (isChanged) {
-    // Calcul d'un hash corrompu non conforme
-    selectedBlockData.isValid = false;
-    selectedBlockData.data = fieldData.value;
-    selectedBlockData.hash = 'e8b49a1f' + Math.floor(Math.random() * 89999999 + 10000000);
-    fieldHash.value = selectedBlockData.hash;
-    updateSidebarStatus(false);
-  } else {
-    selectedBlockData.isValid = true;
-    selectedBlockData.data = originalText;
-    selectedBlockData.hash = initialBlocksData[selectedBlockData.index].hash;
-    fieldHash.value = selectedBlockData.hash;
-    updateSidebarStatus(true);
+  let parsedData = fieldData.value;
+  try {
+    parsedData = JSON.parse(fieldData.value);
+  } catch {
+    parsedData = fieldData.value;
   }
 
-  updateChainVisualState();
+  // Falsifie deliberement les donnees sans recalculer le hash
+  trainConvoy.corruptBlock(inspectedBlockIndex, parsedData);
+
+  const validityList = trainConvoy.blockchain.getBlockValidityList();
+  const isValid = validityList[inspectedBlockIndex] ?? false;
+  updateSidebarStatus(isValid);
 });
 
-// Bouton Valider / recalculer (minage / re-scellement)
+// Bouton Valider / recalculer (minage / re-scellement de la chaine)
 btnRecalculate.addEventListener('click', () => {
-  if (!selectedBlockData) return;
+  const result = trainConvoy.recalculateAndMineBlock(inspectedBlockIndex, 1);
+  if (!result) return;
 
-  // Re-calcule un hash et un nonce valides (debutant par 0000)
-  selectedBlockData.nonce = Math.floor(Math.random() * 8000 + 1000);
-  selectedBlockData.hash = '0000' + Math.random().toString(16).substring(2, 14);
-  selectedBlockData.isValid = true;
-
-  fieldNonce.value = selectedBlockData.nonce;
-  fieldHash.value = selectedBlockData.hash;
+  const updatedBlock = result.block;
+  fieldHash.value = updatedBlock.hash;
+  fieldNonce.value = updatedBlock.nonce;
   updateSidebarStatus(true);
-  updateChainVisualState();
 });
 
 // Bouton Reinitialiser le wagon
 btnResetBlock.addEventListener('click', () => {
-  if (!selectedBlockData) return;
-
-  const initial = initialBlocksData[selectedBlockData.index];
-  selectedBlockData.data = initial.data;
-  selectedBlockData.hash = initial.hash;
-  selectedBlockData.nonce = initial.nonce;
-  selectedBlockData.isValid = true;
-
-  fieldData.value = initial.data;
-  fieldHash.value = initial.hash;
-  fieldNonce.value = initial.nonce;
-
-  updateSidebarStatus(true);
-  updateChainVisualState();
+  trainConvoy.resetBlock(inspectedBlockIndex);
+  const block = trainConvoy.getBlock(inspectedBlockIndex);
+  if (block) {
+    openInspectionSidebar(block);
+  }
 });
 
 // ============================================================================
-// 8. Indicateur de performances FPS
+// 9. Actions Rapides du HUD
+// ============================================================================
+if (btnAddBlock) {
+  btnAddBlock.addEventListener('click', () => {
+    const newBlock = trainConvoy.addBlock();
+    cameraController.setInteractiveObjects(trainConvoy.getWagonMeshes());
+    openInspectionSidebar(newBlock);
+
+    const wagonPos = trainConvoy.getWagonPosition(newBlock.index);
+    cameraController.moveTo(
+      new THREE.Vector3(wagonPos.x + 2.2, 2.2, 4.4),
+      new THREE.Vector3(wagonPos.x, 0.4, 0),
+      1.0
+    );
+  });
+}
+
+if (btnCorruptBlock) {
+  btnCorruptBlock.addEventListener('click', () => {
+    const targetIndex = 1;
+    trainConvoy.corruptBlock(targetIndex, {
+      emetteur: 'Attaquant',
+      destinataire: 'Compte-Pirate',
+      montant: 9999,
+      unite: 'MMI-Coin'
+    });
+
+    const block = trainConvoy.getBlock(targetIndex);
+    if (block) {
+      openInspectionSidebar(block);
+      const wagonPos = trainConvoy.getWagonPosition(targetIndex);
+      cameraController.moveTo(
+        new THREE.Vector3(wagonPos.x + 2.2, 2.2, 4.4),
+        new THREE.Vector3(wagonPos.x, 0.4, 0),
+        1.0
+      );
+    }
+  });
+}
+
+if (btnRestoreChain) {
+  btnRestoreChain.addEventListener('click', () => {
+    trainConvoy.restoreEntireTrain();
+    const block = trainConvoy.getBlock(inspectedBlockIndex);
+    if (block) {
+      openInspectionSidebar(block);
+    }
+  });
+}
+
+// Mise a jour visuelle des indicateurs du HUD lors des mutations de chaine
+function handleChainStateChange(summary) {
+  if (chainStatusPill && chainStatusText) {
+    if (summary.isValid) {
+      chainStatusPill.className = 'stat-pill status-ok';
+      chainStatusText.textContent = `Chaine valide (${summary.totalWagons} wagons)`;
+    } else {
+      chainStatusPill.className = 'stat-pill status-error';
+      chainStatusText.textContent = `Alerte : Rupture au wagon #${summary.firstInvalidIndex}`;
+    }
+  }
+
+  // Si le panneau est ouvert, rafraichit l'indicateur d'etat du bloc courant
+  const validityList = summary.validityList;
+  if (sidebarEl.classList.contains('open') && validityList) {
+    const currentIsValid = validityList[inspectedBlockIndex] ?? false;
+    updateSidebarStatus(currentIsValid);
+  }
+}
+
+// ============================================================================
+// 10. Indicateur de performances FPS
 // ============================================================================
 const fpsCounterEl = document.getElementById('fps-counter');
 let frameCount = 0;
@@ -556,14 +471,16 @@ function updateFps() {
   const now = performance.now();
   if (now - lastFpsTime >= 500) {
     const fps = Math.round((frameCount * 1000) / (now - lastFpsTime));
-    fpsCounterEl.textContent = `${fps} FPS`;
+    if (fpsCounterEl) {
+      fpsCounterEl.textContent = `${fps} FPS`;
+    }
     frameCount = 0;
     lastFpsTime = now;
   }
 }
 
 // ============================================================================
-// 9. Gestion du redimensionnement de la fenetre
+// 11. Redimensionnement de la fenetre
 // ============================================================================
 window.addEventListener('resize', () => {
   sizes.width = window.innerWidth;
@@ -577,7 +494,7 @@ window.addEventListener('resize', () => {
 });
 
 // ============================================================================
-// 10. Boucle d'animation principale (requestAnimationFrame)
+// 12. Boucle de rendu (requestAnimationFrame)
 // ============================================================================
 const clock = new THREE.Clock();
 
@@ -585,24 +502,79 @@ function animate() {
   const delta = clock.getDelta();
   const elapsedTime = clock.getElapsedTime();
 
-  // Mise a jour du controleur camera cinematographique
+  // Mise a jour de la camera
   cameraController.update(delta);
 
-  // Animation elastique legere et oscillation des wagons pour donner vie au train
-  wagonGroups.forEach((wagon, i) => {
-    const offset = i * 0.4;
-    wagon.position.y = Math.sin(elapsedTime * 1.5 + offset) * 0.035;
-  });
+  // Suspension et legere oscillation des wagons
+  trainConvoy.animateSuspension(elapsedTime);
 
-  // Rendu de la scene Three.js
+  // Rendu WebGL
   renderer.render(scene, camera);
 
-  // Calcul des FPS
+  // Calcul du taux de rafraichissement
   updateFps();
 
   requestAnimationFrame(animate);
 }
 
-// Initialisation au chargement sur la premiere sequence
+// ============================================================================
+// 13. Exposition globale window.blockchain pour tests et verification
+// ============================================================================
+window.blockchain = {
+  instance: trainConvoy.blockchain,
+  convoy: trainConvoy,
+
+  corruptBlock: (index = 1, newData = 'TRANSACTION_FALSIFIEE_9999_MMI') => {
+    trainConvoy.corruptBlock(index, newData);
+    const block = trainConvoy.getBlock(index);
+    if (block) openInspectionSidebar(block);
+  },
+
+  addBlock: (data) => {
+    const newBlock = trainConvoy.addBlock(data);
+    cameraController.setInteractiveObjects(trainConvoy.getWagonMeshes());
+    return newBlock;
+  },
+
+  restore: (index) => {
+    if (typeof index === 'number') {
+      trainConvoy.resetBlock(index);
+    } else {
+      trainConvoy.restoreEntireTrain();
+    }
+    const block = trainConvoy.getBlock(inspectedBlockIndex);
+    if (block) openInspectionSidebar(block);
+  },
+
+  recalculate: (index = 1) => {
+    trainConvoy.recalculateAndMineBlock(index, 1);
+    const block = trainConvoy.getBlock(index);
+    if (block) openInspectionSidebar(block);
+  },
+
+  isValid: () => trainConvoy.blockchain.isChainValid(),
+
+  inspect: () => {
+    const validityList = trainConvoy.blockchain.getBlockValidityList();
+    console.table(
+      trainConvoy.blockchain.chain.map((b, i) => ({
+        index: b.index,
+        valide: validityList[i],
+        hash: `${b.hash.substring(0, 12)}...`,
+        previousHash: `${b.previousHash.substring(0, 12)}...`,
+        data: typeof b.data === 'string' ? b.data : JSON.stringify(b.data)
+      }))
+    );
+  }
+};
+
+// Initialisation sur la premiere sequence et demarrage de la boucle
 setSequence(1);
 animate();
+
+console.log('[LE CONVOI FERROVIAIRE - BLOCKCHAIN 3D]');
+console.log('Commandes de test interactives :');
+console.log('- window.blockchain.corruptBlock(1) : falsifie le wagon 1');
+console.log('- window.blockchain.addBlock() : attelle un nouveau wagon');
+console.log('- window.blockchain.restore() : retablit la chaine');
+console.log('- window.blockchain.inspect() : affiche l etat de la blockchain');

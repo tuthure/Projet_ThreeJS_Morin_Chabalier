@@ -18,9 +18,9 @@ export class CameraController {
     this.controls = new OrbitControls(this.camera, this.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
-    this.controls.maxDistance = 25;
-    this.controls.minDistance = 2;
-    this.controls.maxPolarAngle = Math.PI / 2 + 0.05; // Evite de passer sous le sol
+    this.controls.maxDistance = 65;
+    this.controls.minDistance = 2.5;
+    this.controls.maxPolarAngle = Math.PI / 2 - 0.02; // Evite de passer sous le plan des rails
 
     // Etat d'interpolation cinematographique
     this.isTransitioning = false;

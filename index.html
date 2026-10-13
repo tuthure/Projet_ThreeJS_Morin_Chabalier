@@ -32,9 +32,20 @@
         </div>
 
         <div class="hud-stats">
-          <div class="stat-pill">
-            <span class="stat-dot"></span>
-            <span id="fps-counter">60 FPS</span>
+          <div class="stats-pills">
+            <div id="chain-status-pill" class="stat-pill status-ok">
+              <span class="stat-dot"></span>
+              <span id="chain-status-text">Chaine valide (4 wagons)</span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-dot fps-dot"></span>
+              <span id="fps-counter">60 FPS</span>
+            </div>
+          </div>
+          <div class="hud-quick-actions">
+            <button id="btn-add-block" class="btn btn-primary" title="Ajoute un nouveau bloc attele a la fin du train">Atteler un wagon</button>
+            <button id="btn-corrupt-block" class="btn btn-danger" title="Modifie les donnees du wagon 1 pour provoquer la rupture d'attelage">Falsifier wagon 1</button>
+            <button id="btn-restore-chain" class="btn btn-secondary" title="Retablit les donnees originales du convoi">Retablir convoi</button>
           </div>
           <div class="help-hint">Clic gauche pour inspecter un wagon | Orbite et zoom libres</div>
         </div>

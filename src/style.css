@@ -106,7 +106,13 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 6px;
+  gap: 8px;
+}
+
+.stats-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .stat-pill {
@@ -121,6 +127,13 @@ body {
   font-weight: 600;
   color: #cbd5e1;
   backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
+}
+
+.stat-pill.status-error {
+  background: rgba(69, 10, 10, 0.85);
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #fca5a5;
 }
 
 .stat-dot {
@@ -129,6 +142,49 @@ body {
   border-radius: 50%;
   background: #10b981;
   box-shadow: 0 0 6px #10b981;
+  transition: all 0.3s ease;
+}
+
+.stat-pill.status-error .stat-dot {
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+}
+
+.fps-dot {
+  background: #38bdf8;
+  box-shadow: 0 0 6px #38bdf8;
+}
+
+.hud-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.btn {
+  appearance: none;
+  border: 1px solid transparent;
+  padding: 6px 11px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.btn-danger {
+  background-color: #dc2626;
+  border-color: #f87171;
+  color: #ffffff;
+}
+
+.btn-danger:hover {
+  background-color: #b91c1c;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
 }
 
 .help-hint {
@@ -456,6 +512,14 @@ body {
     flex-direction: column;
     padding: 12px 16px;
     gap: 8px;
+  }
+
+  .hud-stats {
+    align-items: flex-start;
+  }
+
+  .hud-quick-actions {
+    flex-wrap: wrap;
   }
 
   .sequence-title {
