@@ -89,11 +89,11 @@ Note = _____
 
 | Nom / prénom | Contribution, apprentissages, usage de l'IA, difficulté pour la soutenance |
 |:---|:---|
-| Arthur Morin | Mise en place de Three.js, structure de la scène, modélisation des blocs en 3D. |
-| Alban Chabalier | Gestion de projet GitHub, interface 2D/HUD, logique des étapes et documentation. |
+| Arthur Morin | Architecture technique Three.js, rendu 3D (shaders, éclairage, matériaux des wagons), logique de manipulation de la chaîne et intégration Vite. |
+| Alban Chabalier | Gestion de projet, conception UX/UI, ergonomie des contrôles caméra, narration pédagogique et scénarisation des 7 notions. |
 
 | Les 3 actions prioritaires | Responsable | Échéance |
 |:---|:---|:---|
-| Mise en place du projet Vite avec Three.js | Arthur Morin | Semaine 2 |
-| Détail du scénario pas-à-pas pour les 7 étapes | Alban Chabalier | Semaine 2 |
-| Mise en place de la caméra et des premiers contrôles | Binôme | Semaine 2 |
+| Initialisation de la scène Three.js et premier wagon témoin | Arthur Morin | Semaine 2 |
+| Narration pédagogique détaillée reliant les 7 étapes au train | Alban Chabalier | Semaine 2 |
+| Mise en place des contrôles caméra et interface HUD | Binôme | Semaine 2 |

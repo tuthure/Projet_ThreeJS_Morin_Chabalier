@@ -1,346 +1,346 @@
-# BUT MMI 3e année - R507
+# Choix de modelisation - Visualisation pedagogique de la blockchain
 
-## Projet Three.js - Visualisation pédagogique de la blockchain
+Ce document constitue le livrable de cadrage et de justification des choix de modelisation pour le projet de visualisation pedagogique de la blockchain avec Three.js. Il est tenu a jour tout au long des jalons du projet.
 
-### MMI-R507-projet-blockchain-CHOIX-MODELISATION.md - livrable officiel
-
-Ce document détaillé est le livrable officiel consacré aux choix de modélisation. Il compte pour 25 % de la note. Il est complété au fur et à mesure du projet pour justifier les choix visuels et interactifs pour chaque notion obligatoire.
-
-## 1. Informations générales
+## 1. Informations generales
 
 | Champ | Contenu |
 |:---|:---|
-| Groupe | Morin, Alban Chabalier |
-| Membres et rôles | Arthur Morin (@tuthure) : développement 3D et modélisation Three.js<br>Alban Chabalier (@albanchab14) : logique, interface et gestion de projet |
-| Public cible | Utilisateur non initié (étudiants hors informatique ou grand public curieux) |
-| Lien vers la démo | https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/ |
+| Groupe | Arthur Morin, Alban Chabalier |
+| Membres et roles | Alban Chabalier (@achabalier14) : Gestion de projet, conception UX/UI, ergonomie des controles camera, narration pedagogique et scenarisation des 7 notions.<br>Arthur Morin (@tuthure) : Architecture technique Three.js, rendu 3D (shaders, eclairage, materiaux des wagons), logique de manipulation de la chaine et integration Vite. |
+| Public cible | Grand public non initie, lyceens et etudiants decouvrant les concepts de la blockchain. |
+| Lien vers la demo en ligne | https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/ |
 | Lien vers GitHub Projects | https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier/projects |
-| Version et date de mise à jour | v0.1 - 09/10/2026 |
+| Version et date | v0.1 - 09/10/2026 |
 
-## 2. Univers visuel et métaphore principale
+## 2. Univers visuel et metaphore principale
 
-### 2.1 Public cible et objectif
-L'utilisateur visé n'a pas de connaissances particulières en cryptographie ni en développement web. À la fin du parcours, il doit comprendre :
-- ce que contient un bloc et comment les blocs sont reliés entre eux ;
-- pourquoi modifier une ancienne donnée casse la chaîne et se voit immédiatement ;
-- comment plusieurs ordinateurs (nœuds) se mettent d'accord sans avoir besoin d'un serveur central.
+### 2.1 Public cible et objectifs pedagogiques
+Le dispositif s'adresse a un public sans bagage technique prealable en mathematiques cryptographiques ou en architecture reseau distribuee.
+A l'issue de l'experience, l'utilisateur doit pouvoir :
+- Identifier les composants essentiels d'un bloc et leur utilite.
+- Comprendre pourquoi et comment l'empreinte numerique (hash) lie les blocs de maniere inalterable.
+- Visualiser concretement l'effet domino (effet avalanche) lorsqu'une transaction passee est alteree.
+- Apprehender le consensus sans autorite centrale grace a un reseau distribue de voies paralleles.
+- Distinguer le fonctionnement et les implications energetiques de la Preuve de Travail (PoW) par rapport a la Preuve d'Enjeu (PoS).
+- Suivre le parcours d'une transaction et comprendre pourquoi une tentative de double depense echoue.
 
-### 2.2 Métaphore retenue
-Nous utilisons une chaîne de cubes modulaires semi-transparents placés dans un espace neutre et sombre. Chaque cube représente un bloc. À l'intérieur, des panneaux lisibles affichent les transactions, le hash du bloc, le hash du bloc précédent et le nonce. Les liens entre les blocs sont représentés par des connecteurs lumineux reliant la face arrière d'un bloc à la face avant du suivant.
+### 2.2 Metaphore retenue : Le Convoi Ferroviaire Blinde (Le train infini)
+Nous avons opte pour la metaphore d'un convoi ferroviaire blindÃ© progressant sur des voies ferrees.
+Dans cette analogie :
+- Chaque wagon represente un bloc de la chaine.
+- L'interieur du wagon accueille des conteneurs de marchandises securisees representant les transactions.
+- L'attelage entre deux wagons est un dispositif magnetique inviolable materialisant le hash cryptographique. Cet attelage n'accepte de se verrouiller que si le connecteur arriere du wagon N s'aligne exactement sur le connecteur avant du wagon N-1 (previousHash).
+- La rupture d'attelage illustre l'effet avalanche et la perte d'immutabilite : alterer la moindre marchandise a bord d'un wagon modifie immediatement sa polarisation magnetique. L'attelage se rompt dans une lueur rouge d'alerte, et tous les wagons suivants sont desolidarises du train.
+- Les voies ferrées paralleles et leurs aiguilleurs independants modelisent la decentralisation. Plusieurs aiguilleurs surveillent chacun une voie identique sans chef de gare central.
+- La motrice et sa chaudiere mecanique figurent la Preuve de Travail (PoW) : pour forger et atteler un nouveau wagon, la machinerie doit depenser de l'energie pour caler ses rouages sur le Nonce requis par la difficulte du reseau.
 
-### 2.3 Justification et limites
-| Question | Réponse |
+### 2.3 Justification pedagogique et limites
+| Question | Reponse et analyse |
 |:---|:---|
-| Quelles propriétés deviennent évidentes ? | L'ordre chronologique des blocs, le lien direct avec le bloc précédent, et la rupture visuelle immédiate quand un bloc devient invalide. |
-| Quelles propriétés sont difficiles à représenter ou risquent d'être déformées ? | Le calcul mathématique du hachage (SHA-256) ne peut pas être montré en détail sans perdre l'utilisateur. |
-| Comment ces limites sont-elles compensées ? | On montre le résultat du hash (une chaîne de caractères qui change brutalement à la moindre frappe) et une animation de compteur pour la recherche du nonce. |
+| Quelles proprietes deviennent evidentes ? | L'ordre chronologique strict des blocs, la dependance directe a l'etat anterieur, la severite de la rupture d'inalterabilite, et la nature distribuee des observateurs du convoi. |
+| Quelles proprietes risquent d'etre deformees ? | Le calcul de la fonction de hachage SHA-256 risque d'etre percu comme une simple attache physique plutot que comme un calcul mathematique a sens unique. De meme, un train suggere une continuite temporelle continue alors que les blocs sont produits par intervalles discrets. |
+| Comment ces limites sont-elles compensees ? | Des compteurs numeriques et cadrans interactifs affichent la chaine hexadecimale du hash en temps reel. Les wagons s'assemblent par a-coups nets au moment de la resolution du nonce. |
 
-### 2.4 Métaphores écartées
-| Métaphore | Points forts | Pourquoi écartée |
+### 2.4 Metaphores ecartees
+| Metaphore envisagee | Points forts | Pourquoi ecartee |
 |:---|:---|:---|
-| Train avec des wagons reliés par des attaches | Métaphore très courante et facile à imaginer au départ | Trop rigide pour montrer la décentralisation avec plusieurs copies du réseau et l'arrivée de transactions non confirmées. |
-| Coffres-forts dans une salle d'archives | Donne une idée claire de sécurité et de stockage | Rappelle trop le fonctionnement d'une banque classique avec un bâtiment centralisé. |
+| Coffres-forts dans une salle d'archives | Bonne representation de la securite et du scellement | Convoque involontairement l'imaginaire bancaire centralise et manque de dynamisme interactif dans l'espace 3D. |
+| Cubes de verre abstraits flottants | Esthetique moderne et epuree | Trop abstraite pour des lyceens, ne transmet pas l'intuition physique de l'attelage resistant a l'arrachement. |
+| Registre papier tamponne | Proche de l'historique comptable reel | Difficile a animer en Three.js de facon engageante et ne valorise pas l'espace tridimensionnel. |
 
-### 2.5 Charte visuelle
-| Élément | Choix | Justification pédagogique |
+### 2.5 Charte visuelle et sonore
+| Element | Choix retenu | Justification pedagogique |
 |:---|:---|:---|
-| Palette et signification des couleurs | Vert pour les blocs valides, rouge pour les blocs corrompus ou invalides, orange pour les actions en cours (minage, transaction en attente). Fond sombre neutre. | Ce sont des codes couleurs simples et universels, faciles à interpréter sans explication technique. |
-| Formes, style et niveau d'abstraction | Cubes simples avec arrêtes nettes, faces légèrement translucides et typographies nettes. | Évite de charger la scène inutilement et garantit une bonne fluidité (au moins 30 FPS). |
-| Éclairage et ambiance | Lumière ambiante douce avec spots ciblés sur le bloc actuellement sélectionné par l'utilisateur. | Permet de guider naturellement le regard vers l'élément important. |
-| Typographie et lisibilité | Police sans empattement lisible pour les textes, police à chasse fixe (monospace) pour les hashs. | Facilite la comparaison entre deux hashs. |
-| Échelle et rapport de taille | Blocs de même taille alignés horizontalement, avec un espacement régulier. | Permet d'avoir une vue d'ensemble claire sans déformation d'échelle. |
+| Palette chromatique | Gris acier bleute (#1e293b) pour les wagons valides, vert emeraude (#10b981) pour les attelages stables, rouge signalisation (#ef4444) pour les ruptures d'attelage et falsifications, orange ambre (#f59e0b) pour le minage en cours. Fond d'espace sombre (#0b0f19). | Utilisation de contrastes chromatiques normalises : le vert valide, l'orange signale le travail en cours, le rouge alerte sur l'invalidite. |
+| Formes et silhouettes | Wagons stylises et anguleux, voies metalliques rectilignes, cadrans hexagonaux pour les hashs. | Formes nettes et sobres, faciles a analyser visuellement sous tous les angles de camera. |
+| Eclairage | Ambiance tamisee avec spots directionnels places sur le wagon etudie. Halo lumineux emissif sur les points de jonction magnetique. | Focalise naturellement l'attention de l'apprenant sur la zone d'interaction sans artifice inutile. |
+| Typographie | Police sans-serif moderne et neutre pour l'interface HUD ; police monospace (chasse fixe) pour les hashs et nonces. | Permet la comparaison terme a terme des chaines hexadecimales sans decalage d'alignement. |
+| Son | Non utilise. | Maintient la sobriete du dispositif et evite la saturation cognitive lors d'une utilisation en salle de cours ou au casque. |
 
-## 3. Caméra, espace et navigation
+## 3. Camera, espace et navigation
 
-| Question | Réponse et justification |
+| Question | Reponse et justification |
 |:---|:---|
-| Caméra libre, guidée ou mixte ? | Mixte : un mode guidé pour suivre l'explication étape par étape, et la possibilité de tourner autour du bloc avec la souris (OrbitControls) pour regarder les détails. |
-| Comment l'utilisateur sait-il où regarder ? | La caméra se déplace automatiquement sur le bloc concerné à chaque étape, et le bloc actif est mis en surbrillance. |
-| Organisation spatiale et signification des positions | Organisation linéaire de gauche à droite pour la chaîne principale ; disposition en réseau circulaire pour l'étape montrant les différents nœuds. |
-| Représentation du temps | L'axe horizontal représente le temps : les blocs les plus anciens sont à gauche, les plus récents à droite. |
-| Passage d'une notion à l'autre | Des boutons simples "Étape précédente" et "Étape suivante" dans une interface 2D par-dessus la scène 3D. |
+| Mode de camera (libre, guide, mixte) | Camera mixte : trajectoire automatique guidee lors des transitions de notions, avec possibilite de rotation libre (OrbitControls) sur chaque wagon pour inspecter les marchandises et cadrans. |
+| Reperage de l'utilisateur | La camera se recadre avec un travelling fluide vers le wagon ou l'element concerne. Une etiquette textuelle HUD indique en permanence la notion en cours. |
+| Organisation spatiale | Voie principale orientee le long de l'axe X (de gauche a droite). Les voies paralleles des autres noeuds sont disposees sur l'axe Z a distance constante. |
+| Representation temporelle | Sens de circulation de gauche a droite : le wagon Genesis est a l'arriere gauche, le wagon le plus recent est a droite en tete de convoi. |
+| Passage entre notions | Boutons de navigation pas-a-pas "Precedent" et "Suivant" dans le HUD superpose, doubles d'un fil d'ariane cliquable. |
 
 ## 4. Fiches des 7 notions obligatoires
 
 ### 4.1 - Structure d'un bloc
 
-Issues liées : #1, #2  
-Séquence(s) concernée(s) : Séquence 1 (Découverte d'un bloc)
+Issues liees : #1, #2, #3  
+Sequence concernee : Sequence 1 (Decouverte du wagon de base)
 
-#### a) Objectif pédagogique
-L'utilisateur doit comprendre qu'un bloc regroupe des informations précises : des transactions, son propre hash, le hash du bloc précédent qui le précède, et un nombre appelé nonce.
+#### a) Objectif pedagogique
+Faire comprendre qu'un bloc n'est pas une donnee brute unitaire, mais un conteneur structure associant quatre champs indissociables : des transactions (marchandises), une empreinte propre (hash du bloc), l'empreinte du bloc precedent (previousHash), et un facteur d'ajustement (nonce).
 
-#### b) Risque de mauvaise compréhension
-L'utilisateur ne doit pas penser qu'un bloc est un simple fichier texte sans lien avec les autres.
+#### b) Risque de mauvaise comprehension
+Confondre le hash du bloc avec une transaction, ou imaginer que le nonce est un numero d'ordre arbitraire.
 
-#### c) Représentation choisie
-| Dimension | Choix | Pourquoi ce choix sert la compréhension |
+#### c) Representation choisie
+| Dimension | Choix | Pourquoi ce choix sert la comprehension |
 |:---|:---|:---|
-| Forme / géométrie | Cube 3D | Forme simple et identifiable. |
-| Taille et échelle | 2x2x2 unités | Lisible à l'écran tout en laissant de la place pour les voisins. |
-| Couleur / matériau | Matériau légèrement translucide avec bordures claires | Permet de voir le contenu sans surcharger la scène. |
-| Position | Centre de l'écran lors de la première étape | Focalise l'attention sur les détails du bloc. |
-| Mouvement / animation | Légère rotation sur lui-même au survol | Indique que l'objet est interactif. |
-| Interaction et retour visuel | Clic pour ouvrir les détails des transactions | Permet d'explorer le contenu sans forcer la lecture. |
-| Son, si utilisé | Non utilisé | Évite les distractions. |
-| Texte d'accompagnement | Panneau 2D contextuel avec résumé simple | Donne les définitions clés avec des mots simples. |
+| Forme / geometrie | Wagon blindé rectangulaire stylise avec compartiment superieur transparent et attelages aux extremites. | Rend tangible l'idee d'un volume qui transporte des charges utiles. |
+| Taille et echelle | 2.5 x 1.4 x 1.4 unites 3D. | Taille ideale pour une bonne lisibilite des faces a distance standard de camera. |
+| Couleur / materiau | Metal sombre satine avec marquages luminescents cyan. | Donne un aspect technique robuste sans charger la geometrie. |
+| Position | Centre de la scene pour le premier wagon (Bloc 0 / Genesis). | Focalise le regard sur l'anatomie interne du wagon. |
+| Mouvement / animation | Legere lévitation elastique au-dessus des rails au repos. | Signale l'interactivite de l'objet sans distraire. |
+| Interaction et retour visuel | Clic sur le wagon pour deployer un panneau d'inspection des marchandises, de la plaque de hash et du cadran du nonce. | Permet une observation a deux niveaux : vue macro du convoi et vue micro du contenu. |
+| Son, si utilise | Aucun. | Sobriete cognitive. |
+| Texte d'accompagnement | Fiche descriptive synthetique dans le HUD listant les 4 champs fondamentaux. | Formalise le vocabulaire technique avec des termes clairs. |
 
-#### d) Correspondance avec la réalité technique
-| Élément visuel | Élément réel | Fidélité |
+#### d) Correspondance avec la realite technique
+| Element visuel | Element reel | Fidelite |
 |:---|:---|:---|
-| Face supérieure : hash | Empreinte SHA-256 | Exacte (affiché sous forme tronquée pour rester lisible) |
-| Connecteur arrière : previousHash | Lien cryptographique vers le bloc parent | Exact |
-| Corps du cube : liste de transactions | Données du bloc (mempool validée) | Simplifiée (2 ou 3 transactions courtes) |
-| Nonce affiché sur le côté | Entier incrémenté lors du minage | Exact |
+| Caisses scellees dans le compartiment | Transactions composant le bloc (mempool futee) | Simplifiee a 3 transactions explicites (ex: "Alice -> Bob : 2 BTC"). |
+| Plaque metallique avant gravee | Hash SHA-256 du bloc courant | Exacte (affiche sous forme abregee lisible, ex: 0000a89f...3c). |
+| Connecteur magnetique arriere | previousHash (hash du bloc parent) | Exacte dans le principe de reproduction de l'empreinte precedente. |
+| Cadran a molettes numerotees | Nonce (entier naturel teste pour le scellement) | Exacte, represente sous forme de compteur numerique. |
 
-#### e) Alternative écartée
+#### e) Alternative ecartee
 | Alternative | Raison du rejet |
 |:---|:---|
-| Afficher toutes les transactions réelles de Bitcoin | Trop lourd et illisible pour un débutant. |
+| Affichage exhaustif d'un arbre de Merkle complet dans le wagon | Trop touffu visuellement pour un novice lors d'une premiere prise en main. |
 
 #### f) Tests utilisateurs
-| Observation | Modification | Issue |
+| Observation prevue | Modification prevue | Issue associee |
 |:---|:---|:---|
-| Prévu en semaine 3 | À documenter lors des tests | À créer |
+| Verifier si l'utilisateur identifie les 4 champs sans assistance orale. | Ajuster les labels du panneau d'inspection si confusion. | A ouvrir en phase de test utilisateur. |
 
-#### g) Limites assumées
-Le hash complet de 64 caractères est tronqué (ex. 0000a4f...8c) pour ne pas encombrer l'affichage.
+#### g) Limites assumees
+Le hash est tronque pour garantir une lisibilite immediate sur les ecrans de resolution standard.
 
-### 4.2 - Chaînage cryptographique
+---
 
-Issues liées : #2, #3  
-Séquence(s) concernée(s) : Séquence 2 (La chaîne)
+### 4.2 - Chainage cryptographique
 
-#### a) Objectif pédagogique
-L'utilisateur doit comprendre que chaque bloc intègre l'empreinte du bloc précédent, ce qui crée un lien direct et indissociable entre eux.
+Issues liees : #1, #2, #3  
+Sequence concernee : Sequence 2 (Attelage et dependance)
 
-#### b) Risque de mauvaise compréhension
-L'utilisateur ne doit pas penser que les blocs sont juste posés les uns à côté des autres par ordre d'arrivée sans vérification technique.
+#### a) Objectif pedagogique
+Comprendre que l'incorporation de l'empreinte du bloc N-1 dans l'entete du bloc N cree une liaison directionnelle stricte et inviolable.
 
-#### c) Représentation choisie
-| Dimension | Choix | Pourquoi ce choix sert la compréhension |
+#### b) Risque de mauvaise comprehension
+Penser que les blocs sont de simples maillons interchangeables ou relies par une simple liste chainee modifiable en memoire.
+
+#### c) Representation choisie
+| Dimension | Choix | Pourquoi ce choix sert la comprehension |
 |:---|:---|:---|
-| Forme / géométrie | Ligne lumineuse reliant la sortie d'un bloc à l'entrée du bloc suivant | Montre visuellement le lien de dépendance. |
-| Couleur | Même couleur verte que les blocs valides | Renforce l'idée de continuité et de validité. |
-| Interaction | Survol d'un lien pour mettre en valeur le hash partagé | Montre que la valeur de sortie du bloc N est identique à l'entrée du bloc N+1. |
+| Forme / geometrie | Faisceau magnetique cylindrique dense reliant la plaque arriere du wagon N a la plaque avant du wagon N-1. | Concrétise physiquement la transmission de l'identifiant d'un bloc a l'autre. |
+| Couleur | Lueur verte stabilisée (#10b981). | Atteste de la parfaite concordance entre previousHash et le hash reel du parent. |
+| Interaction | Survol du faisceau pour illuminer simultanement les deux plaques identiques sur les deux wagons. | Met en evidence la relation d'egalite mathematique entre la source et la cible. |
 
-#### d) Correspondance avec la réalité technique
-| Élément visuel | Élément réel | Fidélité |
+#### d) Correspondance avec la realite technique
+| Element visuel | Element reel | Fidelite |
 |:---|:---|:---|
-| Câble / faisceau reliant deux blocs | Champ previousHash vérifié par le nœud | Simplifiée mais fidèle au principe |
+| Faisceau magnetique verouille | Verification de l'integrite du champ previousHash par les pairs | Fidelite logique fidele a l'algorithme de validation. |
 
-#### e) Alternative écartée
+#### e) Alternative ecartee
 | Alternative | Raison du rejet |
 |:---|:---|
-| Des maillons de chaîne métalliques | Métaphore trop lourde visuellement et difficile à colorer selon l'état de validité. |
+| Chaine de maillons metalliques classiques | Suggere une attache purement physique sans support d'information cryptographique. |
 
 #### f) Tests utilisateurs
-| Observation | Modification | Issue |
+| Observation prevue | Modification prevue | Issue associee |
 |:---|:---|:---|
-| Prévu en semaine 3 | À documenter lors des tests | À créer |
+| Tester si la notion de liaison par empreinte est comprise spontanement. | Renforcer le marquage lumineux si le lien est neglige. | Phase de validation. |
 
-#### g) Limites assumées
-Le calcul réel du hash se fait instantanément en JavaScript plutôt que par un véritable algorithme de minage réseau.
+#### g) Limites assumees
+L'attelage est represente par une lumiere continue plutot que par un calcul cryptographique abstrait execute sous les yeux de l'apprenant.
 
-### 4.3 - Immutabilité et détection de falsification
+---
 
-Issues liées : #2, #3  
-Séquence(s) concernée(s) : Séquence 3 (Test de modification)
+### 4.3 - Immutabilite et detection de falsification
 
-#### a) Objectif pédagogique
-L'utilisateur doit constater que modifier ne serait-ce qu'un caractère dans un bloc passé change son hash, brise le lien avec les blocs suivants et rend toute la suite invalide.
+Issues liees : #2, #3  
+Sequence concernee : Sequence 3 (Tentative d'alteration d'un wagon)
 
-#### b) Risque de mauvaise compréhension
-L'utilisateur ne doit pas croire qu'il est physiquement impossible de changer un fichier, mais plutôt que toute modification est immédiatement repérée et rejetée par le réseau.
+#### a) Objectif pedagogique
+Visualiser l'effet avalanche : modifier un caractere d'une transaction passee change integralement son hash, rendant caducs tous les attelages des wagons suivants.
 
-#### c) Représentation choisie
-| Dimension | Choix | Pourquoi ce choix sert la compréhension |
+#### b) Risque de mauvaise comprehension
+Croire qu'une modification discrete dans le passe peut passer inapercue si les wagons recents ne sont pas touches.
+
+#### c) Representation choisie
+| Dimension | Choix | Pourquoi ce choix sert la comprehension |
 |:---|:---|:---|
-| Interaction | Champ texte modifiable dans un bloc ancien | L'utilisateur teste lui-même en modifiant un montant. |
-| Retour visuel | Le bloc modifié et tous les suivants virent au rouge instantanément | Rend la rupture flagrante et intuitive. |
-| Animation | Le lien entre les blocs se brise visuellement | Montre la déconnexion cryptographique. |
+| Forme / geometrie | Champ de saisie interactif permettant d'editer une marchandise dans un wagon ancien (Wagon 1 sur un convoi de 4). | Place l'utilisateur en posture active d'attaquant ou de falsificateur. |
+| Animation / retour visuel | Instantanement, le hash du wagon altere vire au rouge vif ; les attelages magnetiques vers les wagons suivants se brisent avec des arcs electriques ; tous les wagons aval basculent en position desaxee avec clignotement rouge d'alarme. | L'effet domino est immediat et spectaculaire : l'echec de validation saute aux yeux. |
+| Texte contextuel | Message expliquant que l'ancien convoi rejette ces wagons devenus incompatibles. | Donne l'explication logique du phenomene observe. |
 
-#### d) Correspondance avec la réalité technique
-| Élément visuel | Élément réel | Fidélité |
+#### d) Correspondance avec la realite technique
+| Element visuel | Element reel | Fidelite |
 |:---|:---|:---|
-| Virage au rouge des blocs suivants | Invalidation de l'arbre de hashs dans les nœuds | Exacte dans le principe |
+| Rupture des liens et bascule en rouge | Rejet par les regles de consensus des blocs dont le previousHash ne matche plus | Exacte sur la cascade d'invalidation. |
 
-#### e) Alternative écartée
+#### e) Alternative ecartee
 | Alternative | Raison du rejet |
 |:---|:---|
-| Bloquer la modification avec un cadenas | Donnerait l'impression fausse qu'un pirate ne peut pas toucher aux données, alors qu'en réalité il peut les modifier localement mais se fera rejeter. |
+| Simple message texte d'erreur sans animation 3D | Ne tire aucun parti de Three.js et manque cruellement d'impact pedagogique. |
 
 #### f) Tests utilisateurs
-| Observation | Modification | Issue |
+| Observation prevue | Modification prevue | Issue associee |
 |:---|:---|:---|
-| Prévu en semaine 4 | À documenter lors des tests | À créer |
+| Observer la surprise et la deduction de l'utilisateur face a la rupture en cascade. | Calibrer la vitesse de l'effet d'avalanche pour que chaque wagon soit vu en train de rompre. | Phase de tests. |
 
-#### g) Limites assumées
-L'invalidation est montrée sur 3 ou 4 blocs pour que tout reste visible d'un coup d'œil à l'écran.
+#### g) Limites assumees
+La rupture se propage de facon quasi instantanee a des fins visuelles, alors que sur un reseau reel elle intervient au moment du broadcast des blocs.
 
-### 4.4 - Réseau et décentralisation
+---
 
-Issues liées : #2, #4  
-Séquence(s) concernée(s) : Séquence 4 (Vue réseau)
+### 4.4 - Reseau et decentralisation
 
-#### a) Objectif pédagogique
-L'utilisateur doit comprendre qu'il n'y a pas de serveur central : plusieurs ordinateurs ont chacun une copie identique de la chaîne et comparent leurs versions.
+Issues liees : #1, #2, #4  
+Sequence concernee : Sequence 4 (Les voies d'aiguillage paralleles)
 
-#### b) Risque de mauvaise compréhension
-L'utilisateur ne doit pas penser qu'un serveur principal contrôle le réseau et envoie des ordres aux autres.
+#### a) Objectif pedagogique
+Demontrer qu'aucune entite unique ne possede la verite du registre : plusieurs voies paralleles hebergent une copie fidele du train, inspectee par des aiguilleurs autonomes (noeuds du reseau).
 
-#### c) Représentation choisie
-| Dimension | Choix | Pourquoi ce choix sert la compréhension |
+#### b) Risque de mauvaise comprehension
+S'imaginer qu'il existe un serveur principal qui synchronise des terminaux passifs esclaves.
+
+#### c) Representation choisie
+| Dimension | Choix | Pourquoi ce choix sert la comprehension |
 |:---|:---|:---|
-| Organisation | Vue dézoomée montrant 4 stations disposées en cercle | Met chaque nœud sur un pied d'égalité visuel. |
-| Animation | Propagation d'une pulsation lumineuse d'un nœud vers les autres | Illustre le partage pair-à-pair. |
-| Comparaison | Affichage côte à côte de la chaîne de chaque nœud | Montre que la majorité l'emporte en cas de divergence. |
+| Organisation spatiale | Dezoom camera revelant 3 voies ferrees paralleles cote a cote, transportant chacune une copie identique du convoi. | Materialise visuellement le registre distribue. |
+| Entites autonomes | Des cabines d'aiguillage independantes le long des voies avec fanions verts de synchronisation. | Symbolisent les noeuds validateurs complets (full nodes). |
+| Interaction | L'utilisateur peut modifier un wagon sur une seule voie : les deux autres aiguilleurs refusent la mise a jour et isolent la voie corrompue. | Met en evidence le principe de majorite du reseau. |
 
-#### d) Correspondance avec la réalité technique
-| Élément visuel | Élément réel | Fidélité |
+#### d) Correspondance avec la realite technique
+| Element visuel | Element reel | Fidelite |
 |:---|:---|:---|
-| 4 nœuds interconnectés | Réseau P2P mondial à milliers de nœuds | Très simplifiée mais représentative de la logique distribuée |
+| Voies paralleles | Registres locaux maintenus par chaque noeud complet | Fidele au paradigme pair-a-pair. |
+| Decision de l'aiguilleur | Regles de consensus appliquees par chaque client blockchain | Exacte. |
 
-#### e) Alternative écartée
+#### e) Alternative ecartee
 | Alternative | Raison du rejet |
 |:---|:---|
-| Représenter un globe terrestre avec des milliers de points | Trop complexe à afficher et distrait de la notion de consensus. |
+| Reseau de serveurs informatiques en rack 19 pouces | Iconographie informatique classique mais depourvue de lien avec notre fil rouge ferroviaire. |
 
 #### f) Tests utilisateurs
-| Observation | Modification | Issue |
+| Observation prevue | Modification prevue | Issue associee |
 |:---|:---|:---|
-| Prévu en semaine 4 | À documenter lors des tests | À créer |
+| Verifier que l'utilisateur comprend qu'il n'y a pas de cabine centrale chef. | Accentuer la symetrie absolue des cabines d'aiguillage. | Phase de tests. |
 
-#### g) Limites assumées
-Le nombre de nœuds est limité à 4 pour garder une scène lisible et fluide.
+#### g) Limites assumees
+Le nombre de voies est limite a 3 ou 4 pour preserver la fluidite de calcul Three.js (viser >= 30 FPS).
 
-### 4.5 - Validation et minage
+---
 
-Issues liées : #1, #4  
-Séquence(s) concernée(s) : Séquence 5 (Recherche du nonce)
+### 4.5 - Validation et minage (Proof of Work)
 
-#### a) Objectif pédagogique
-L'utilisateur doit comprendre le rôle du Proof of Work : pour valider un bloc, un ordinateur doit chercher un nombre (nonce) qui donne un hash respectant une règle précise (par exemple commencer par plusieurs zéros).
+Issues liees : #1, #2, #3  
+Sequence concernee : Sequence 5 (La motrice en surchauffe et le Nonce)
 
-#### b) Risque de mauvaise compréhension
-L'utilisateur ne doit pas penser que le mineur résout une énigme logique ou une devinette intelligente : c'est un tirage au sort par essais répétés à grande vitesse.
+#### a) Objectif pedagogique
+Expliquer le cout en calcul de l'ajout d'un bloc : trouver un Nonce generant un hash satisfaisant la difficulte imposee (ex: commencant par plusieurs zeros).
 
-#### c) Représentation choisie
-| Dimension | Choix | Pourquoi ce choix sert la compréhension |
+#### b) Risque de mauvaise comprehension
+Croire que le minage resout une equation complexe utile ou qu'il s'agit d'un tirage au sort passif sans depense de travail.
+
+#### c) Representation choisie
+| Dimension | Choix | Pourquoi ce choix sert la comprehension |
 |:---|:---|:---|
-| Animation | Défilement rapide d'un compteur de nonces et des hashs correspondants | Montre la recherche par force brute. |
-| Retour visuel | Bloc teinté en orange pendant le calcul, passant au vert dès que la cible est atteinte | Signale clairement la réussite de l'étape. |
-| Interaction | Bouton "Lancer le minage" avec curseur de difficulté | Permet de voir que plus la difficulté est haute, plus le calcul est long. |
+| Forme / geometrie | La motrice de queue / tete avec piston mecanique, chaudiere lumineuse et cadran rotatif rapide pour le nonce. | Rend visible l'effort mecanique et thermique associe a la preuve de travail. |
+| Animation | Lors du clic sur "Lancer le minage", la motrice s'emballe, les pistons accelerent, les cadrans defilent rapidement, puis s'arretent des qu'un hash valide est trouve (ex: debutant par 0000). | Permet de vivre l'attente et l'effort statistique du processus. |
+| Couleur | Passage de l'orange d'activite intense au vert d'achevement des la trouvaille du nonce valide. | Feedback positif direct. |
 
-#### d) Correspondance avec la réalité technique
-| Élément visuel | Élément réel | Fidélité |
+#### d) Correspondance avec la realite technique
+| Element visuel | Element reel | Fidelite |
 |:---|:---|:---|
-| Recherche d'un hash avec zéros au début | Défi de difficulté du protocole Bitcoin | Exacte dans le principe, difficulté allégée pour le navigateur |
+| Defilement des cadrans | Incrementation par force brute de l'entier Nonce | Fidele a la recherche d'une empreinte valide sous la cible de difficulte. |
+| Fumee / surchauffe | Consommation electrique et puissance de hachage (hashrate) | Analogie directe de la consommation energetique. |
 
-#### e) Alternative écartée
+#### e) Alternative ecartee
 | Alternative | Raison du rejet |
 |:---|:---|
-| Faire tourner un vrai calcul lourd pendant plusieurs minutes | Bloquerait le navigateur de l'utilisateur et gâcherait l'expérience. |
+| Afficher une ligne de commande textuelle brute du mineur | Totalement hermetique pour notre public cible de lyceens et non inities. |
 
 #### f) Tests utilisateurs
-| Observation | Modification | Issue |
+| Observation prevue | Modification prevue | Issue associee |
 |:---|:---|:---|
-| Prévu en semaine 5 | À documenter lors des tests | À créer |
+| Mesurer la comprehension du temps de resolution face a la difficulte. | Permettre a l'utilisateur de tester deux niveaux de difficulte (1 zero vs 3 zeros). | Phase de tests. |
 
-#### g) Limites assumées
-La difficulté est calibrée pour que le minage prenne 2 à 3 secondes dans la démo.
+#### g) Limites assumees
+La difficulte est artificielle et reduite a quelques caracteres pour ne pas bloquer le thread JavaScript du navigateur pendant plusieurs minutes.
 
-### 4.6 - Comparaison d'au moins deux mécanismes de consensus
+---
 
-Issues liées : #2, #4  
-Séquence(s) concernée(s) : Séquence 6 (PoW contre PoS)
+### 4.6 - Comparaison de deux mecanismes de consensus (PoW vs PoS)
 
-#### a) Objectif pédagogique
-L'utilisateur doit comprendre la différence principale entre Proof of Work (basé sur la puissance de calcul et l'énergie) et Proof of Stake (basé sur la quantité de jetons mis en jeu).
+Issues liees : #2, #4  
+Sequence concernee : Sequence 6 (L'effort mecanique vs la caution d'aiguillage)
 
-#### b) Risque de mauvaise compréhension
-L'utilisateur ne doit pas penser que le Proof of Stake est une simple variante sans règles ou sans risque pour les participants.
+#### a) Objectif pedagogique
+Comparer objectivement la Preuve de Travail (Proof of Work) et la Preuve d'Enjeu (Proof of Stake) sur leurs criteres fondamentaux : consommation d'energie, vitesse de validation et critere de selection du validateur.
 
-#### c) Représentation choisie
-| Dimension | Choix | Pourquoi ce choix sert la compréhension |
+#### b) Risque de mauvaise comprehension
+Penser que le Proof of Stake est moins securise par essence ou ne pas comprendre le role de la mise sous sequestre (stake/caution).
+
+#### c) Representation choisie
+| Dimension | Choix | Pourquoi ce choix sert la comprehension |
 |:---|:---|:---|
-| Affichage | Écran partagé en deux colonnes 3D comparatives | Permet une comparaison directe côte à côte. |
-| Représentation PoW | Ordinateurs avec jauge de calcul et consommation d'énergie | Illustre le coût matériel et énergétique. |
-| Représentation PoS | Coffres de jetons déposés en garantie (staking) | Illustre le principe de mise sous séquestre. |
+| Mise en scene comparative | Ecran scinde ou bascule interactive entre deux motrices :<br>1. Mode PoW : Motrice thermique brulant du combustible, pistons bruyants, validation lente et couteuse.<br>2. Mode PoS : Cabine d'aiguilleur deposant un coffre de caution (lingots scelles). Tirage proportionnel a la caution, attelage instantane et silencieux. | Confrontation visuelle directe des deux philosophies de consensus. |
+| Indicateurs comparatifs | Jauge de consommation energetique et chronometre compares cote a cote dans le HUD. | Donne des reperes quantitatifs simples et marquants. |
 
-#### d) Correspondance avec la réalité technique
-| Élément visuel | Élément réel | Fidélité |
+#### d) Correspondance avec la realite technique
+| Element visuel | Element reel | Fidelite |
 |:---|:---|:---|
-| Comparatif puissance vs jetons | Protocoles Bitcoin (PoW) et Ethereum (PoS) | Simplifiée mais juste |
+| Surchauffe motrice PoW | Consommation electrique massive de l'algorithme SHA-256 | Exacte dans les ordres de grandeur energetiques. |
+| Caution deposee PoS | Depose de tokens en staking avec penalite de slashing | Exacte sur le principe d'engagement financier. |
 
-#### e) Alternative écartée
+#### e) Alternative ecartee
 | Alternative | Raison du rejet |
 |:---|:---|
-| Présenter plus de 3 consensus différents (PoA, DPoS, etc.) | Risquerait de noyer le public sous trop de détails techniques. |
+| Tableau purement textuel sans representation 3D | Trop scolaire, rate l'opportunite d'illustrer la difference par l'animation 3D. |
 
 #### f) Tests utilisateurs
-| Observation | Modification | Issue |
+| Observation prevue | Modification prevue | Issue associee |
 |:---|:---|:---|
-| Prévu en semaine 5 | À documenter lors des tests | À créer |
+| Verifier si la notion de caution immobilisee est bien comprise en PoS. | Ajouter une infobulle precisant le risque de confiscation en cas de triche. | Phase de tests. |
 
-#### g) Limites assumées
-Les mécanismes de pénalité (slashing en PoS) sont résumés dans un court panneau explicatif.
+#### g) Limites assumees
+Le tirage pseudo-aleatoire du validateur en PoS est synthetise par une roulette visuelle simplifiee.
 
-### 4.7 - Cycle de vie d'une transaction et scénario d'attaque illustré
+---
 
-Issues liées : #2, #5  
-Séquence(s) concernée(s) : Séquence 7 (De l'émission à l'attaque repoussée)
+### 4.7 - Cycle de vie d'une transaction et scenario d'attaque illustre
 
-#### a) Objectif pédagogique
-L'utilisateur doit suivre une transaction depuis sa création par un utilisateur jusqu'à son inclusion dans un bloc validé, puis observer comment une tentative de double dépense est détectée et refusée.
+Issues liees : #2, #3, #4  
+Sequence concernee : Sequence 7 (Du quai au rejet de la double depense)
 
-#### b) Risque de mauvaise compréhension
-L'utilisateur ne doit pas penser qu'une transaction est définitive dès qu'elle est envoyée, ni qu'une attaque peut réussir sans convaincre la majorité du réseau.
+#### a) Objectif pedagogique
+Visualiser les etapes successives d'une transaction (creation, mempool d'attente, integration dans un bloc scelle, propagation sur les voies) et demontrer pourquoi une attaque de type double depense est neutralisee par le reseau.
 
-#### c) Représentation choisie
-| Dimension | Choix | Pourquoi ce choix sert la compréhension |
+#### b) Risque de mauvaise comprehension
+Croire qu'une transaction est immediate des sa creation ou ne pas comprendre pourquoi deux transactions contradictoires ne peuvent coexister.
+
+#### c) Representation choisie
+| Dimension | Choix | Pourquoi ce choix sert la comprehension |
 |:---|:---|:---|
-| Particule | Petite sphère colorée représentant la transaction | Montre son voyage dans l'espace 3D. |
-| Étapes | 1. Mempool -> 2. Prise en charge par un mineur -> 3. Validation -> 4. Blocs suivants | Découpe le parcours en phases claires. |
-| Attaque | Émission de deux transactions contradictoires avec le même solde | Montre que le réseau ne valide que la première et rejette la seconde. |
+| Cycle standard | 1. Un colis numerique arrive sur le quai de chargement (zone mempool).<br>2. Le colis est embarque dans le wagon en cours de scellement.<br>3. Le wagon est arrime et la mise a jour roule sur toutes les voies paralleles. | Decompose clairement la chronologie d'inclusion. |
+| Scenario d'attaque (Double depense) | L'utilisateur tente d'envoyer le meme colis sur la voie 1 et sur la voie 2 avec deux destinataires differents. Des que les aiguilleurs comparent l'historique de leurs voies, la deuxieme transaction est ejectee du convoi avec un signal sonore/visuel d'invalidation. | Demonstration par l'experience de la resolution du conflit. |
 
-#### d) Correspondance avec la réalité technique
-| Élément visuel | Élément réel | Fidélité |
+#### d) Correspondance avec la realite technique
+| Element visuel | Element reel | Fidelite |
 |:---|:---|:---|
-| Trajet mempool vers bloc | File d'attente des transactions non confirmées | Exacte dans le principe |
-| Rejet de la transaction en conflit | Règle de consensus contre la double dépense | Exacte |
+| Colis sur le quai | Transaction diffusee en attente dans la mempool | Exacte. |
+| Embarquement dans le convoi | Validation par inclusion dans un bloc scelle | Exacte. |
+| Ejection du doublon | Regle univoque empechant la reutilisation des memes UTXO | Fidele au protocole Bitcoin/Ethereum. |
 
-#### e) Alternative écartée
+#### e) Alternative ecartee
 | Alternative | Raison du rejet |
 |:---|:---|
-| Simuler une attaque des 51 % complète | Trop longue à mettre en scène et moins courante à expliquer pour un premier niveau de vulgarisation. |
+| Attaque des 51% detaillee des cette etape | Trop complexe a simuler pour un premier niveau de decouverte sans noyer l'utilisateur. |
 
 #### f) Tests utilisateurs
-| Observation | Modification | Issue |
+| Observation prevue | Modification prevue | Issue associee |
 |:---|:---|:---|
-| Prévu en semaine 6 | À documenter lors des tests | À créer |
+| Valider si la difference entre mempool et transaction confirmee est nette. | Ajouter un statut explicite "En attente sur le quai" puis "Confirmee dans le convoi". | Phase de tests. |
 
-#### g) Limites assumées
-Le scénario d'attaque est pré-enregistré avec des choix interactifs pour l'utilisateur plutôt qu'une simulation réseau complète.
-
-## 5. Cohérence globale
-
-| Question | Réponse |
-|:---|:---|
-| Les codes visuels sont-ils constants ? | Oui, les couleurs ont la même signification partout (vert = valide, rouge = problème, orange = en attente). |
-| Un même élément est-il représenté de la même façon partout ? | Oui, les blocs gardent leur format cubique tout au long de l'expérience. |
-| L'ordre des séquences est-il progressif ? | Oui, on commence par le bloc isolé, puis la chaîne, la falsification, le réseau, le minage, les consensus, et enfin le parcours d'une transaction avec l'attaque. |
-| Quelle notion est la moins bien représentée ? | Le minage : il est difficile d'expliquer la cryptographie sans formule, nous compensons par un compteur de nonces interactif. |
-| Quelle décision reverriez-vous avec une semaine de plus ? | Ajouter des animations plus détaillées lors du passage d'un nœud à un autre dans la vue réseau. |
-
-## 6. Rôle de l'IA générative
-
-Conformément aux consignes de transparence de l'UE R507 :
-- Les outils d'IA ont été utilisés comme aide pour structurer les documents de cadrage et préparer les trames des fiches.
-- Les choix techniques, la scénarisation pédagogique et l'implémentation du code Three.js sont réalisés et validés par les deux étudiants du groupe.
-
-## 7. Sources
-
-- Documentation officielle Three.js (https://threejs.org/docs/)
-- Bitcoin Whitepaper (Satoshi Nakamoto, 2008)
-- Documentation Ethereum sur le Proof of Stake
+#### g) Limites assumees
+Le temps de latence reseau entre les noeuds est contracte a quelques secondes pour maintenir le dynamisme de la demonstration.

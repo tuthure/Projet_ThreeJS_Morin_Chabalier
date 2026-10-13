@@ -1,116 +1,118 @@
-# BUT MMI 3e année - R507
+# BUT MMI 3e annee - R507
 
-## Projet Three.js - Visualisation pédagogique de la blockchain
+## Projet Three.js - Visualisation pedagogique de la blockchain
 
 ### Fiche de suivi - Semaine 1
 
-## 0. Informations générales
+## 0. Informations generales
 
 | Champ | Contenu |
 |:---|:---|
-| Groupe | Arthur Morin (@tuthure), Alban Chabalier (@albanchab14) |
+| Groupe | Arthur Morin (@tuthure), Alban Chabalier (@achabalier14) |
 | Semaine | 1 |
 | Dates couvertes | 1er octobre au 9 octobre 2026 |
-| Membres présents | Arthur Morin, Alban Chabalier |
-| Lien dépôt / GitHub Projects | https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier / https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier/projects |
-| Lien démo (si disponible) | https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/ |
+| Membres presents | Arthur Morin, Alban Chabalier |
+| Lien depot / GitHub Projects | https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier / https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier/projects |
+| Lien demo en ligne | https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/ |
 
 ## 1. Avancement
 
-### 1.1 Réalisé
-| Issue / tâche | Notion concernée | Statut | Preuve |
+### 1.1 Realise
+| Issue / tache | Notion concernee | Statut | Preuve |
 |:---|:---|:---|:---|
-| Cadrage général, constitution du groupe et création du dépôt | Toutes | Fonctionnel | Dépôt GitHub initialisé avec README.md de cadrage |
-| Création des dossiers et des livrables de documentation | Méthodologie | Fonctionnel | Fichiers CHOIX-MODELISATION.md, GRILLE-AUTOEVAL.md et SEMAINE-01.md dans docs/ |
-| Création des 4 jalons officiels du calendrier | Méthodologie | Fonctionnel | Milestones créés sur GitHub (9 oct, 15 nov, 19 nov x2) |
-| Rédaction et assignation des 5 premières issues | Toutes | Fonctionnel | Issues #1 à #5 créées, assignées et rattachées au Jalon 1 |
-| Choix de la métaphore visuelle (cubes modulaires 3D) | Notions 1 à 7 | Fonctionnel | Section 2 de CHOIX-MODELISATION.md rédigée |
+| Constitution du binome et repartition des roles | Methodologie | Fonctionnel | Roles formalises dans CHOIX-MODELISATION.md et README.md |
+| Creation du depot distant GitHub et initialisation locale | Methodologie | Fonctionnel | Depot tuthure/Projet_ThreeJS_Morin_Chabalier avec branche main |
+| Creation des 4 Milestones officielles et du calendrier | Methodologie | Fonctionnel | Milestones crees avec dates limites sur GitHub |
+| Decoupage et creation des issues initiales | Toutes | Fonctionnel | 5 issues granulaires assignees et reliees au Jalon 1 |
+| Choix du fil rouge : Le Convoi Ferroviaire Blinde | Notions 1 a 7 | Fonctionnel | Section 2 de CHOIX-MODELISATION.md entierement redigee |
+| Initialisation de l'environnement Vite et Three.js | Architecture 3D | Fonctionnel | Scene Three.js operationnelle, mesh temoin de wagon sur rails, build Vite valide |
+| Configuration de l'integration continue GitHub Pages | DevOps | Fonctionnel | Workflow .github/workflows/deploy.yml cree et configure |
 
-### 1.2 Prévu mais non réalisé
-| Tâche | Cause | Report |
+### 1.2 Prevu mais non realise
+| Tache | Cause | Report |
 |:---|:---|:---|
-| Aucune | Tous les éléments attendus pour le jalon du 9 octobre sont prêts | N/A |
+| Aucune | Tous les objectifs du Jalon 1 (cadrage, depot, issues, livrables) sont atteints a date | N/A |
 
-### 1.3 État des 7 notions
+### 1.3 Etat des 7 notions
 
-| Notion obligatoire | État | Remarque / preuve |
+| Notion obligatoire | Etat | Remarque / preuve |
 |:---|:---|:---|
-| 1. Structure d'un bloc | En cours | Spécifié dans CHOIX-MODELISATION.md (cube avec données, hash et nonce) |
-| 2. Chaînage cryptographique | En cours | Métaphore des connecteurs reliant chaque bloc au parent validée |
-| 3. Immutabilité et détection de falsification | En cours | Principe du passage au rouge et rupture de lien documenté |
-| 4. Réseau et décentralisation | En cours | Disposition circulaire de 4 nœuds pairs définie |
-| 5. Validation et minage | En cours | Principe de la recherche du nonce par compteur documenté |
-| 6. Comparaison d'au moins deux mécanismes de consensus | En cours | Comparaison PoW vs PoS prévue dans le scénario |
-| 7. Cycle de vie d'une transaction et scénario d'attaque illustré | En cours | Parcours d'une transaction et double dépense rejetée cadré |
+| 1. Structure d'un bloc | En cours | Wagon blinde avec conteneurs de marchandises, plaque de hash, connecteur previousHash et cadran nonce |
+| 2. Chainage cryptographique | En cours | Attelage magnetique inviolable reliant les wagons consecutifs |
+| 3. Immutabilite et detection de falsification | En cours | Rupture d'attelage en cascade et passage au rouge d'alerte lors d'une tentative de fraude |
+| 4. Reseau et decentralisation | En cours | Voies ferrees paralleles supervisees par des cabines d'aiguilleurs autonomes |
+| 5. Validation et minage | En cours | Surchauffe de la motrice et cadence mecanique pour aligner le Nonce sous la difficulte |
+| 6. Comparaison de consensus (PoW vs PoS) | En cours | Confrontation entre motrice thermique lourde (PoW) et caution d'aiguillage gagée (PoS) |
+| 7. Cycle de vie et scenario d'attaque | En cours | Parcours colis sur le quai (mempool), inclusion wagon et rejet d'un colis duplique (double depense) |
 
-Définitions des états :
-- Non commencé = réflexion initiale non entamée
-- En cours = spécifié ou en cours d'implémentation
+Definitions des etats :
+- Non commence = reflexion initiale non entamee
+- En cours = specifie ou en cours d'implementation
 - Fonctionnel = fonctionne au moins une fois
-- Testé = vérifié par un test documenté
+- Teste = verifie par un test documente
 
-## 2. Répartition du travail
+## 2. Repartition du travail
 
-| Membre | Tâches / issues | Issues traitées | Commits |
+| Membre | Taches / issues | Issues traitees | Commits |
 |:---|:---|:---:|:---:|
-| Arthur Morin | Cadrage technique Three.js, structure de scène, métaphores 3D | #1, #3 | Init & structure 3D |
-| Alban Chabalier | Gestion de projet, Milestones, issues, README et documentation | #2, #4, #5 | Docs & suivi |
+| Arthur Morin | Architecture technique Three.js, shaders, boucle d'animation, wagon temoin et setup Vite | #1, #3 | Setup technique et scene Three.js |
+| Alban Chabalier | Gestion de projet, cadrage pedagogique, redaction du convoi ferroviaire, GitHub Projects et CI/CD | #2, #4, #5 | Documentation, cadrage et CI |
 
 ## 3. GitHub Projects
 
-| Question | Réponse |
+| Question | Reponse |
 |:---|:---|
-| Issues créées | 5 issues initiales créées sur le dépôt |
-| Issues fermées | 0 (sprint de développement qui débute en semaine 2) |
-| Nombre dans Backlog / À faire / En cours / À vérifier / Terminé | Réparties entre Backlog et À faire |
-| Board mis à jour pendant la semaine ? | Oui, initialisé pour le jalon du 9 octobre |
-| Milestone concerné et état | "Cadrage, groupes, dépôt et GitHub Projects créés" (9 octobre 2026) - Atteint |
+| Issues creees | 5 issues granulaires associees au Jalon 1 |
+| Issues fermees | 0 (entree dans le developpement actif prevue pour les semaines 2 a 6) |
+| Nombre dans les colonnes | Reparties entre Backlog et A faire sur le tableau Kanban a 5 colonnes |
+| Board mis a jour pendant la semaine ? | Oui, initialise et structure conformement aux exigences |
+| Milestone concerne et etat | Jalon 1 "Cadrage, groupes, depot et GitHub Projects crees" (09/10/2026) : atteint |
 
-## 4. Choix de modélisation
+## 4. Choix de modelisation
 
-| Question | Réponse |
+| Question | Reponse |
 |:---|:---|
-| Fiches de MMI-R507-projet-blockchain-CHOIX-MODELISATION.md complétées | Sections 1 à 7 complétées pour poser le cadre initial. |
-| Choix important et justification | Choix de cubes simples avec connecteurs lumineux : très lisible, facile à comprendre et léger en calcul. |
-| Choix remis en question | Abandon de la métaphore du train avec wagons, trop rigide pour représenter le réseau multi-nœuds. |
+| Fiches de CHOIX-MODELISATION.md completees | L'ensemble des 7 fiches de notions est complete et formalise. |
+| Choix important et justification | Choix du convoi ferroviaire blinde : metaphore tres parlante pour le public cible (lyceens, non inities), matérialisant physiquement l'attelage resistant a l'arrachement et la rupture spectaculaire en cascade. |
+| Choix remis en question | Abandon des cubes abstraits deconnectes de la realite physique au profit du train infini sur rails. |
 
 ## 5. Tests utilisateurs
 
-| Question | Réponse |
+| Question | Reponse |
 |:---|:---|
-| Nombre de testeurs extérieurs cette semaine | 0 (phase de cadrage initiale) |
-| Compréhension ou problème observé | N/A |
-| Issue corrective | Prévue pour les phases de prototype (semaines 3 à 5) |
+| Nombre de testeurs exterieurs cette semaine | 0 (etape initiale de cadrage theorique et architectural) |
+| Comprehension ou probleme observe | N/A |
+| Issue corrective | Prevues a partir de la semaine 3 sur le premier prototype interactif |
 
-## 6. IA, difficultés et besoins
+## 6. IA, difficultes et besoins
 
-| Question | Réponse |
+| Question | Reponse |
 |:---|:---|
-| Usage de l'IA et vérifications effectuées | Aide pour générer les trames des fiches markdown. Contenus relus, vérifiés et adaptés par le groupe. |
-| Blocage technique | Aucun. |
-| Blocage pédagogique ou organisationnel | Aucun, le binôme est bien calé sur la répartition. |
-| Besoin d'un point enseignant | Aucun pour le moment. |
+| Usage de l'IA et verifications effectuees | Utilisation de l'IA pour structurer les canevas documentaires markdown et assister le setup initial. Tous les choix narratifs, roles et codes Three.js ont ete relus, corriges et valides manuellement par le binome. |
+| Blocage technique | Aucun blocage technique rencontre sur l'initialisation Three.js / Vite. |
+| Blocage pedagogique ou organisationnel | Aucun, repartition claire et consensus valide sur la metaphore ferroviaire. |
+| Besoin d'un point enseignant | Non necessaire pour le Jalon 1, tous les voyants sont au vert. |
 
 ## 7. Objectifs de la semaine suivante
 
 | Objectif | Responsable | Issue |
 |:---|:---|:---|
-| Initialiser l'application Three.js avec Vite | Arthur Morin | #1 |
-| Rédiger le storyboard détaillé reliant les 7 notions | Alban Chabalier | #2 |
-| Mettre en place la caméra et les premiers contrôles | Binôme | #4 |
+| Enrichir le wagon Three.js avec ses compartiments de marchandises et roues | Arthur Morin | #1, #3 |
+| Mettre en place OrbitControls et les premiers boutons de transition du HUD | Alban Chabalier | #4 |
+| Tester les premiers shaders de lueur magnetique pour les attelages | Arthur Morin | #3 |
 
 ## 8. Signaux d'alerte
 
-- [ ] Le board n'a été mis à jour qu'aujourd'hui.
-- [ ] La répartition est fortement déséquilibrée et non expliquée.
-- [ ] Nous n'avons pas encore atteint les 2 testeurs extérieurs requis (normal en semaine 1).
-- [ ] Un choix de modélisation important n'est pas justifié.
-- [ ] Une notion n'a pas avancé depuis 2 semaines.
+- [ ] Le board n'a ete mis a jour qu'aujourd'hui.
+- [ ] La repartition est fortement desequilibree et non expliquee.
+- [ ] Nous n'avons pas encore atteint les 2 testeurs exterieurs requis (normal en semaine 1).
+- [ ] Un choix de modelisation important n'est pas justifie.
+- [ ] Une notion n'a pas avance depuis 2 semaines.
 
 ## 9. Validation
 
-| Élément | Réponse |
+| Element | Reponse |
 |:---|:---|
 | Fiche relue par tous | Oui |
-| Date d'envoi | 9 octobre 2026 |
+| Date de validation | 09/10/2026 |
 | Noms des membres | Arthur Morin, Alban Chabalier |

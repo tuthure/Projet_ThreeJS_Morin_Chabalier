@@ -1,56 +1,81 @@
-# Visualisation pédagogique de la blockchain
+# Visualisation pedagogique de la blockchain
 
-Projet Three.js réalisé dans le cadre de la ressource R507 en 3e année de BUT MMI.
+Application web 3D interactive de vulgarisation des concepts fondamentaux de la blockchain, concue avec Three.js et Vite.
 
-## Membres du groupe
+## Membres du binome
 
-- Arthur Morin (@tuthure) : développement 3D et scène Three.js
-- Alban Chabalier (@albanchab14) : logique, interface et gestion de projet
+- Alban Chabalier (@achabalier14) : Gestion de projet, conception UX/UI, ergonomie des controles camera, narration pedagogique et scenarisation des 7 notions.
+- Arthur Morin (@tuthure) : Architecture technique Three.js, rendu 3D (shaders, eclairage, materiaux des wagons), logique de manipulation de la chaine et integration Vite.
 
-## Présentation du projet
+## Metaphore centrale : Le Convoi Ferroviaire Blinde
 
-L'objectif de ce projet est d'expliquer le fonctionnement d'une blockchain à un utilisateur non initié, à l'aide d'une scène 3D interactive développée avec Three.js.
+Pour rendre accessibles des principes cryptographiques abstraits a un public non initie, le projet repose sur la metaphore d'un train infini circulant a grande vitesse :
 
-Le but n'est pas de développer une vraie blockchain, mais de vulgariser visuellement les concepts clés : comment les blocs sont liés entre eux, pourquoi une modification invalide la chaîne, et comment le réseau valide les transactions sans serveur central.
+- Les wagons representent les blocs. Chaque wagon transporte des marchandises scellees qui correspondent aux transactions du bloc.
+- L'attelage magnetique inviolable materialise le hash cryptographique. Le verrouillage energetique du wagon N ne peut s'enclencher que s'il reconnait la signature magnetique exacte du wagon precedent (previousHash).
+- La rupture d'attelage illustre l'effet avalanche et l'immutabilite : modifier une marchandise a l'interieur d'un wagon corrompt instantanement sa signature, brisant l'attelage magnetique avec tous les wagons suivants qui passent au rouge et se decrochent.
+- Les voies ferrees paralleles et les aiguilleurs independants modelisent le reseau pair-a-pair decentralise. Chaque aiguilleur (noeud) entretient sa propre voie et s'assure de la validite du convoi sans autorite centrale.
+- La motrice et le verrouillage mecanique incarnent le minage et la preuve de travail (Proof of Work). Pour accrocher un nouveau wagon, la chaudiere doit chauffer et faire tourner ses mecanismes pour trouver la combinaison exacte (le Nonce) respectant la difficulte demandee.
 
-L'application doit rester simple à prendre en main, fluide (au moins 30 FPS sur une machine standard de TP) et accessible directement dans le navigateur via GitHub Pages.
+## Notions abordees
 
-## Les 7 notions abordées
+1. Structure d'un bloc (marchandises, hash, previousHash, nonce).
+2. Chainage cryptographique (attelage magnetique scellant les wagons).
+3. Immutabilite et detection de falsification (rupture d'attelage en cascade).
+4. Reseau et decentralisation (voies paralleles surveillees par des aiguilleurs).
+5. Validation et minage (chauffe de la motrice et resolution du nonce en PoW).
+6. Comparaison de mecanismes de consensus (effort energetique PoW vs caution d'aiguilleurs PoS).
+7. Cycle de vie d'une transaction et tentative d'attaque (colis sur le quai, validation et rejet de la double depense).
 
-L'expérience illustre les 7 notions obligatoires du sujet :
-1. Structure d'un bloc (données, hash du bloc, hash du bloc parent, nonce).
-2. Chaînage cryptographique (empreinte reliant chaque bloc au précédent).
-3. Immutabilité et détection de falsification (impact d'une modification sur les hashs suivants).
-4. Réseau et décentralisation (répartition sur plusieurs nœuds sans autorité centrale).
-5. Validation et minage (recherche d'un nonce valide en Proof of Work).
-6. Comparaison de deux mécanismes de consensus (Proof of Work vs Proof of Stake).
-7. Cycle de vie d'une transaction et scénario d'attaque (création, propagation, validation dans un bloc et tentative de double dépense rejetée).
+## Stack technique
 
-## Organisation du dépôt
+- Three.js (rendu 3D WebGL)
+- Vite (outillage de developpement et bundling)
+- HTML5 / CSS3 (interface HUD et styles responsive)
+- GitHub Actions & GitHub Pages (integration continue et deploiement)
 
-- docs/ : documents de conception et d'évaluation
-  - MMI-R507-projet-blockchain-CHOIX-MODELISATION.md : choix visuels et justification des métaphores pour chaque notion
-  - MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md : grille d'auto-évaluation du projet
-  - suivi/ : fiches de suivi hebdomadaires (SEMAINE-01.md à SEMAINE-08.md)
-- scripts/ : scripts d'aide à la configuration
-- src/ : code source de l'application (Three.js, shaders, logique)
-- public/ : assets statiques (textures, modèles)
+## Installation et execution locale
 
-## Calendrier et jalons
+Pre-requis : Node.js (version 18 ou superieure) et npm.
 
-Le projet suit les 4 jalons imposés :
-- 9 octobre 2026 (17h) : Cadrage, groupes, dépôt et GitHub Projects créés
-- 15 novembre 2026 (23h59) : Livraison du projet (code, démo en ligne, fiches complétées)
-- 19 novembre 2026 (9h30 - 11h) : Répétition finale
-- 19 novembre 2026 (11h - 12h30) : Soutenance finale (20 minutes par groupe)
+1. Cloner le depot :
+```bash
+git clone https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier.git
+cd Projet_ThreeJS_Morin_Chabalier
+```
 
-## Gestion de projet
+2. Installer les dependances :
+```bash
+npm install
+```
 
-Le suivi des tâches se fait avec un GitHub Project configuré en 5 colonnes :
-- Backlog
-- À faire
-- En cours
-- À vérifier
-- Terminé
+3. Lancer le serveur local de developpement :
+```bash
+npm run dev
+```
 
-Les tâches sont découpées en issues précises, assignées à chaque membre et reliées aux jalons du calendrier.
+4. Compiler pour la production :
+```bash
+npm run build
+```
+
+Les fichiers compiles sont generes dans le dossier `dist/`.
+
+## Structure du repertoire
+
+- `docs/` : Documents de cadrage, choix de modelisation et fiches de suivi.
+  - `MMI-R507-projet-blockchain-CHOIX-MODELISATION.md` : Justification pedagogique et technique des choix 3D.
+  - `MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md` : Grille d'auto-evaluation du projet.
+  - `suivi/` : Suivi hebdomadaire de l'avancement.
+- `src/` : Code source JavaScript et CSS de l'application.
+  - `main.js` : Point d'entree de la scene Three.js, rendu et boucle d'animation.
+  - `style.css` : Mise en page plein ecran et HUD.
+- `public/` : Ressources statiques (textures, modeles, icones).
+- `.github/workflows/` : Pipeline d'automatisation du deploiement.
+
+## Jalons du projet
+
+- Jalon 1 (09/10/2026) : Cadrage, groupe, depot GitHub, GitHub Projects et premiere scene Three.js.
+- Jalon 2 (15/11/2026) : Livraison complete du projet, code source et demo en ligne.
+- Jalon 3 (19/11/2026, 9h30 - 11h) : Repetition finale inter-groupes.
+- Jalon 4 (19/11/2026, 11h - 12h30) : Soutenance finale.
