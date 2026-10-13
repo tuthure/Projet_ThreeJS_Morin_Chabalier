@@ -1,137 +1,243 @@
-import * as THREE from 'three';
+import { Blockchain } from './blockchain/Blockchain.js';
+import { TrainScene } from './three/TrainScene.js';
+import { WagonMesh } from './three/WagonMesh.js';
 
 /**
- * Scene Three.js - Visualisation pedagogique de la blockchain
- * Metaphore : Le Convoi Ferroviaire Blinde
- * Jalon 1 : Scene de base et premier wagon temoin (Bloc Genesis)
+ * Point d'entree principal de la visualisation 3D de la blockchain.
+ * Relie le registre Blockchain aux modeles proceduraux Three.js (WagonMesh)
+ * au sein de la scene ferroviaire (TrainScene).
  */
 
-// 1. Initialisation de la scene et du canvas
 const canvas = document.querySelector('#webgl');
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0b0f19);
-
-// 2. Tailles et ratio
-const sizes = {
-  width: window.innerWidth,
-  height: window.innerHeight
-};
-
-// 3. Camera perspective
-const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 0.1, 100);
-camera.position.set(4, 3, 5);
-scene.add(camera);
-
-// 4. Eclairage
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-scene.add(ambientLight);
-
-const directionalLight = new THREE.DirectionalLight(0x38bdf8, 2.0);
-directionalLight.position.set(5, 8, 4);
-scene.add(directionalLight);
-
-const warmFillLight = new THREE.DirectionalLight(0xf59e0b, 0.6);
-warmFillLight.position.set(-5, -2, -4);
-scene.add(warmFillLight);
-
-// 5. Elements de decor (rails et sol)
-const gridHelper = new THREE.GridHelper(20, 20, 0x1e293b, 0x0f172a);
-gridHelper.position.y = -1;
-scene.add(gridHelper);
-
-// 6. Mesh temoin : Wagon de base (Bloc Genesis)
-const wagonGroup = new THREE.Group();
-
-// Corps du wagon (conteneur de transactions)
-const bodyGeometry = new THREE.BoxGeometry(2, 1.2, 1.2);
-const bodyMaterial = new THREE.MeshStandardMaterial({
-  color: 0x1e293b,
-  metalness: 0.6,
-  roughness: 0.3
-});
-const wagonBody = new THREE.Mesh(bodyGeometry, bodyMaterial);
-wagonBody.position.y = 0;
-wagonGroup.add(wagonBody);
-
-// Aretes lumineuses du wagon (indicateur de structure)
-const edgesGeometry = new THREE.EdgesGeometry(bodyGeometry);
-const edgesMaterial = new THREE.LineBasicMaterial({ color: 0x38bdf8 });
-const edgesMesh = new THREE.LineSegments(edgesGeometry, edgesMaterial);
-wagonBody.add(edgesMesh);
-
-// Attelage magnetique arriere (symbolisant le hash de liaison)
-const couplerGeometry = new THREE.CylinderGeometry(0.18, 0.18, 0.3, 16);
-const couplerMaterial = new THREE.MeshStandardMaterial({
-  color: 0x10b981,
-  emissive: 0x059669,
-  emissiveIntensity: 0.6,
-  metalness: 0.8,
-  roughness: 0.2
-});
-const coupler = new THREE.Mesh(couplerGeometry, couplerMaterial);
-coupler.rotation.z = Math.PI / 2;
-coupler.position.set(1.15, 0, 0);
-wagonGroup.add(coupler);
-
-// Essieux / roues temoins
-const wheelGeometry = new THREE.CylinderGeometry(0.22, 0.22, 0.15, 16);
-const wheelMaterial = new THREE.MeshStandardMaterial({
-  color: 0x475569,
-  metalness: 0.8,
-  roughness: 0.4
-});
-
-const wheelPositions = [
-  [-0.6, -0.65, 0.65],
-  [0.6, -0.65, 0.65],
-  [-0.6, -0.65, -0.65],
-  [0.6, -0.65, -0.65]
-];
-
-wheelPositions.forEach(([x, y, z]) => {
-  const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
-  wheel.rotation.x = Math.PI / 2;
-  wheel.position.set(x, y, z);
-  wagonGroup.add(wheel);
-});
-
-scene.add(wagonGroup);
-camera.lookAt(wagonGroup.position);
-
-// 7. Moteur de rendu (WebGLRenderer)
-const renderer = new THREE.WebGLRenderer({
-  canvas,
-  antialias: true
-});
-renderer.setSize(sizes.width, sizes.height);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-// 8. Gestion du redimensionnement de la fenetre
-window.addEventListener('resize', () => {
-  sizes.width = window.innerWidth;
-  sizes.height = window.innerHeight;
-
-  camera.aspect = sizes.width / sizes.height;
-  camera.updateProjectionMatrix();
-
-  renderer.setSize(sizes.width, sizes.height);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-});
-
-// 9. Boucle d'animation (requestAnimationFrame)
-const clock = new THREE.Clock();
-
-function animate() {
-  const elapsedTime = clock.getElapsedTime();
-
-  // Animation douce du wagon temoin
-  wagonGroup.rotation.y = Math.sin(elapsedTime * 0.5) * 0.35;
-  wagonGroup.position.y = Math.sin(elapsedTime * 1.5) * 0.05;
-
-  // Rendu de la scene
-  renderer.render(scene, camera);
-
-  requestAnimationFrame(animate);
+if (!canvas) {
+  throw new Error('Canvas WebGL introuvable dans le DOM');
 }
 
-animate();
+// 1. Initialisation de la scene 3D
+const trainScene = new TrainScene(canvas);
+
+// 2. Initialisation de la blockchain et generation des premiers blocs
+const blockchain = new Blockchain();
+const originalBlocksBackup = new Map();
+
+// Sauvegarde des donnees initiales pour permettre une reinitialisation
+originalBlocksBackup.set(0, JSON.parse(JSON.stringify(blockchain.chain[0].data)));
+
+// Ajout des deux blocs initiaux (transactions temoins)
+const block1 = blockchain.addBlock({
+  emetteur: 'Arthur',
+  destinataire: 'Alban',
+  montant: 15,
+  unite: 'MMI-Coin'
+});
+originalBlocksBackup.set(1, JSON.parse(JSON.stringify(block1.data)));
+
+const block2 = blockchain.addBlock({
+  emetteur: 'Alban',
+  destinataire: 'Equipe-R507',
+  montant: 30,
+  unite: 'MMI-Coin'
+});
+originalBlocksBackup.set(2, JSON.parse(JSON.stringify(block2.data)));
+
+// 3. Gestion de la flotte de wagons 3D
+const WAGON_SPACING = 3.8;
+const wagonMeshes = [];
+
+/**
+ * Synchronise les maillons 3D (wagons) avec la liste des blocs de la blockchain.
+ * Met a jour l'alignement le long de l'axe X et propage les etats de validite.
+ */
+function syncTrainWithBlockchain() {
+  const chainLength = blockchain.chain.length;
+  const validityList = blockchain.getBlockValidityList();
+
+  // Instancie les nouveaux wagons manquants
+  for (let i = wagonMeshes.length; i < chainLength; i++) {
+    const block = blockchain.chain[i];
+    const wagon = new WagonMesh(block, { spacing: WAGON_SPACING });
+
+    // Alignement longitudinal des wagons le long de l'axe X
+    wagon.position.x = -i * WAGON_SPACING;
+    wagon.position.y = 0;
+    wagon.position.z = 0;
+
+    trainScene.add(wagon);
+    wagonMeshes.push(wagon);
+  }
+
+  // Met a jour l'etat de validite de chaque wagon existant
+  for (let i = 0; i < wagonMeshes.length; i++) {
+    const wagon = wagonMeshes[i];
+    const isValid = validityList[i] ?? false;
+    wagon.updateStatus(isValid);
+  }
+
+  // Recentre doucement la cible des controles sur le barycentre du train
+  const trainCenterX = -((chainLength - 1) * WAGON_SPACING) / 2;
+  trainScene.controls.target.x = trainCenterX;
+
+  // Mise a jour du HUD d'information HTML
+  updateHUDStatus(validityList);
+}
+
+/**
+ * Met a jour l'affichage informatif de l'interface utilisateur.
+ * @param {boolean[]} validityList - Tableau de validite par wagon.
+ */
+function updateHUDStatus(validityList) {
+  const badgeEl = document.querySelector('.hud-info .badge');
+  const descEl = document.querySelector('.hud-info .desc');
+
+  if (!badgeEl || !descEl) {
+    return;
+  }
+
+  const isAllValid = validityList.every((val) => val === true);
+  const totalWagons = validityList.length;
+
+  if (isAllValid) {
+    badgeEl.textContent = `Chaine valide - ${totalWagons} wagons synchronises`;
+    badgeEl.style.color = '#10b981';
+    descEl.textContent = 'Tous les attelages cryptographiques sont stables et verrouilles.';
+  } else {
+    const firstInvalidIndex = validityList.findIndex((val) => val === false);
+    badgeEl.textContent = `Alerte : Rupture au wagon #${firstInvalidIndex}`;
+    badgeEl.style.color = '#ef4444';
+    descEl.textContent = `Effet avalanche actif : les wagons de #${firstInvalidIndex} a #${totalWagons - 1} sont invalides.`;
+  }
+}
+
+// 4. Animation d'oscillation douce de suspension des wagons
+trainScene.registerUpdatable((delta, elapsedTime) => {
+  for (let i = 0; i < wagonMeshes.length; i++) {
+    const wagon = wagonMeshes[i];
+    // Legere oscillation verticale asynchrone simulant la suspension sur rails
+    wagon.position.y = Math.sin(elapsedTime * 1.8 + i * 0.7) * 0.025;
+  }
+});
+
+// 5. Premiere synchronisation au demarrage
+syncTrainWithBlockchain();
+
+// 6. Exposition des methodes de manipulation dans l'objet global window.blockchain
+window.blockchain = {
+  instance: blockchain,
+
+  /**
+   * Modifie arbitrairement les donnees d'un bloc sans regenerer son hash.
+   * Provoque visuellement la rupture d'attelage et le passage au rouge des wagons suivants.
+   * @param {number} [index=1] - Indice du wagon a falsifier.
+   * @param {any} [newData='TRANSACTION_FALSIFIEE_9999_BTC'] - Contenu frauduleux.
+   */
+  corruptBlock: (index = 1, newData = 'TRANSACTION_FALSIFIEE_9999_BTC') => {
+    const targetBlock = blockchain.corruptBlock(index, newData);
+    if (!targetBlock) {
+      console.warn(`Impossible de corrompre le bloc a l'index ${index}`);
+      return;
+    }
+
+    syncTrainWithBlockchain();
+
+    console.warn(`[BLOCKCHAIN] Bloc #${index} falsifie.`);
+    console.warn(`Nouvelles donnees injectees :`, newData);
+    console.warn(`Etat de validite :`, blockchain.getBlockValidityList());
+  },
+
+  /**
+   * Ajoute un nouveau wagon attele a la fin du train avec calcul de hash cryptographique.
+   * @param {any} [data] - Donnees de la transaction a integrer.
+   * @returns {import('./blockchain/Block.js').Block}
+   */
+  addBlock: (data) => {
+    const payload = data || {
+      emetteur: `Station-${blockchain.chain.length}`,
+      destinataire: 'Depot-Central',
+      quantite: Math.floor(Math.random() * 50) + 1,
+      horodatage: new Date().toLocaleTimeString('fr-FR')
+    };
+
+    const newBlock = blockchain.addBlock(payload);
+    originalBlocksBackup.set(newBlock.index, JSON.parse(JSON.stringify(payload)));
+
+    syncTrainWithBlockchain();
+
+    console.info(`[BLOCKCHAIN] Nouveau wagon #${newBlock.index} attele au convoi.`);
+    console.info(`Hash : ${newBlock.hash}`);
+    console.info(`PreviousHash : ${newBlock.previousHash}`);
+    return newBlock;
+  },
+
+  /**
+   * Restaure les donnees initiales d'un bloc ou de l'ensemble de la chaine.
+   * @param {number} [index] - Indice a restaurer, ou restaure tout si omis.
+   */
+  restore: (index) => {
+    if (typeof index === 'number') {
+      if (originalBlocksBackup.has(index)) {
+        blockchain.chain[index].data = JSON.parse(JSON.stringify(originalBlocksBackup.get(index)));
+        console.info(`[BLOCKCHAIN] Bloc #${index} retabli a ses donnees d'origine.`);
+      }
+    } else {
+      blockchain.chain.forEach((block) => {
+        if (originalBlocksBackup.has(block.index)) {
+          block.data = JSON.parse(JSON.stringify(originalBlocksBackup.get(block.index)));
+        }
+      });
+      console.info('[BLOCKCHAIN] Tous les blocs ont ete restaures a leur etat initial.');
+    }
+
+    syncTrainWithBlockchain();
+  },
+
+  /**
+   * Retourne la validite globale de la chaine.
+   * @returns {boolean}
+   */
+  isValid: () => blockchain.isChainValid(),
+
+  /**
+   * Retourne la validite detaillee wagon par wagon.
+   * @returns {boolean[]}
+   */
+  getValidityList: () => blockchain.getBlockValidityList(),
+
+  /**
+   * Affiche un tableau recapitulatif dans la console de developpement.
+   */
+  inspect: () => {
+    console.table(
+      blockchain.chain.map((b, i) => ({
+        index: b.index,
+        valide: blockchain.getBlockValidityList()[i],
+        hash: `${b.hash.substring(0, 12)}...`,
+        previousHash: `${b.previousHash.substring(0, 12)}...`,
+        data: typeof b.data === 'string' ? b.data : JSON.stringify(b.data)
+      }))
+    );
+  }
+};
+
+// 7. Connexion des boutons d'interaction du HUD (s'ils existent dans le DOM)
+const btnAdd = document.querySelector('#btn-add-block');
+if (btnAdd) {
+  btnAdd.addEventListener('click', () => window.blockchain.addBlock());
+}
+
+const btnCorrupt = document.querySelector('#btn-corrupt-block');
+if (btnCorrupt) {
+  btnCorrupt.addEventListener('click', () => window.blockchain.corruptBlock(1));
+}
+
+const btnRestore = document.querySelector('#btn-restore-chain');
+if (btnRestore) {
+  btnRestore.addEventListener('click', () => window.blockchain.restore());
+}
+
+// 8. Message d'accueil et consignes de test en console
+console.log('%c[LE CONVOI FERROVIAIRE - BLOCKCHAIN 3D]', 'color: #38bdf8; font-weight: bold; font-size: 14px;');
+console.log('Commandes de test interactives disponibles dans la console :');
+console.log('- window.blockchain.corruptBlock(1) : Falsifie le wagon #1 pour declencher la rupture de la chaine.');
+console.log('- window.blockchain.addBlock({ ... }) : Attelle dynamiquement un nouveau wagon au train.');
+console.log('- window.blockchain.restore() : Restaure les donnees valides et retablit les attelages.');
+console.log('- window.blockchain.inspect() : Affiche l etat structurel de la blockchain.');

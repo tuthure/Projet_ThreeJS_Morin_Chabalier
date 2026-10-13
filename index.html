@@ -10,12 +10,19 @@
   <div id="app">
     <canvas id="webgl"></canvas>
     <header class="hud-header">
-      <h1>Le Convoi Ferroviaire</h1>
+      <h1>Le Convoi Ferroviaire Blindé</h1>
       <p class="subtitle">Visualisation pedagogique de la blockchain avec Three.js</p>
     </header>
+
     <div class="hud-info">
-      <p class="badge">Jalon 1 - Scene 3D initialisee</p>
-      <p class="desc">Mesh temoin : Wagon 0 (Bloc Genesis) sur rails</p>
+      <p class="badge">Initialisation...</p>
+      <p class="desc">Chargement du convoi ferroviaire...</p>
+    </div>
+
+    <div class="hud-controls">
+      <button id="btn-add-block" class="btn btn-primary" title="Ajoute un nouveau bloc attele a la fin du train">Atteler un wagon</button>
+      <button id="btn-corrupt-block" class="btn btn-danger" title="Modifie les donnees du wagon 1 pour provoquer la rupture d'attelage">Falsifier wagon 1</button>
+      <button id="btn-restore-chain" class="btn btn-secondary" title="Retablit les donnees originales du convoi">Retablir convoi</button>
     </div>
   </div>
   <script type="module" src="./src/main.js"></script>
