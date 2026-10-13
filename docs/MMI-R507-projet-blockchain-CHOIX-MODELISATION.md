@@ -72,120 +72,125 @@ Dans cette analogie :
 
 ### 4.1 - Structure d'un bloc
 
-Issues liees : #1, #2, #3  
-Sequence concernee : Sequence 1 (Decouverte du wagon de base)
+Issues liees : #6, #7  
+Sequence concernee : Sequence 1 (Decouverte du wagon en coupe)
 
 #### a) Objectif pedagogique
-Faire comprendre qu'un bloc n'est pas une donnee brute unitaire, mais un conteneur structure associant quatre champs indissociables : des transactions (marchandises), une empreinte propre (hash du bloc), l'empreinte du bloc precedent (previousHash), et un facteur d'ajustement (nonce).
+Faire comprendre qu'un bloc n'est pas une simple boite noire ou un fichier texte monolithique, mais une structure de donnees rigoureusement organisee associant quatre champs fondamentaux : des transactions validees (marchandises), une empreinte cryptographique propre (hash du bloc), l'empreinte du bloc precedent (previousHash), et un facteur d'ajustement mathematique (nonce).
 
 #### b) Risque de mauvaise comprehension
-Confondre le hash du bloc avec une transaction, ou imaginer que le nonce est un numero d'ordre arbitraire.
+Confondre le hash du bloc avec une donnee de transaction interne, ou imaginer que le nonce est un numero d'ordre arbitraire.
 
 #### c) Representation choisie
 | Dimension | Choix | Pourquoi ce choix sert la comprehension |
 |:---|:---|:---|
-| Forme / geometrie | Wagon blindé rectangulaire stylise avec compartiment superieur transparent et attelages aux extremites. | Rend tangible l'idee d'un volume qui transporte des charges utiles. |
-| Taille et echelle | 2.5 x 1.4 x 1.4 unites 3D. | Taille ideale pour une bonne lisibilite des faces a distance standard de camera. |
-| Couleur / materiau | Metal sombre satine avec marquages luminescents cyan. | Donne un aspect technique robuste sans charger la geometrie. |
-| Position | Centre de la scene pour le premier wagon (Bloc 0 / Genesis). | Focalise le regard sur l'anatomie interne du wagon. |
-| Mouvement / animation | Legere lévitation elastique au-dessus des rails au repos. | Signale l'interactivite de l'objet sans distraire. |
-| Interaction et retour visuel | Clic sur le wagon pour deployer un panneau d'inspection des marchandises, de la plaque de hash et du cadran du nonce. | Permet une observation a deux niveaux : vue macro du convoi et vue micro du contenu. |
-| Son, si utilise | Aucun. | Sobriete cognitive. |
-| Texte d'accompagnement | Fiche descriptive synthetique dans le HUD listant les 4 champs fondamentaux. | Formalise le vocabulaire technique avec des termes clairs. |
+| Forme / geometrie | Wagon blinde en vue semi-eclatee ou en coupe : chassis metallique protecteur (#1e293b), compartiment central bleu translucide (#0284c7) revelant les conteneurs de marchandises (transactions), plaques d'empreinte gravees a l'avant et a l'arriere, et cadran numerote du nonce sur le flanc. | Rend directement tangible le concept de conteneur structure sans passer par une abstraction desincarnee. |
+| Taille et echelle | 2.4 unites de long sur 1.3 unite de large et de haut, espacement fixe de 4.2 unites entre essieux de wagons consecutifs sur les rails. | Proportions ideales assurant la lisibilite des plaques d'empreinte et des conteneurs a distance standard de camera. |
+| Couleur / materiau | Chassis acier sombre satine, aretes luminescentes cyan (#38bdf8), conteneur central translucide laissant voir les transactions. | Cree un contraste visuel immediat entre l'enveloppe protectrice et la charge utile transportee. |
+| Position | Centre de l'axe X (Wagon Genesis a X=0, convoi progressant vers les X positifs). | Fixe une reference spatiale claire le long de la ligne ferroviaire. |
+| Mouvement / animation | Legere oscillation verticale amortie des wagons au repos pour simuler la souplesse mecanique du train sur les rails. | Indique visuellement que la scene 3D est vivante et reactive a l'utilisateur. |
+| Interaction et retour visuel | Clic direct sur le wagon en 3D (raycasting) ou navigation via la barre HUD pour ouvrir le panneau lateral d'inspection (Drawer) affichant les 4 champs en clair. | Permet une observation a deux niveaux : vue d'ensemble du convoi et vue chirurgicale du bloc selectionne. |
+| Son, si utilise | Aucun. | Maintien de la concentration en salle de cours ou au casque. |
+| Texte d'accompagnement | HUD superpose indiquant la sequence active, sous-titre explicatif et infobulles contextuelles pour chaque champ du wagon. | Guide le parcours cognitif de l'apprenant sans occulter la vue 3D. |
 
 #### d) Correspondance avec la realite technique
 | Element visuel | Element reel | Fidelite |
 |:---|:---|:---|
-| Caisses scellees dans le compartiment | Transactions composant le bloc (mempool futee) | Simplifiee a 3 transactions explicites (ex: "Alice -> Bob : 2 BTC"). |
-| Plaque metallique avant gravee | Hash SHA-256 du bloc courant | Exacte (affiche sous forme abregee lisible, ex: 0000a89f...3c). |
-| Connecteur magnetique arriere | previousHash (hash du bloc parent) | Exacte dans le principe de reproduction de l'empreinte precedente. |
-| Cadran a molettes numerotees | Nonce (entier naturel teste pour le scellement) | Exacte, represente sous forme de compteur numerique. |
+| Conteneurs centraux dans le compartiment | Donnees du bloc (transactions extraites de la mempool) | Simplifiee a quelques transactions explicites (ex: "Alice -> Bob : 2.5 BTC"). |
+| Plaque metallique avant gravee | previousHash (empreinte de l'en-tete du bloc parent) | Exacte dans son role de dependance univoque au bloc precedent. |
+| Plaque metallique arriere gravee | Hash SHA-256 calcule sur l'integralite du bloc courant | Exacte, affichee sous forme hexadecimale tronquee pour preserver la lisibilite. |
+| Molette rotative numerotee | Nonce (entier naturel teste iterativement lors du minage) | Exacte dans son fonctionnement de variable d'ajustement. |
 
 #### e) Alternative ecartee
 | Alternative | Raison du rejet |
 |:---|:---|
-| Affichage exhaustif d'un arbre de Merkle complet dans le wagon | Trop touffu visuellement pour un novice lors d'une premiere prise en main. |
+| Cube opaque avec panneau de texte 2D uniquement | N'exploite pas le potentiel immersif de Three.js et masque la logique interne du conteneur. |
 
 #### f) Tests utilisateurs
 | Observation prevue | Modification prevue | Issue associee |
 |:---|:---|:---|
-| Verifier si l'utilisateur identifie les 4 champs sans assistance orale. | Ajuster les labels du panneau d'inspection si confusion. | A ouvrir en phase de test utilisateur. |
+| Verifier si l'apprenant identifie spontanement les 4 champs du wagon sans guide oral. | Ajouter des etiquettes 3D flottantes au survol si necessaire. | #17 |
 
 #### g) Limites assumees
-Le hash est tronque pour garantir une lisibilite immediate sur les ecrans de resolution standard.
+L'arbre de Merkle regroupant les transactions est synthetise sous la forme d'un conteneur global unifie plutot que par une hierarchie arborescente complete, afin de preserver la clarte d'affichage.
 
 ---
 
 ### 4.2 - Chainage cryptographique
 
-Issues liees : #1, #2, #3  
-Sequence concernee : Sequence 2 (Attelage et dependance)
+Issues liees : #8  
+Sequence concernee : Sequence 2 (Attelage magnetique et dependance cryptographique)
 
 #### a) Objectif pedagogique
-Comprendre que l'incorporation de l'empreinte du bloc N-1 dans l'entete du bloc N cree une liaison directionnelle stricte et inviolable.
+Comprendre que chaque bloc incorpore la signature cryptographique exacte du bloc precedent, etablissant un attelage energetique direct et invariant d'un bout a l'autre du convoi.
 
 #### b) Risque de mauvaise comprehension
-Penser que les blocs sont de simples maillons interchangeables ou relies par une simple liste chainee modifiable en memoire.
+Penser que les blocs sont simplement juxtaposes dans l'ordre chronologique sans contrainte mathematique d'arrimage.
 
 #### c) Representation choisie
 | Dimension | Choix | Pourquoi ce choix sert la comprehension |
 |:---|:---|:---|
-| Forme / geometrie | Faisceau magnetique cylindrique dense reliant la plaque arriere du wagon N a la plaque avant du wagon N-1. | Concrétise physiquement la transmission de l'identifiant d'un bloc a l'autre. |
-| Couleur | Lueur verte stabilisée (#10b981). | Atteste de la parfaite concordance entre previousHash et le hash reel du parent. |
-| Interaction | Survol du faisceau pour illuminer simultanement les deux plaques identiques sur les deux wagons. | Met en evidence la relation d'egalite mathematique entre la source et la cible. |
+| Forme / geometrie | Faisceau magnetique cylindrique dense reliant le connecteur arriere du wagon N-1 au connecteur avant du wagon N. | Materialise visuellement le lien invisible du hash partage. |
+| Couleur et emission | Cylindre vert emeraude (#10b981) avec emission forte (#059669) et halo lumineux directionnel pointLight. | Signale de facon univoque que la liaison cryptographique est active et conforme. |
+| Animation / comportement | Legere pulsation lumineuse le long de l'axe pour illustrer le flux continu de validation entre wagons. | Renforce l'idee d'une continuite logique indestructible sans alteration. |
+| Interaction | Clic sur la sequence 2 pour aligner la camera sur l'espace inter-wagons et inspecter l'alignement des plaques. | Permet d'observer que la plaque arriere du wagon N-1 affiche la meme empreinte que la plaque avant du wagon N. |
 
 #### d) Correspondance avec la realite technique
 | Element visuel | Element reel | Fidelite |
 |:---|:---|:---|
-| Faisceau magnetique verouille | Verification de l'integrite du champ previousHash par les pairs | Fidelite logique fidele a l'algorithme de validation. |
+| Verrouillage magnetique stable | Verification de l'egalite `block[N].previousHash === sha256(block[N-1])` | Fidele au protocole de verification de chaine. |
+| Faisceau energetique reliant deux wagons | Pointeur cryptographique d'integrite | Analogie physique directe et universellement interpretable. |
 
 #### e) Alternative ecartee
 | Alternative | Raison du rejet |
 |:---|:---|
-| Chaine de maillons metalliques classiques | Suggere une attache purement physique sans support d'information cryptographique. |
+| Maillons de chaine metalliques classiques | Donne l'illusion d'une attache purement mecanique demontable manuellement sans recalcul cryptographique. |
 
 #### f) Tests utilisateurs
 | Observation prevue | Modification prevue | Issue associee |
 |:---|:---|:---|
-| Tester si la notion de liaison par empreinte est comprise spontanement. | Renforcer le marquage lumineux si le lien est neglige. | Phase de validation. |
+| Evaluer si la continuite de l'attelage vert est percue comme un gage d'authenticite. | Ajuster l'intensite emissive du faisceau en fonction de l'eclairage ambiant. | #17 |
 
 #### g) Limites assumees
-L'attelage est represente par une lumiere continue plutot que par un calcul cryptographique abstrait execute sous les yeux de l'apprenant.
+L'attelage est matérialise par un faisceau continu alors que la verification cryptographique est une operation logique ponctuelle executee lors du consensus.
 
 ---
 
 ### 4.3 - Immutabilite et detection de falsification
 
-Issues liees : #2, #3  
-Sequence concernee : Sequence 3 (Tentative d'alteration d'un wagon)
+Issues liees : #9  
+Sequence concernee : Sequence 3 (Simulation de falsification et rupture d'attelage)
 
 #### a) Objectif pedagogique
-Visualiser l'effet avalanche : modifier un caractere d'une transaction passee change integralement son hash, rendant caducs tous les attelages des wagons suivants.
+Demontrer concretement l'effet avalanche : modifier le moindre caractere d'une transaction passee recalcule une empreinte totalement divergente, ce qui detruit la correspondance avec le wagon suivant et invalide en cascade l'integralite du convoi aval.
 
 #### b) Risque de mauvaise comprehension
-Croire qu'une modification discrete dans le passe peut passer inapercue si les wagons recents ne sont pas touches.
+Imaginer qu'un attaquant peut reecrire discretement une ancienne transaction sans que les observateurs du reseau ne s'en apercoivent.
 
 #### c) Representation choisie
 | Dimension | Choix | Pourquoi ce choix sert la comprehension |
 |:---|:---|:---|
-| Forme / geometrie | Champ de saisie interactif permettant d'editer une marchandise dans un wagon ancien (Wagon 1 sur un convoi de 4). | Place l'utilisateur en posture active d'attaquant ou de falsificateur. |
-| Animation / retour visuel | Instantanement, le hash du wagon altere vire au rouge vif ; les attelages magnetiques vers les wagons suivants se brisent avec des arcs electriques ; tous les wagons aval basculent en position desaxee avec clignotement rouge d'alarme. | L'effet domino est immediat et spectaculaire : l'echec de validation saute aux yeux. |
-| Texte contextuel | Message expliquant que l'ancien convoi rejette ces wagons devenus incompatibles. | Donne l'explication logique du phenomene observe. |
+| Forme / interaction | Champ de saisie direct (textarea) dans le panneau lateral d'inspection permettant d'editer les transactions du Wagon #1. | Rend l'utilisateur acteur de la tentative de fraude pour une assimilation active. |
+| Retour visuel instantane | Des la premiere frappe au clavier : le hash du wagon altere mute brutalement, son conteneur et ses aretes virent au rouge alerte (#ef4444) ; l'attelage magnetique vers le wagon suivant vire au rouge et se contracte ; tous les wagons aval passent simultanement en rouge d'invalidation. | L'effet domino est spectaculaire et illustre sans ambiguite la rupture de confiance. |
+| Re-synchronisation (Minage) | Un bouton "Valider / recalculer" permet a l'utilisateur de simuler le travail requis pour recalculer un Nonce valide debutant par 0000 et retablir l'attelage au vert. | Conclut la demonstration en montrant l'effort computationnel impose pour retablir la validite. |
+| Reinitialisation | Un bouton "Reinitialiser le wagon" permet de revenir a l'etat initial conforme en un clic. | Facilite les iterations de test et d'apprentissage. |
 
 #### d) Correspondance avec la realite technique
 | Element visuel | Element reel | Fidelite |
 |:---|:---|:---|
-| Rupture des liens et bascule en rouge | Rejet par les regles de consensus des blocs dont le previousHash ne matche plus | Exacte sur la cascade d'invalidation. |
+| Mutation immediate du hash au clavier | Sensibilite extreme de la fonction de hachage SHA-256 a la moindre modification d'entree | Exacte sur le principe de l'effet avalanche. |
+| Rupture rouge de l'attelage et rejet des wagons suivants | Regle de consensus : rejet par les noeuds de tout bloc dont l'empreinte ne correspond pas a celle attendue | Rigoureuse et fidele a la verification de registre distribue. |
+| Recalcul du Nonce et attelage retabli | Recalcul de la preuve de travail pour forger un bloc valide apres modification | Exacte dans sa logique algorithmique. |
 
 #### e) Alternative ecartee
 | Alternative | Raison du rejet |
 |:---|:---|
-| Simple message texte d'erreur sans animation 3D | Ne tire aucun parti de Three.js et manque cruellement d'impact pedagogique. |
+| Simple message d'erreur pop-up sans modification des materiaux 3D | Occulte le lien de cause a effet physique et frustre l'utilisateur en masquant la 3D. |
 
 #### f) Tests utilisateurs
 | Observation prevue | Modification prevue | Issue associee |
 |:---|:---|:---|
-| Observer la surprise et la deduction de l'utilisateur face a la rupture en cascade. | Calibrer la vitesse de l'effet d'avalanche pour que chaque wagon soit vu en train de rompre. | Phase de tests. |
+| Observer la surprise et la deduction de l'utilisateur face a la rupture en cascade. | Calibrer la vitesse de l'effet d'avalanche pour que chaque wagon soit vu en train de rompre. | #17 |
 
 #### g) Limites assumees
 La rupture se propage de facon quasi instantanee a des fins visuelles, alors que sur un reseau reel elle intervient au moment du broadcast des blocs.

@@ -9,15 +9,127 @@
 <body>
   <div id="app">
     <canvas id="webgl"></canvas>
-    <header class="hud-header">
-      <h1>Le Convoi Ferroviaire</h1>
-      <p class="subtitle">Visualisation pedagogique de la blockchain avec Three.js</p>
-    </header>
-    <div class="hud-info">
-      <p class="badge">Jalon 1 - Scene 3D initialisee</p>
-      <p class="desc">Mesh temoin : Wagon 0 (Bloc Genesis) sur rails</p>
+
+    <!-- Superposition HUD 2D -->
+    <div id="hud">
+      <!-- En-tete superieur -->
+      <header class="hud-top">
+        <div class="hud-brand">
+          <div class="brand-row">
+            <h1>Visualisation Blockchain</h1>
+            <span class="metaphor-tag">Le Convoi Ferroviaire</span>
+          </div>
+          <h2 id="sequence-title" class="sequence-title">Sequence 1 : Structure d'un bloc</h2>
+          <p id="sequence-desc" class="sequence-desc">Anatomie d'un wagon : conteneurs de transactions, plaques de hachage et molette du nonce.</p>
+        </div>
+
+        <div class="hud-stats">
+          <div class="stat-pill">
+            <span class="stat-dot"></span>
+            <span id="fps-counter">60 FPS</span>
+          </div>
+          <div class="help-hint">Clic gauche pour inspecter un wagon | Orbite et zoom libres</div>
+        </div>
+      </header>
+
+      <!-- Barre de navigation inferieure (7 notions) -->
+      <nav class="hud-bottom" aria-label="Navigation des sequences">
+        <div class="nav-bar">
+          <button id="btn-prev" class="nav-arrow" title="Sequence precedente" aria-label="Precedent">
+            &larr; Precedent
+          </button>
+
+          <div class="nav-steps">
+            <button class="step-btn active" data-step="1">
+              <span class="step-num">1</span>
+              <span class="step-name">Structure</span>
+            </button>
+            <button class="step-btn" data-step="2">
+              <span class="step-num">2</span>
+              <span class="step-name">Chainage</span>
+            </button>
+            <button class="step-btn" data-step="3">
+              <span class="step-num">3</span>
+              <span class="step-name">Immutabilite</span>
+            </button>
+            <button class="step-btn" data-step="4">
+              <span class="step-num">4</span>
+              <span class="step-name">Reseau</span>
+            </button>
+            <button class="step-btn" data-step="5">
+              <span class="step-num">5</span>
+              <span class="step-name">Minage</span>
+            </button>
+            <button class="step-btn" data-step="6">
+              <span class="step-num">6</span>
+              <span class="step-name">Consensus</span>
+            </button>
+            <button class="step-btn" data-step="7">
+              <span class="step-num">7</span>
+              <span class="step-name">Attaque</span>
+            </button>
+          </div>
+
+          <button id="btn-next" class="nav-arrow" title="Sequence suivante" aria-label="Suivant">
+            Suivant &rarr;
+          </button>
+        </div>
+      </nav>
+
+      <!-- Panneau lateral droit d'inspection du wagon -->
+      <aside id="inspection-sidebar" class="hud-sidebar" aria-hidden="true">
+        <div class="sidebar-header">
+          <div class="sidebar-title-group">
+            <span class="sidebar-badge">Inspection 3D</span>
+            <h2 id="sidebar-wagon-title">Wagon #0 (Bloc Genesis)</h2>
+          </div>
+          <button id="btn-close-sidebar" class="btn-close" aria-label="Fermer le panneau">&times;</button>
+        </div>
+
+        <div class="sidebar-body">
+          <div class="field-group">
+            <label for="field-index">Index du bloc</label>
+            <input type="text" id="field-index" readonly value="0">
+          </div>
+
+          <div class="field-group">
+            <label for="field-data">Marchandises transportees (Transactions)</label>
+            <textarea id="field-data" rows="3" placeholder="Saisissez ou modifiez les transactions..."></textarea>
+            <span class="field-helper">Modifiez le texte pour simuler une alteration de transaction.</span>
+          </div>
+
+          <div class="field-group">
+            <label for="field-prev-hash">Attelage precedent (previousHash)</label>
+            <input type="text" id="field-prev-hash" class="code-font" readonly value="0000000000000000">
+          </div>
+
+          <div class="field-group">
+            <label for="field-hash">Plaque d'empreinte gravee (hash)</label>
+            <input type="text" id="field-hash" class="code-font" readonly value="0000a89f41b2c3d4">
+          </div>
+
+          <div class="field-group">
+            <label for="field-nonce">Molette de verrouillage (Nonce)</label>
+            <input type="text" id="field-nonce" class="code-font" readonly value="2084">
+          </div>
+
+          <div class="field-group">
+            <label>Etat de l'attelage magnetique</label>
+            <div id="field-status" class="status-indicator valid">
+              <span class="status-bulb"></span>
+              <span id="field-status-text">Attelage magnetique actif</span>
+            </div>
+          </div>
+
+          <div class="sidebar-actions">
+            <button id="btn-recalculate" class="btn-primary">Valider / recalculer</button>
+            <button id="btn-reset-block" class="btn-secondary">Reinitialiser le wagon</button>
+          </div>
+        </div>
+      </aside>
     </div>
   </div>
+
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>
