@@ -120,7 +120,7 @@ function setupEnvironment() {
   envGroup.add(groundMesh);
 
   // Rails longitudinaux le long de l'axe X (espacement de 1.32 adapte aux essieux)
-  const railLength = 90;
+  const railLength = 100;
   const railDistance = 1.32;
   const railGeometry = new THREE.BoxGeometry(railLength, 0.12, 0.08);
   const railMaterial = new THREE.MeshStandardMaterial({
@@ -129,16 +129,17 @@ function setupEnvironment() {
     roughness: 0.2
   });
 
+  const railCenterX = 6;
   const railLeft = new THREE.Mesh(railGeometry, railMaterial);
-  railLeft.position.set(-12, -0.32, -railDistance / 2);
+  railLeft.position.set(railCenterX, -0.32, -railDistance / 2);
   envGroup.add(railLeft);
 
   const railRight = new THREE.Mesh(railGeometry, railMaterial);
-  railRight.position.set(-12, -0.32, railDistance / 2);
+  railRight.position.set(railCenterX, -0.32, railDistance / 2);
   envGroup.add(railRight);
 
   // Traverses de voie ferree regulieres
-  const sleeperCount = 80;
+  const sleeperCount = 90;
   const sleeperSpacing = 1.1;
   const sleeperGeometry = new THREE.BoxGeometry(0.3, 0.08, 1.9);
   const sleeperMaterial = new THREE.MeshStandardMaterial({
@@ -147,7 +148,7 @@ function setupEnvironment() {
     metalness: 0.2
   });
 
-  const startX = -12 - (sleeperCount * sleeperSpacing) / 2;
+  const startX = railCenterX - (sleeperCount * sleeperSpacing) / 2;
   for (let i = 0; i < sleeperCount; i++) {
     const sleeper = new THREE.Mesh(sleeperGeometry, sleeperMaterial);
     sleeper.position.set(startX + i * sleeperSpacing, -0.42, 0);
@@ -204,24 +205,42 @@ const sequencesInfo = [
     step: 1,
     title: "Sequence 1 : Structure d'un bloc",
     desc: "Anatomie d'un wagon : coffre de transactions, plaque gravée SHA-256, connecteur previousHash et molette de Nonce.",
-    getCamPos: () => new THREE.Vector3(1.6, 2.0, 4.4),
-    getCamTarget: () => new THREE.Vector3(0, 0.4, 0),
+    getCamPos: () => {
+      const pos = trainConvoy.getWagonPosition(0);
+      return new THREE.Vector3(pos.x + 2.0, 2.0, 4.2);
+    },
+    getCamTarget: () => {
+      const pos = trainConvoy.getWagonPosition(0);
+      return new THREE.Vector3(pos.x, 0.45, 0);
+    },
     wagonIndex: 0
   },
   {
     step: 2,
     title: "Sequence 2 : Chainage cryptographique",
     desc: "L'attelage magnetique scelle le wagon precedent au suivant. Chaque bloc integre l'empreinte du wagon qui le precede.",
-    getCamPos: () => new THREE.Vector3(-1.0, 1.8, 3.8),
-    getCamTarget: () => new THREE.Vector3(-1.9, 0.3, 0),
+    getCamPos: () => {
+      const pos = trainConvoy.getWagonPosition(1);
+      return new THREE.Vector3(pos.x - 2.5, 1.4, 2.6);
+    },
+    getCamTarget: () => {
+      const pos = trainConvoy.getWagonPosition(1);
+      return new THREE.Vector3(pos.x - 1.9, 0.4, 0);
+    },
     wagonIndex: 1
   },
   {
     step: 3,
     title: "Sequence 3 : Immutabilite et falsification",
     desc: "Modifiez les transactions dans le panneau lateral : la rupture de l'attelage magnetique invalide instantanement tous les wagons suivants.",
-    getCamPos: () => new THREE.Vector3(-2.2, 2.2, 4.8),
-    getCamTarget: () => new THREE.Vector3(-3.8, 0.4, 0),
+    getCamPos: () => {
+      const pos = trainConvoy.getWagonPosition(1);
+      return new THREE.Vector3(pos.x + 2.0, 2.0, 4.4);
+    },
+    getCamTarget: () => {
+      const pos = trainConvoy.getWagonPosition(1);
+      return new THREE.Vector3(pos.x, 0.45, 0);
+    },
     wagonIndex: 1
   },
   {
@@ -230,7 +249,7 @@ const sequencesInfo = [
     desc: "Vue elargie du convoi : chaque participant au reseau conserve une copie conforme de l'integralite du convoi ferroviaire.",
     getCamPos: () => {
       const center = trainConvoy.getTrainCenter();
-      return new THREE.Vector3(center.x, 6.0, 13.5);
+      return new THREE.Vector3(center.x, 5.5, 13.0);
     },
     getCamTarget: () => trainConvoy.getTrainCenter(),
     wagonIndex: 2
@@ -256,7 +275,7 @@ const sequencesInfo = [
     desc: "Confrontation energetique : la preuve de travail consomme de la puissance de calcul, la preuve d'enjeu sequestre des garanties.",
     getCamPos: () => {
       const center = trainConvoy.getTrainCenter();
-      return new THREE.Vector3(center.x + 2.0, 7.5, 15.0);
+      return new THREE.Vector3(center.x, 7.0, 15.0);
     },
     getCamTarget: () => trainConvoy.getTrainCenter(),
     wagonIndex: 1
@@ -265,7 +284,10 @@ const sequencesInfo = [
     step: 7,
     title: "Sequence 7 : Cycle de vie et illustration d'attaque",
     desc: "Trajectoire d'une transaction du quai d'embarquement jusqu'a son scellement definitif et rejet des tentatives de double depense.",
-    getCamPos: () => new THREE.Vector3(3.5, 3.5, 8.5),
+    getCamPos: () => {
+      const center = trainConvoy.getTrainCenter();
+      return new THREE.Vector3(center.x, 4.5, 11.0);
+    },
     getCamTarget: () => trainConvoy.getTrainCenter(),
     wagonIndex: 0
   }
@@ -347,14 +369,14 @@ function applyViewAngle(viewMode, wagonIndex = inspectedBlockIndex, duration = 1
       break;
 
     case 'coupler':
-      // Vue rapprochee sur l'attelage cryptographique et la plaque transversale previousHash
+      // Vue rapprochee sur l'attelage cryptographique et la plaque transversale previousHash a gauche
       if (wagonIndex > 0) {
-        targetPos = new THREE.Vector3(wagonPos.x + 2.7, 1.3, 2.3);
-        targetLookAt = new THREE.Vector3(wagonPos.x + 1.6, 0.45, 0);
+        targetPos = new THREE.Vector3(wagonPos.x - 2.6, 1.3, 2.4);
+        targetLookAt = new THREE.Vector3(wagonPos.x - 1.6, 0.45, 0);
       } else {
-        // Pour le wagon Genesis, focus sur la prise arriere vers le premier maillon
-        targetPos = new THREE.Vector3(wagonPos.x - 0.4, 1.3, 2.3);
-        targetLookAt = new THREE.Vector3(wagonPos.x - 1.5, 0.45, 0);
+        // Pour le wagon Genesis, focus sur la prise droite vers le wagon suivant
+        targetPos = new THREE.Vector3(wagonPos.x + 2.6, 1.3, 2.4);
+        targetLookAt = new THREE.Vector3(wagonPos.x + 1.5, 0.45, 0);
       }
       break;
 
@@ -370,7 +392,7 @@ function applyViewAngle(viewMode, wagonIndex = inspectedBlockIndex, duration = 1
     default:
       currentViewMode = 'quarter';
       // Vue de trois-quarts perspective equilibrant volume, cargaison et lisibilite
-      targetPos = new THREE.Vector3(wagonPos.x + 2.4, 2.0, 4.2);
+      targetPos = new THREE.Vector3(wagonPos.x + 2.0, 2.0, 4.2);
       targetLookAt = new THREE.Vector3(wagonPos.x, 0.45, 0);
       break;
   }

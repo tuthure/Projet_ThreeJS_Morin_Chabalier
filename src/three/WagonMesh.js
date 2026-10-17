@@ -383,13 +383,14 @@ export class WagonMesh extends THREE.Group {
   }
 
   /**
-   * Construit la prise d'attelage arriere du wagon (Socket du Hash propre).
+   * Construit la prise d'attelage arriere du wagon (Socket du Hash propre vers le wagon suivant).
    * L'anneau arriere prend la couleur deterministe associee a son propre hash (colorHash).
+   * Comme le convoi se lit de gauche a droite, le wagon suivant se situe a droite (+X).
    */
   buildRearSocket() {
     this.rearSocketGroup = new THREE.Group();
 
-    // Bras arriere metallique
+    // Bras arriere metallique oriente vers la droite (+X)
     const armGeo = new THREE.BoxGeometry(0.18, 0.16, 0.32);
     const armMat = new THREE.MeshStandardMaterial({
       color: 0x334155,
@@ -397,7 +398,7 @@ export class WagonMesh extends THREE.Group {
       roughness: 0.3
     });
     const arm = new THREE.Mesh(armGeo, armMat);
-    arm.position.set(-1.38, 0, 0);
+    arm.position.set(1.38, 0, 0);
     this.rearSocketGroup.add(arm);
 
     // Anneau de prise arriere : prend la couleur exacte du hash du bloc !
@@ -411,7 +412,7 @@ export class WagonMesh extends THREE.Group {
     });
     const ring = new THREE.Mesh(ringGeo, this.rearRingMaterial);
     ring.rotation.z = Math.PI / 2;
-    ring.position.set(-1.48, 0, 0);
+    ring.position.set(1.48, 0, 0);
     this.rearSocketGroup.add(ring);
 
     this.add(this.rearSocketGroup);
@@ -420,11 +421,12 @@ export class WagonMesh extends THREE.Group {
   /**
    * Construit l'attelage cryptographique avant reliant ce wagon au precedent (previousHash).
    * L'anneau avant prend la couleur exacte du previousHash, concordant avec l'anneau arriere du precedent.
+   * L'attelage s'etend vers la gauche (-X) vers le wagon precedent.
    */
   buildCoupler() {
     this.couplerGroup = new THREE.Group();
 
-    // Le wagon Genesis n'a pas de predecesseur auquel s'atteler
+    // Le wagon Genesis n'a pas de predecesseur a sa gauche auquel s'atteler
     if (this.block.index === 0) {
       const frontAnchorGeo = new THREE.BoxGeometry(0.18, 0.18, 0.4);
       const frontAnchorMat = new THREE.MeshStandardMaterial({
@@ -433,13 +435,13 @@ export class WagonMesh extends THREE.Group {
         roughness: 0.3
       });
       const frontAnchor = new THREE.Mesh(frontAnchorGeo, frontAnchorMat);
-      frontAnchor.position.set(1.36, 0, 0);
+      frontAnchor.position.set(-1.36, 0, 0);
       this.add(frontAnchor);
       return;
     }
 
     const linkLength = Math.max(0.6, this.spacing - 2.6);
-    const linkCenterX = 1.3 + linkLength / 2;
+    const linkCenterX = -(1.3 + linkLength / 2);
 
     // Tube protecteur mecanique
     const sleeveGeo = new THREE.CylinderGeometry(0.11, 0.11, linkLength, 16);
@@ -587,9 +589,9 @@ export class WagonMesh extends THREE.Group {
         side: THREE.DoubleSide
       });
       const prevPlate = new THREE.Mesh(prevPlateGeo, prevPlateMat);
-      // Parfaitement droite et orthogonale : alignee sur la face arriere du wagon
-      prevPlate.rotation.set(0, Math.PI / 2, 0);
-      prevPlate.position.set(1.185, 0.62, 0);
+      // Parfaitement droite et orthogonale : alignee sur la face gauche vers le wagon precedent
+      prevPlate.rotation.set(0, -Math.PI / 2, 0);
+      prevPlate.position.set(-1.185, 0.62, 0);
       this.platesGroup.add(prevPlate);
     }
 
@@ -775,8 +777,8 @@ export class WagonMesh extends THREE.Group {
       nonce: new THREE.Vector3(0, 0.2, 0.71),
       // 3. Le Hash actuel sur l'etiquette centrale
       hash: new THREE.Vector3(0, 0.62, 0.61),
-      // 4. L'attelage avant et plaque previousHash sur la face transversale
-      previousHash: new THREE.Vector3(1.185, 0.62, 0)
+      // 4. L'attelage avant et plaque previousHash sur la face transversale gauche
+      previousHash: new THREE.Vector3(-1.185, 0.62, 0)
     };
   }
 
@@ -874,7 +876,7 @@ export class WagonMesh extends THREE.Group {
 
       if (this.couplerGroup && this.couplerBeamMaterial) {
         this.couplerGroup.position.y = this.defaultCouplerPosition.y - 0.22;
-        this.couplerGroup.rotation.z = -0.18;
+        this.couplerGroup.rotation.z = 0.18;
 
         this.couplerBeamMaterial.color.setHex(0x7f1d1d);
         this.couplerBeamMaterial.emissive.setHex(0x7f1d1d);

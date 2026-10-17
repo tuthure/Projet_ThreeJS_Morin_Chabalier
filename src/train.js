@@ -64,8 +64,8 @@ export class TrainConvoy {
       const block = chain[i];
       const wagon = new WagonMesh(block, { spacing: this.spacing });
 
-      // Alignement du convoi le long de l'axe X (le train grandit vers les X negatifs)
-      wagon.position.set(-i * this.spacing, 0, 0);
+      // Alignement du convoi le long de l'axe X (le train grandit vers les X positifs, de gauche a droite)
+      wagon.position.set(i * this.spacing, 0, 0);
 
       this.group.add(wagon);
       this.wagonMeshes.push(wagon);
@@ -124,7 +124,7 @@ export class TrainConvoy {
       wagon.getWorldPosition(pos);
       return pos;
     }
-    return new THREE.Vector3(-index * this.spacing, 0, 0);
+    return new THREE.Vector3(index * this.spacing, 0, 0);
   }
 
   /**
@@ -133,7 +133,7 @@ export class TrainConvoy {
    */
   getTrainCenter() {
     const count = this.wagonMeshes.length;
-    const centerX = count > 0 ? -((count - 1) * this.spacing) / 2 : 0;
+    const centerX = count > 0 ? ((count - 1) * this.spacing) / 2 : 0;
     return new THREE.Vector3(centerX, 0.4, 0);
   }
 
