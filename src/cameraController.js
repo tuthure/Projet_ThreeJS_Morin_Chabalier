@@ -87,9 +87,9 @@ export class CameraController {
       const intersects = this.raycaster.intersectObjects(this.interactiveObjects, true);
 
       if (intersects.length > 0) {
-        // Remonte jusqu'au groupe wagon porteur des donnees
+        // Remonte jusqu'au groupe wagon ou locomotive porteur des donnees
         let obj = intersects[0].object;
-        while (obj && !obj.userData.blockData && obj.parent) {
+        while (obj && !obj.userData.blockData && !obj.userData.isLocomotive && obj.parent) {
           obj = obj.parent;
         }
 
@@ -99,6 +99,12 @@ export class CameraController {
 
           if (typeof this.onSelectBlock === 'function') {
             this.onSelectBlock(blockData, obj);
+          }
+        } else if (obj && obj.userData.isLocomotive) {
+          this.focusOnObject(obj, new THREE.Vector3(3.5, 2.2, 4.0), 1.0);
+
+          if (typeof this.onSelectBlock === 'function') {
+            this.onSelectBlock({ isLocomotive: true }, obj);
           }
         }
       }

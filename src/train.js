@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Block } from './blockchain/Block.js';
 import { Blockchain } from './blockchain/Blockchain.js';
 import { WagonMesh } from './three/WagonMesh.js';
+import { LocomotiveMesh } from './three/LocomotiveMesh.js';
 
 /**
  * Espacement standard longitudinal entre deux wagons consecutifs.
@@ -31,6 +32,11 @@ export class TrainConvoy {
 
     this.group = new THREE.Group();
     this.scene.add(this.group);
+
+    // Locomotive de tete tractant le convoi (moteur de consensus)
+    this.locomotiveMesh = new LocomotiveMesh({ spacing: this.spacing });
+    this.locomotiveMesh.position.set(-this.spacing, 0, 0);
+    this.group.add(this.locomotiveMesh);
   }
 
   /**
@@ -71,11 +77,16 @@ export class TrainConvoy {
       this.wagonMeshes.push(wagon);
     }
 
-    // 2. Propagation des etats de validite a chaque wagon 3D
+    // 2. Propagation des etats de validite a chaque wagon 3D et a la locomotive
     for (let i = 0; i < this.wagonMeshes.length; i++) {
       const wagon = this.wagonMeshes[i];
       const isValid = validityList[i] ?? false;
       wagon.updateStatus(isValid);
+    }
+
+    const isAllValid = validityList.every((val) => val === true);
+    if (this.locomotiveMesh) {
+      this.locomotiveMesh.updateStatus(isAllValid);
     }
 
     // 3. Notification d'ecouteur d'evenements
@@ -87,7 +98,15 @@ export class TrainConvoy {
   }
 
   /**
-   * Retourne la liste des groupes WagonMesh pour les interactions de raycasting.
+   * Retourne l'ensemble des elements cliquables (Locomotive + Wagons) pour le raycaster.
+   * @returns {Array<THREE.Object3D>}
+   */
+  getInteractiveObjects() {
+    return this.locomotiveMesh ? [this.locomotiveMesh, ...this.wagonMeshes] : this.wagonMeshes;
+  }
+
+  /**
+   * Retourne la liste des groupes WagonMesh pour les interactions directes.
    * @returns {WagonMesh[]}
    */
   getWagonMeshes() {
@@ -128,12 +147,14 @@ export class TrainConvoy {
   }
 
   /**
-   * Barycentre du train complet pour le positionnement de camera en vue d'ensemble.
+   * Barycentre du train complet (Locomotive + Wagons) pour la vue d'ensemble.
    * @returns {THREE.Vector3}
    */
   getTrainCenter() {
     const count = this.wagonMeshes.length;
-    const centerX = count > 0 ? ((count - 1) * this.spacing) / 2 : 0;
+    const minX = -this.spacing;
+    const maxX = count > 0 ? (count - 1) * this.spacing : 0;
+    const centerX = (minX + maxX) / 2;
     return new THREE.Vector3(centerX, 0.4, 0);
   }
 
@@ -247,6 +268,10 @@ export class TrainConvoy {
    * @param {number} elapsedTime - Temps ecoule en secondes.
    */
   animateSuspension(elapsedTime) {
+    if (this.locomotiveMesh) {
+      this.locomotiveMesh.position.y = Math.sin(elapsedTime * 1.8 - 0.7) * 0.025;
+      this.locomotiveMesh.animate(elapsedTime);
+    }
     for (let i = 0; i < this.wagonMeshes.length; i++) {
       const wagon = this.wagonMeshes[i];
       wagon.position.y = Math.sin(elapsedTime * 1.8 + i * 0.7) * 0.025;
@@ -270,4 +295,4 @@ export class TrainConvoy {
   }
 }
 
-export { Block, Blockchain, WagonMesh };
+export { Block, Blockchain, WagonMesh, LocomotiveMesh };

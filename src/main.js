@@ -193,9 +193,13 @@ trainConvoy.init([
 // 6. Controleur de Camera et Interactions
 // ============================================================================
 const cameraController = new CameraController(camera, renderer.domElement, (blockData) => {
-  selectWagon(blockData.index, false);
+  if (blockData?.isLocomotive) {
+    openLocomotiveSidebar();
+  } else if (typeof blockData?.index === 'number') {
+    selectWagon(blockData.index, false);
+  }
 });
-cameraController.setInteractiveObjects(trainConvoy.getWagonMeshes());
+cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
 
 // ============================================================================
 // 7. Navigation Pedagogique des 7 Notions
@@ -370,14 +374,8 @@ function applyViewAngle(viewMode, wagonIndex = inspectedBlockIndex, duration = 1
 
     case 'coupler':
       // Vue rapprochee sur l'attelage cryptographique et la plaque transversale previousHash a gauche
-      if (wagonIndex > 0) {
-        targetPos = new THREE.Vector3(wagonPos.x - 2.6, 1.3, 2.4);
-        targetLookAt = new THREE.Vector3(wagonPos.x - 1.6, 0.45, 0);
-      } else {
-        // Pour le wagon Genesis, focus sur la prise droite vers le wagon suivant
-        targetPos = new THREE.Vector3(wagonPos.x + 2.6, 1.3, 2.4);
-        targetLookAt = new THREE.Vector3(wagonPos.x + 1.5, 0.45, 0);
-      }
+      targetPos = new THREE.Vector3(wagonPos.x - 2.6, 1.3, 2.4);
+      targetLookAt = new THREE.Vector3(wagonPos.x - 1.6, 0.45, 0);
       break;
 
     case 'overview': {
@@ -460,11 +458,30 @@ if (btnWagonNext) {
 // ============================================================================
 // 9. Panneau Lateral d'Inspection (Sidebar / Drawer en lecture seule)
 // ============================================================================
+function openLocomotiveSidebar() {
+  if (sidebarTitleEl) sidebarTitleEl.textContent = 'Locomotive (Moteur de Consensus)';
+  if (fieldIndex) fieldIndex.value = 'Traction';
+  if (fieldData) {
+    fieldData.value = 'Moteur du reseau blockchain :\n- Protocole d\'echange et propagation P2P\n- Force motrice du consensus\n- Tracte l\'ensemble des wagons du registre immuable.';
+  }
+  if (fieldPrevHash) fieldPrevHash.value = 'Tete de ligne (aucun predecesseur)';
+  if (fieldHash) fieldHash.value = '0000000000000000 [ANCRAGE GENESIS]';
+  if (fieldNonce) fieldNonce.value = 'Traction active';
+
+  const summary = trainConvoy.getSummary();
+  updateSidebarStatus(summary.isValid);
+
+  if (sidebarEl) {
+    sidebarEl.classList.add('open');
+    sidebarEl.setAttribute('aria-hidden', 'false');
+  }
+}
+
 function openInspectionSidebar(block) {
   if (!block) return;
   inspectedBlockIndex = block.index;
 
-  const wagonLabel = block.index === 0 ? 'Locomotive #0 (Bloc Genesis)' : `Wagon #${block.index} (Bloc #${block.index})`;
+  const wagonLabel = block.index === 0 ? 'Wagon #0 (Bloc Genesis)' : `Wagon #${block.index} (Bloc #${block.index})`;
   if (sidebarTitleEl) sidebarTitleEl.textContent = wagonLabel;
 
   if (fieldIndex) fieldIndex.value = block.index;
@@ -602,7 +619,7 @@ window.blockchain = {
 
   addBlock: (data) => {
     const newBlock = trainConvoy.addBlock(data);
-    cameraController.setInteractiveObjects(trainConvoy.getWagonMeshes());
+    cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
     return newBlock;
   },
 
