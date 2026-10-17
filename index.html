@@ -42,10 +42,12 @@
               <span id="fps-counter">60 FPS</span>
             </div>
           </div>
-          <div class="hud-quick-actions">
-            <button id="btn-add-block" class="btn btn-primary" title="Ajoute un nouveau bloc attele a la fin du train">Atteler un wagon</button>
-            <button id="btn-corrupt-block" class="btn btn-danger" title="Modifie les donnees du wagon 1 pour provoquer la rupture d'attelage">Falsifier wagon 1</button>
-            <button id="btn-restore-chain" class="btn btn-secondary" title="Retablit les donnees originales du convoi">Retablir convoi</button>
+          <div class="hud-view-angles">
+            <span class="view-angles-label">Vues :</span>
+            <button id="btn-view-quarter" class="btn btn-view active" title="Vue de trois-quarts perspective">Perspective</button>
+            <button id="btn-view-profile" class="btn btn-view" title="Vue de profil sur les marchandises et la molette">Profil</button>
+            <button id="btn-view-coupler" class="btn btn-view" title="Vue rapprochée sur l'attelage et la plaque previousHash">Attelage</button>
+            <button id="btn-view-overview" class="btn btn-view" title="Vue d'ensemble sur le convoi complet">Convoi</button>
           </div>
           <div class="help-hint">Clic gauche pour inspecter un wagon | Orbite et zoom libres</div>
         </div>
@@ -102,7 +104,11 @@
             <span class="sidebar-badge">Inspection 3D</span>
             <h2 id="sidebar-wagon-title">Wagon #0 (Bloc Genesis)</h2>
           </div>
-          <button id="btn-close-sidebar" class="btn-close" aria-label="Fermer le panneau">&times;</button>
+          <div class="sidebar-header-actions">
+            <button id="btn-wagon-prev" class="btn-nav-wagon" title="Wagon précédent">&larr;</button>
+            <button id="btn-wagon-next" class="btn-nav-wagon" title="Wagon suivant">&rarr;</button>
+            <button id="btn-close-sidebar" class="btn-close" aria-label="Fermer le panneau">&times;</button>
+          </div>
         </div>
 
         <div class="sidebar-body">
@@ -113,8 +119,7 @@
 
           <div class="field-group">
             <label for="field-data">Marchandises transportees (Transactions)</label>
-            <textarea id="field-data" rows="3" placeholder="Saisissez ou modifiez les transactions..."></textarea>
-            <span class="field-helper">Modifiez le texte pour simuler une alteration de transaction.</span>
+            <textarea id="field-data" rows="3" readonly></textarea>
           </div>
 
           <div class="field-group">
@@ -138,11 +143,6 @@
               <span class="status-bulb"></span>
               <span id="field-status-text">Attelage magnetique actif</span>
             </div>
-          </div>
-
-          <div class="sidebar-actions">
-            <button id="btn-recalculate" class="btn-primary">Valider / recalculer</button>
-            <button id="btn-reset-block" class="btn-secondary">Reinitialiser le wagon</button>
           </div>
         </div>
       </aside>

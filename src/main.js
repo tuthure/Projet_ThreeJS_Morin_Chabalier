@@ -26,14 +26,18 @@ const stepButtons = document.querySelectorAll('.step-btn');
 const btnPrev = document.getElementById('btn-prev');
 const btnNext = document.getElementById('btn-next');
 
-// Actions rapides
-const btnAddBlock = document.getElementById('btn-add-block');
-const btnCorruptBlock = document.getElementById('btn-corrupt-block');
-const btnRestoreChain = document.getElementById('btn-restore-chain');
+// Boutons de changement d'angle de vue
+const btnViewQuarter = document.getElementById('btn-view-quarter');
+const btnViewProfile = document.getElementById('btn-view-profile');
+const btnViewCoupler = document.getElementById('btn-view-coupler');
+const btnViewOverview = document.getElementById('btn-view-overview');
+const viewButtons = [btnViewQuarter, btnViewProfile, btnViewCoupler, btnViewOverview].filter(Boolean);
 
 // Panneau lateral droit d'inspection (Drawer)
 const sidebarEl = document.getElementById('inspection-sidebar');
 const btnCloseSidebar = document.getElementById('btn-close-sidebar');
+const btnWagonPrev = document.getElementById('btn-wagon-prev');
+const btnWagonNext = document.getElementById('btn-wagon-next');
 const sidebarTitleEl = document.getElementById('sidebar-wagon-title');
 const fieldIndex = document.getElementById('field-index');
 const fieldData = document.getElementById('field-data');
@@ -42,8 +46,6 @@ const fieldHash = document.getElementById('field-hash');
 const fieldNonce = document.getElementById('field-nonce');
 const fieldStatus = document.getElementById('field-status');
 const fieldStatusText = document.getElementById('field-status-text');
-const btnRecalculate = document.getElementById('btn-recalculate');
-const btnResetBlock = document.getElementById('btn-reset-block');
 
 // ============================================================================
 // 2. Scene, Canvas et Moteur de Rendu Three.js
@@ -185,9 +187,10 @@ trainConvoy.init([
 // 6. Controleur de Camera et Interactions
 // ============================================================================
 let inspectedBlockIndex = 0;
+let currentViewMode = 'quarter';
 
 const cameraController = new CameraController(camera, renderer.domElement, (blockData) => {
-  openInspectionSidebar(blockData);
+  selectWagon(blockData.index, false);
 });
 cameraController.setInteractiveObjects(trainConvoy.getWagonMeshes());
 
@@ -291,10 +294,7 @@ function setSequence(stepNumber) {
 
   // Ouvre le panneau sur le wagon associe si pertinent
   if (seq.wagonIndex !== null) {
-    const targetBlock = trainConvoy.getBlock(seq.wagonIndex);
-    if (targetBlock) {
-      openInspectionSidebar(targetBlock);
-    }
+    selectWagon(seq.wagonIndex, false);
   }
 }
 
@@ -317,7 +317,124 @@ if (btnNext) {
 }
 
 // ============================================================================
-// 8. Panneau Lateral d'Inspection (Sidebar / Drawer)
+// 8. Gestion des Angles de Vue et Navigation Inter-Wagons
+// ============================================================================
+
+/**
+ * Applique un angle de vue cinematographique specifique autour du wagon cible
+ * ou sur l'ensemble du convoi.
+ * @param {'quarter'|'profile'|'coupler'|'overview'} viewMode - Type de vue demande.
+ * @param {number} [wagonIndex=inspectedBlockIndex] - Index du wagon concerne.
+ * @param {number} [duration=1.0] - Duree de la transition camera en secondes.
+ */
+function applyViewAngle(viewMode, wagonIndex = inspectedBlockIndex, duration = 1.0) {
+  currentViewMode = viewMode;
+
+  // Mise a jour visuelle des boutons d'angles de vue
+  viewButtons.forEach((btn) => {
+    btn.classList.toggle('active', btn.id === `btn-view-${viewMode}`);
+  });
+
+  const wagonPos = trainConvoy.getWagonPosition(wagonIndex);
+  let targetPos;
+  let targetLookAt;
+
+  switch (viewMode) {
+    case 'profile':
+      // Vue de profil orthogonale axee sur la marchandise, le chassis et la molette du nonce
+      targetPos = new THREE.Vector3(wagonPos.x, 0.7, 4.2);
+      targetLookAt = new THREE.Vector3(wagonPos.x, 0.45, 0);
+      break;
+
+    case 'coupler':
+      // Vue rapprochee sur l'attelage cryptographique et la plaque transversale previousHash
+      if (wagonIndex > 0) {
+        targetPos = new THREE.Vector3(wagonPos.x + 2.7, 1.3, 2.3);
+        targetLookAt = new THREE.Vector3(wagonPos.x + 1.6, 0.45, 0);
+      } else {
+        // Pour le wagon Genesis, focus sur la prise arriere vers le premier maillon
+        targetPos = new THREE.Vector3(wagonPos.x - 0.4, 1.3, 2.3);
+        targetLookAt = new THREE.Vector3(wagonPos.x - 1.5, 0.45, 0);
+      }
+      break;
+
+    case 'overview': {
+      // Vue d'ensemble sur le convoi complet
+      const center = trainConvoy.getTrainCenter();
+      targetPos = new THREE.Vector3(center.x, 5.0, 12.0);
+      targetLookAt = new THREE.Vector3(center.x, 0.4, 0);
+      break;
+    }
+
+    case 'quarter':
+    default:
+      currentViewMode = 'quarter';
+      // Vue de trois-quarts perspective equilibrant volume, cargaison et lisibilite
+      targetPos = new THREE.Vector3(wagonPos.x + 2.4, 2.0, 4.2);
+      targetLookAt = new THREE.Vector3(wagonPos.x, 0.45, 0);
+      break;
+  }
+
+  cameraController.moveTo(targetPos, targetLookAt, duration);
+}
+
+if (btnViewQuarter) {
+  btnViewQuarter.addEventListener('click', () => applyViewAngle('quarter'));
+}
+if (btnViewProfile) {
+  btnViewProfile.addEventListener('click', () => applyViewAngle('profile'));
+}
+if (btnViewCoupler) {
+  btnViewCoupler.addEventListener('click', () => applyViewAngle('coupler'));
+}
+if (btnViewOverview) {
+  btnViewOverview.addEventListener('click', () => applyViewAngle('overview'));
+}
+
+/**
+ * Selectionne un wagon, actualise la sidebar et deplace la camera selon l'angle actif.
+ * @param {number} index - Index ordinal du bloc/wagon.
+ * @param {boolean} [animateCam=true] - Declencher le mouvement de camera.
+ */
+function selectWagon(index, animateCam = true) {
+  const total = trainConvoy.wagonMeshes.length;
+  if (index < 0 || index >= total) return;
+
+  inspectedBlockIndex = index;
+  const block = trainConvoy.getBlock(inspectedBlockIndex);
+  if (block) {
+    openInspectionSidebar(block);
+  }
+
+  if (animateCam) {
+    applyViewAngle(currentViewMode, inspectedBlockIndex);
+  }
+}
+
+function updateWagonNavButtons() {
+  const total = trainConvoy.wagonMeshes.length;
+  if (btnWagonPrev) btnWagonPrev.disabled = inspectedBlockIndex <= 0;
+  if (btnWagonNext) btnWagonNext.disabled = inspectedBlockIndex >= total - 1;
+}
+
+if (btnWagonPrev) {
+  btnWagonPrev.addEventListener('click', () => {
+    if (inspectedBlockIndex > 0) {
+      selectWagon(inspectedBlockIndex - 1, true);
+    }
+  });
+}
+
+if (btnWagonNext) {
+  btnWagonNext.addEventListener('click', () => {
+    if (inspectedBlockIndex < trainConvoy.wagonMeshes.length - 1) {
+      selectWagon(inspectedBlockIndex + 1, true);
+    }
+  });
+}
+
+// ============================================================================
+// 9. Panneau Lateral d'Inspection (Sidebar / Drawer en lecture seule)
 // ============================================================================
 function openInspectionSidebar(block) {
   if (!block) return;
@@ -339,6 +456,7 @@ function openInspectionSidebar(block) {
   const validityList = trainConvoy.blockchain.getBlockValidityList();
   const isValid = validityList[block.index] ?? false;
   updateSidebarStatus(isValid);
+  updateWagonNavButtons();
 
   if (sidebarEl) {
     sidebarEl.classList.add('open');
@@ -366,103 +484,6 @@ if (btnCloseSidebar) {
   });
 }
 
-// Falsification en direct via edition du champ de transactions
-if (fieldData) {
-  fieldData.addEventListener('input', () => {
-    const block = trainConvoy.getBlock(inspectedBlockIndex);
-    if (!block) return;
-
-    let parsedData = fieldData.value;
-    try {
-      parsedData = JSON.parse(fieldData.value);
-    } catch {
-      parsedData = fieldData.value;
-    }
-
-    // Falsifie les donnees sans recalculer le hash
-    trainConvoy.corruptBlock(inspectedBlockIndex, parsedData);
-
-    const validityList = trainConvoy.blockchain.getBlockValidityList();
-    const isValid = validityList[inspectedBlockIndex] ?? false;
-    updateSidebarStatus(isValid);
-  });
-}
-
-// Bouton Valider / recalculer (minage et propagation du scellement)
-if (btnRecalculate) {
-  btnRecalculate.addEventListener('click', () => {
-    const result = trainConvoy.recalculateAndMineBlock(inspectedBlockIndex, 1);
-    if (!result) return;
-
-    const updatedBlock = result.block;
-    if (fieldHash) fieldHash.value = updatedBlock.hash;
-    if (fieldNonce) fieldNonce.value = updatedBlock.nonce;
-    updateSidebarStatus(true);
-  });
-}
-
-// Bouton Reinitialiser le wagon
-if (btnResetBlock) {
-  btnResetBlock.addEventListener('click', () => {
-    trainConvoy.resetBlock(inspectedBlockIndex);
-    const block = trainConvoy.getBlock(inspectedBlockIndex);
-    if (block) {
-      openInspectionSidebar(block);
-    }
-  });
-}
-
-// ============================================================================
-// 9. Actions Rapides du HUD
-// ============================================================================
-if (btnAddBlock) {
-  btnAddBlock.addEventListener('click', () => {
-    const newBlock = trainConvoy.addBlock();
-    cameraController.setInteractiveObjects(trainConvoy.getWagonMeshes());
-    openInspectionSidebar(newBlock);
-
-    const wagonPos = trainConvoy.getWagonPosition(newBlock.index);
-    cameraController.moveTo(
-      new THREE.Vector3(wagonPos.x + 2.2, 2.2, 4.4),
-      new THREE.Vector3(wagonPos.x, 0.4, 0),
-      1.0
-    );
-  });
-}
-
-if (btnCorruptBlock) {
-  btnCorruptBlock.addEventListener('click', () => {
-    const targetIndex = 1;
-    trainConvoy.corruptBlock(targetIndex, {
-      emetteur: 'Attaquant',
-      destinataire: 'Compte-Pirate',
-      montant: 9999,
-      unite: 'MMI-Coin'
-    });
-
-    const block = trainConvoy.getBlock(targetIndex);
-    if (block) {
-      openInspectionSidebar(block);
-      const wagonPos = trainConvoy.getWagonPosition(targetIndex);
-      cameraController.moveTo(
-        new THREE.Vector3(wagonPos.x + 2.2, 2.2, 4.4),
-        new THREE.Vector3(wagonPos.x, 0.4, 0),
-        1.0
-      );
-    }
-  });
-}
-
-if (btnRestoreChain) {
-  btnRestoreChain.addEventListener('click', () => {
-    trainConvoy.restoreEntireTrain();
-    const block = trainConvoy.getBlock(inspectedBlockIndex);
-    if (block) {
-      openInspectionSidebar(block);
-    }
-  });
-}
-
 // Mise a jour visuelle des indicateurs du HUD lors des mutations de chaine
 function handleChainStateChange(summary) {
   if (chainStatusPill && chainStatusText && summary) {
@@ -481,6 +502,8 @@ function handleChainStateChange(summary) {
     const currentIsValid = validityList[inspectedBlockIndex] ?? false;
     updateSidebarStatus(currentIsValid);
   }
+
+  updateWagonNavButtons();
 }
 
 // ============================================================================
