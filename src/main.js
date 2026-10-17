@@ -464,8 +464,8 @@ function openInspectionSidebar(block) {
   if (!block) return;
   inspectedBlockIndex = block.index;
 
-  const wagonLabel = block.index === 0 ? 'Bloc Genesis' : `Bloc #${block.index}`;
-  if (sidebarTitleEl) sidebarTitleEl.textContent = `Wagon #${block.index} (${wagonLabel})`;
+  const wagonLabel = block.index === 0 ? 'Locomotive #0 (Bloc Genesis)' : `Wagon #${block.index} (Bloc #${block.index})`;
+  if (sidebarTitleEl) sidebarTitleEl.textContent = wagonLabel;
 
   if (fieldIndex) fieldIndex.value = block.index;
   if (fieldData) {
