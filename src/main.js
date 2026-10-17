@@ -47,6 +47,11 @@ const fieldNonce = document.getElementById('field-nonce');
 const fieldStatus = document.getElementById('field-status');
 const fieldStatusText = document.getElementById('field-status-text');
 
+// Variables d'etat globales de l'application
+let inspectedBlockIndex = 0;
+let currentViewMode = 'quarter';
+let currentStep = 1;
+
 // ============================================================================
 // 2. Scene, Canvas et Moteur de Rendu Three.js
 // ============================================================================
@@ -186,9 +191,6 @@ trainConvoy.init([
 // ============================================================================
 // 6. Controleur de Camera et Interactions
 // ============================================================================
-let inspectedBlockIndex = 0;
-let currentViewMode = 'quarter';
-
 const cameraController = new CameraController(camera, renderer.domElement, (blockData) => {
   selectWagon(blockData.index, false);
 });
@@ -268,8 +270,6 @@ const sequencesInfo = [
     wagonIndex: 0
   }
 ];
-
-let currentStep = 1;
 
 function setSequence(stepNumber) {
   currentStep = Math.max(1, Math.min(stepNumber, 7));
@@ -412,9 +412,11 @@ function selectWagon(index, animateCam = true) {
 }
 
 function updateWagonNavButtons() {
-  const total = trainConvoy.wagonMeshes.length;
+  const total = (typeof trainConvoy !== 'undefined' && trainConvoy?.wagonMeshes)
+    ? trainConvoy.wagonMeshes.length
+    : 0;
   if (btnWagonPrev) btnWagonPrev.disabled = inspectedBlockIndex <= 0;
-  if (btnWagonNext) btnWagonNext.disabled = inspectedBlockIndex >= total - 1;
+  if (btnWagonNext) btnWagonNext.disabled = total > 0 ? (inspectedBlockIndex >= total - 1) : true;
 }
 
 if (btnWagonPrev) {
