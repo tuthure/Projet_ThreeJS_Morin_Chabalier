@@ -25,18 +25,16 @@ export class LocomotiveMesh extends THREE.Group {
     this.headlightLens = null;
     this.rods = [];
 
-    // Metadonnees pour l'interaction et le raycaster
+    // Metadonnees pour l'interaction
     this.userData.isLocomotive = true;
-    this.userData.wagonMesh = this;
 
-    // Construction procedurale complete de la motrice ferroviaire
+    // Construction procedurale complete de la motrice ferroviaire pure
     this.buildChassis();
     this.buildWheelsAndRods();
     this.buildBoilerAndStack();
     this.buildDriverCab();
     this.buildCowcatcherAndBuffers();
     this.buildHeadlight();
-    this.buildEngineCore();
     this.buildRearSocket();
     this.buildStatusBeacon();
 
@@ -289,48 +287,6 @@ export class LocomotiveMesh extends THREE.Group {
       sideWin.position.set(0.85, 0.82, z);
       this.add(sideWin);
     });
-
-    // Plaque de flanc de cabine : Inscription de la locomotive
-    const plateCanvas = document.createElement('canvas');
-    plateCanvas.width = 512;
-    plateCanvas.height = 256;
-    const ctx = plateCanvas.getContext('2d');
-    ctx.fillStyle = '#071524';
-    ctx.fillRect(0, 0, 512, 256);
-    ctx.strokeStyle = '#f59e0b';
-    ctx.lineWidth = 10;
-    ctx.strokeRect(5, 5, 502, 246);
-
-    ctx.fillStyle = '#f59e0b';
-    ctx.font = 'bold 36px monospace';
-    ctx.fillText('LOCOMOTIVE', 28, 56);
-
-    ctx.fillStyle = '#38bdf8';
-    ctx.font = 'bold 24px monospace';
-    ctx.fillText('MOTEUR DE CONSENSUS', 28, 102);
-
-    ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(28, 122);
-    ctx.lineTo(484, 122);
-    ctx.stroke();
-
-    ctx.fillStyle = '#e2e8f0';
-    ctx.font = '19px monospace';
-    ctx.fillText('PROTOCOLE & PROPAGATION P2P', 28, 160);
-    ctx.fillText('TRACTION DU CONVOI IMMUABLE', 28, 196);
-
-    const plateTex = new THREE.CanvasTexture(plateCanvas);
-    const plateGeo = new THREE.PlaneGeometry(0.85, 0.44);
-    const plateMat = new THREE.MeshBasicMaterial({
-      map: plateTex,
-      transparent: true,
-      side: THREE.DoubleSide
-    });
-    const plate = new THREE.Mesh(plateGeo, plateMat);
-    plate.position.set(0.72, 0.58, 0.64);
-    this.add(plate);
   }
 
   /**
@@ -415,40 +371,6 @@ export class LocomotiveMesh extends THREE.Group {
     this.add(this.headlightSpot);
     this.add(spotTarget);
     this.headlightSpot.target = spotTarget;
-  }
-
-  /**
-   * Coeur mecanique dore abrite dans la machine.
-   */
-  buildEngineCore() {
-    const coreGroup = new THREE.Group();
-    const coreOrb = new THREE.Mesh(
-      new THREE.SphereGeometry(0.24, 20, 20),
-      new THREE.MeshStandardMaterial({
-        color: 0xf59e0b,
-        metalness: 0.95,
-        roughness: 0.15,
-        emissive: 0xd97706,
-        emissiveIntensity: 0.9
-      })
-    );
-    coreOrb.position.set(0, 0.56, 0);
-    coreGroup.add(coreOrb);
-
-    const coreRing = new THREE.Mesh(
-      new THREE.TorusGeometry(0.32, 0.025, 12, 32),
-      new THREE.MeshStandardMaterial({
-        color: 0xfbbf24,
-        emissive: 0xf59e0b,
-        emissiveIntensity: 1.2,
-        metalness: 0.9
-      })
-    );
-    coreRing.position.set(0, 0.56, 0);
-    coreRing.rotation.x = Math.PI / 3;
-    coreGroup.add(coreRing);
-
-    this.add(coreGroup);
   }
 
   /**

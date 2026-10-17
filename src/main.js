@@ -194,7 +194,10 @@ trainConvoy.init([
 // ============================================================================
 const cameraController = new CameraController(camera, renderer.domElement, (blockData) => {
   if (blockData?.isLocomotive) {
-    openLocomotiveSidebar();
+    if (sidebarEl) {
+      sidebarEl.classList.remove('open');
+      sidebarEl.setAttribute('aria-hidden', 'true');
+    }
   } else if (typeof blockData?.index === 'number') {
     selectWagon(blockData.index, false);
   }
@@ -458,25 +461,6 @@ if (btnWagonNext) {
 // ============================================================================
 // 9. Panneau Lateral d'Inspection (Sidebar / Drawer en lecture seule)
 // ============================================================================
-function openLocomotiveSidebar() {
-  if (sidebarTitleEl) sidebarTitleEl.textContent = 'Locomotive (Moteur de Consensus)';
-  if (fieldIndex) fieldIndex.value = 'Traction';
-  if (fieldData) {
-    fieldData.value = 'Moteur du reseau blockchain :\n- Protocole d\'echange et propagation P2P\n- Force motrice du consensus\n- Tracte l\'ensemble des wagons du registre immuable.';
-  }
-  if (fieldPrevHash) fieldPrevHash.value = 'Tete de ligne (aucun predecesseur)';
-  if (fieldHash) fieldHash.value = '0000000000000000 [ANCRAGE GENESIS]';
-  if (fieldNonce) fieldNonce.value = 'Traction active';
-
-  const summary = trainConvoy.getSummary();
-  updateSidebarStatus(summary.isValid);
-
-  if (sidebarEl) {
-    sidebarEl.classList.add('open');
-    sidebarEl.setAttribute('aria-hidden', 'false');
-  }
-}
-
 function openInspectionSidebar(block) {
   if (!block) return;
   inspectedBlockIndex = block.index;
