@@ -57,6 +57,24 @@ export class TrainConvoy {
   }
 
   /**
+   * Reinitialise l'integralite du convoi 3D avec une nouvelle configuration de blocs.
+   * Supprime proprement les maillons 3D et reconstruit la chaine demandee.
+   * @param {Array<any>} [initialBlocks=[]] - Blocs supplementaires au Genesis.
+   */
+  resetConvoy(initialBlocks = []) {
+    // 1. Supprime les wagons 3D existants de la scene
+    while (this.wagonMeshes.length > 0) {
+      const wagon = this.wagonMeshes.pop();
+      this.group.remove(wagon);
+    }
+    this.originalDataBackup.clear();
+
+    // 2. Reinitialise la blockchain avec le Genesis et les blocs demandes
+    this.blockchain = new Blockchain();
+    this.init(initialBlocks);
+  }
+
+  /**
    * Synchronise les modeles 3D des wagons avec la liste des blocs de la blockchain.
    * Instancie les maillons manquants, aligne les positions et propage l'etat de validite.
    * @returns {boolean[]} Liste des etats de validite par wagon.

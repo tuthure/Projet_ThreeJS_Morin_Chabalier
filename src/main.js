@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { CameraController } from './cameraController.js';
 import { TrainConvoy, WAGON_SPACING } from './train.js';
+import { StepManager } from './steps/StepManager.js';
 
 /**
  * Visualisation pedagogique de la blockchain - Le Convoi Ferroviaire
@@ -21,10 +22,6 @@ const chainStatusPill = document.getElementById('chain-status-pill');
 const chainStatusText = document.getElementById('chain-status-text');
 const fpsCounterEl = document.getElementById('fps-counter');
 
-// HUD inferieur (Navigation des 7 notions)
-const stepButtons = document.querySelectorAll('.step-btn');
-const btnPrev = document.getElementById('btn-prev');
-const btnNext = document.getElementById('btn-next');
 
 // Boutons de changement d'angle de vue
 const btnViewQuarter = document.getElementById('btn-view-quarter');
@@ -50,7 +47,6 @@ const fieldStatusText = document.getElementById('field-status-text');
 // Variables d'etat globales de l'application
 let inspectedBlockIndex = 0;
 let currentViewMode = 'quarter';
-let currentStep = 1;
 
 // ============================================================================
 // 2. Scene, Canvas et Moteur de Rendu Three.js
@@ -167,27 +163,8 @@ const trainConvoy = new TrainConvoy(scene, {
   onStateChange: handleChainStateChange
 });
 
-// Initialisation avec 3 wagons de transactions s'ajoutant au Genesis (#0)
-trainConvoy.init([
-  {
-    emetteur: 'Arthur',
-    destinataire: 'Alban',
-    montant: 15,
-    unite: 'MMI-Coin'
-  },
-  {
-    emetteur: 'Alban',
-    destinataire: 'Equipe-R507',
-    montant: 30,
-    unite: 'MMI-Coin'
-  },
-  {
-    emetteur: 'Quai-Central',
-    destinataire: 'Station-Nord',
-    montant: 8,
-    unite: 'MMI-Coin'
-  }
-]);
+// Initialisation du train : pour l'etape 1, seule la locomotive et le wagon Genesis (#0) sont presents
+trainConvoy.init([]);
 
 // ============================================================================
 // 6. Controleur de Camera et Interactions
@@ -205,145 +182,15 @@ const cameraController = new CameraController(camera, renderer.domElement, (bloc
 cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
 
 // ============================================================================
-// 7. Navigation Pedagogique des 7 Notions
+// 7. Navigation Pedagogique Modulaire des 7 Notions (StepManager)
 // ============================================================================
-const sequencesInfo = [
-  {
-    step: 1,
-    title: "Sequence 1 : Structure d'un bloc",
-    desc: "Anatomie d'un wagon : coffre de transactions, plaque gravée SHA-256, connecteur previousHash et molette de Nonce.",
-    getCamPos: () => {
-      const pos = trainConvoy.getWagonPosition(0);
-      return new THREE.Vector3(pos.x + 2.0, 2.0, 4.2);
-    },
-    getCamTarget: () => {
-      const pos = trainConvoy.getWagonPosition(0);
-      return new THREE.Vector3(pos.x, 0.45, 0);
-    },
-    wagonIndex: 0
-  },
-  {
-    step: 2,
-    title: "Sequence 2 : Chainage cryptographique",
-    desc: "L'attelage magnetique scelle le wagon precedent au suivant. Chaque bloc integre l'empreinte du wagon qui le precede.",
-    getCamPos: () => {
-      const pos = trainConvoy.getWagonPosition(1);
-      return new THREE.Vector3(pos.x - 2.5, 1.4, 2.6);
-    },
-    getCamTarget: () => {
-      const pos = trainConvoy.getWagonPosition(1);
-      return new THREE.Vector3(pos.x - 1.9, 0.4, 0);
-    },
-    wagonIndex: 1
-  },
-  {
-    step: 3,
-    title: "Sequence 3 : Immutabilite et falsification",
-    desc: "Modifiez les transactions dans le panneau lateral : la rupture de l'attelage magnetique invalide instantanement tous les wagons suivants.",
-    getCamPos: () => {
-      const pos = trainConvoy.getWagonPosition(1);
-      return new THREE.Vector3(pos.x + 2.0, 2.0, 4.4);
-    },
-    getCamTarget: () => {
-      const pos = trainConvoy.getWagonPosition(1);
-      return new THREE.Vector3(pos.x, 0.45, 0);
-    },
-    wagonIndex: 1
-  },
-  {
-    step: 4,
-    title: "Sequence 4 : Reseau et decentralisation",
-    desc: "Vue elargie du convoi : chaque participant au reseau conserve une copie conforme de l'integralite du convoi ferroviaire.",
-    getCamPos: () => {
-      const center = trainConvoy.getTrainCenter();
-      return new THREE.Vector3(center.x, 5.5, 13.0);
-    },
-    getCamTarget: () => trainConvoy.getTrainCenter(),
-    wagonIndex: 2
-  },
-  {
-    step: 5,
-    title: "Sequence 5 : Validation et minage (PoW)",
-    desc: "Resolution mecanique du Nonce : les machines scellent le bloc pour que son hash respecte la regle de difficulte.",
-    getCamPos: () => {
-      const lastIndex = trainConvoy.wagonMeshes.length - 1;
-      const pos = trainConvoy.getWagonPosition(lastIndex);
-      return new THREE.Vector3(pos.x + 2.0, 2.2, 4.2);
-    },
-    getCamTarget: () => {
-      const lastIndex = trainConvoy.wagonMeshes.length - 1;
-      return trainConvoy.getWagonPosition(lastIndex);
-    },
-    wagonIndex: 3
-  },
-  {
-    step: 6,
-    title: "Sequence 6 : Comparaison des consensus (PoW vs PoS)",
-    desc: "Confrontation energetique : la preuve de travail consomme de la puissance de calcul, la preuve d'enjeu sequestre des garanties.",
-    getCamPos: () => {
-      const center = trainConvoy.getTrainCenter();
-      return new THREE.Vector3(center.x, 7.0, 15.0);
-    },
-    getCamTarget: () => trainConvoy.getTrainCenter(),
-    wagonIndex: 1
-  },
-  {
-    step: 7,
-    title: "Sequence 7 : Cycle de vie et illustration d'attaque",
-    desc: "Trajectoire d'une transaction du quai d'embarquement jusqu'a son scellement definitif et rejet des tentatives de double depense.",
-    getCamPos: () => {
-      const center = trainConvoy.getTrainCenter();
-      return new THREE.Vector3(center.x, 4.5, 11.0);
-    },
-    getCamTarget: () => trainConvoy.getTrainCenter(),
-    wagonIndex: 0
-  }
-];
-
-function setSequence(stepNumber) {
-  currentStep = Math.max(1, Math.min(stepNumber, 7));
-  const seq = sequencesInfo[currentStep - 1];
-
-  // Mise a jour textuelle du HUD
-  if (sequenceTitleEl) sequenceTitleEl.textContent = seq.title;
-  if (sequenceDescEl) sequenceDescEl.textContent = seq.desc;
-
-  // Mise a jour de la barre d'etapes
-  stepButtons.forEach((btn) => {
-    btn.classList.toggle('active', parseInt(btn.dataset.step) === currentStep);
-  });
-
-  if (btnPrev) btnPrev.disabled = currentStep === 1;
-  if (btnNext) btnNext.disabled = currentStep === 7;
-
-  // Deplacement de la camera vers le point de vue scenarise
-  const camPos = seq.getCamPos();
-  const camTarget = seq.getCamTarget();
-  cameraController.moveTo(camPos, camTarget, 1.2);
-
-  // Ouvre le panneau sur le wagon associe si pertinent
-  if (seq.wagonIndex !== null) {
-    selectWagon(seq.wagonIndex, false);
-  }
-}
-
-stepButtons.forEach((btn) => {
-  btn.addEventListener('click', () => {
-    setSequence(parseInt(btn.dataset.step));
-  });
+const stepManager = new StepManager({
+  scene,
+  camera,
+  cameraController,
+  trainConvoy,
+  selectWagon: (idx) => selectWagon(idx, false)
 });
-
-if (btnPrev) {
-  btnPrev.addEventListener('click', () => {
-    if (currentStep > 1) setSequence(currentStep - 1);
-  });
-}
-
-if (btnNext) {
-  btnNext.addEventListener('click', () => {
-    if (currentStep < 7) setSequence(currentStep + 1);
-  });
-}
 
 // ============================================================================
 // 8. Gestion des Angles de Vue et Navigation Inter-Wagons
@@ -639,8 +486,8 @@ window.blockchain = {
   }
 };
 
-// Initialisation sur la premiere sequence et demarrage de la boucle
-setSequence(1);
+// Initialisation sur la premiere etape pedagogique et demarrage de la boucle
+stepManager.goToStep(1);
 animate();
 
 console.log('[LE CONVOI FERROVIAIRE - BLOCKCHAIN 3D]');
