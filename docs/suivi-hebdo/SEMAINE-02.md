@@ -33,22 +33,22 @@
 ### 1.2 Prevu mais non realise
 | Tache | Cause | Report |
 |:---|:---|:---|
-| Interaction complete de falsification sur l'etape 3 | Priorite donnee au cadrage rigoureux de l'etape 1 et a la modularisation en 7 fichiers | Reportee en Semaine 3 (etape 3 dediee) |
+| Developpement des notions 2 a 7 | Choix methodologique de se concentrer sur la finalisation soignee de l'Etape 1 (structure du bloc) et sur la mise en place du squelette d'accueil | Developpement progressif etape par etape (notions 2 et 3 prevues en Semaine 3) |
 
 ### 1.3 Etat des 7 notions
 
 | Notion obligatoire | Etat | Remarque / preuve |
 |:---|:---|:---|
-| 1. Structure d'un bloc | Fonctionnel | Wagon de verre interactif : marchandise visible, molette de Nonce, plaque Hash et Previous Hash inspectables en 3D |
-| 2. Chainage cryptographique | En cours | Liaison magnetique avec anneaux cryptographiques de couleur assortie ; fichier step2.js initialise |
-| 3. Immutabilite et detection de falsification | En cours | Logique de calcul et propagation de rupture dans train.js ; interface pas-a-pas a integrer dans step3.js |
-| 4. Reseau et decentralisation | En cours | Schema cinematique de vue globale convoi pret dans step4.js |
-| 5. Validation et minage | En cours | Molette fonctionnelle avec generation de nonce ; logique de minage prete dans Blockchain.js |
-| 6. Comparaison de consensus (PoW vs PoS) | En cours | Locomotive thermique modelisee pour figurer la motrice PoW ; step6.js structure |
-| 7. Cycle de vie et scenario d'attaque | En cours | Structure d'accueil prete dans step7.js ; flux transactionnel a scenariser |
+| 1. Structure d'un bloc | Fonctionnel | Seule notion reellement traitee cette semaine : wagon de verre interactif, marchandise visible, molette de Nonce, plaque Hash et Previous Hash inspectables en 3D dans le volet pedagogique |
+| 2. Chainage cryptographique | Non commence | Squelette technique mis en place par defaut dans step2.js pour le routage, mais conception pedagogique et interactions reelles a developper en Semaine 3 |
+| 3. Immutabilite et detection de falsification | Non commence | Squelette technique mis en place par defaut dans step3.js ; mise en scene de la rupture et interactions non entamees |
+| 4. Reseau et decentralisation | Non commence | Squelette technique mis en place par defaut dans step4.js ; travail non entame |
+| 5. Validation et minage | Non commence | Squelette technique mis en place par defaut dans step5.js ; travail non entame |
+| 6. Comparaison de consensus (PoW vs PoS) | Non commence | Squelette technique mis en place par defaut dans step6.js ; travail non entame |
+| 7. Cycle de vie et scenario d'attaque | Non commence | Squelette technique mis en place par defaut dans step7.js ; travail non entame |
 
 Definitions des etats :
-- Non commence = reflexion initiale non entamee
+- Non commence = reflexion initiale non entamee (ou simple squelette technique d'accueil sans travail de fond)
 - En cours = specifie ou en cours d'implementation
 - Fonctionnel = fonctionne au moins une fois
 - Teste = verifie par un test documente
@@ -66,9 +66,9 @@ Definitions des etats :
 |:---|:---|
 | Issues creees | Creation des sous-taches relatives a l'architecture modulaire et a la refonte des wagons |
 | Issues fermees | 2 issues validees et cloturees sur le premier prototype de wagon et la structure du bloc |
-| Nombre dans les colonnes | Reparties entre A faire (notions 3 a 7), En cours (notion 2) et Termine (notion 1 et architecture par etape) |
+| Nombre dans les colonnes | Notion 1 et infrastructure modulaire dans "Termine" ; notions 2 a 7 dans "A faire" / "Backlog" |
 | Board mis a jour pendant la semaine ? | Oui, mis a jour a chaque iteration et etape de modelisation |
-| Milestone concerne et etat | Jalon 2 "Prototype fonctionnel avec 3 notions minimum" : en tres bonne voie avec la notion 1 finalisee et notions 2/3 avancees |
+| Milestone concerne et etat | Jalon 2 "Prototype fonctionnel avec 3 notions minimum" : Notion 1 fonctionnelle et terminee, notions 2 et 3 a concevoir en Semaine 3 |
 
 ## 4. Choix de modelisation
 
