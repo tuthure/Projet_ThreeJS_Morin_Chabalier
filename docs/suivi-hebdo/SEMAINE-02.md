@@ -83,9 +83,9 @@ Definitions des etats :
 
 | Question | Reponse |
 |:---|:---|
-| Nombre de testeurs exterieurs cette semaine | 0 (stabilisation de l'architecture modulaire et du premier wagon interactif) |
-| Comprehension ou probleme observe | Les retours internes au binome ont mis en evidence le besoin d'aborder une notion a la fois sans submerger l'utilisateur avec tous les wagons et panneaux techniques d'un coup. |
-| Issue corrective | Planification d'une session de test avec 2 etudiants non issus du domaine informatique des le debut de la Semaine 3 sur l'Etape 1 finalisee. |
+| Nombre de testeurs exterieurs cette semaine | 0 (focalisation sur l'architecture modulaire et la modelisation de l'etape 1) |
+| Comprehension ou probleme observe | Les echanges internes au binome ont confirme qu'il est indispensable de developper un parcours interactif substantiel avant de solliciter des testeurs exterieurs. Tester un seul fragment isole ne permettrait pas aux personnes novices d'evaluer la continuite de la mediation scientifique. |
+| Issue corrective | Decision methodologique : prioriser le developpement des notions 2 et 3 en semaine 3 afin d'avoir le coeur de la demonstration (bloc, chainage, falsification) avant d'organiser la premiere session de tests utilisateurs documentee. |
 
 ## 6. IA, difficultes et besoins
 
@@ -100,15 +100,15 @@ Definitions des etats :
 
 | Objectif | Responsable | Issue |
 |:---|:---|:---|
-| Finaliser l'interaction de l'Etape 2 : animation de l'attelage cryptographique et validation des anneaux colores | Arthur Morin | #3 |
-| Implementer l'Etape 3 : mise en scene de la falsification d'un wagon et rupture magnetique en cascade | Alban Chabalier | #2, #4 |
-| Realiser les 2 premiers tests utilisateurs documentes sur le volet de decouverte du bloc | Binome | #5 |
+| Concevoir l'Etape 2 : animation pedagogique de l'attelage cryptographique et concordance des hashs | Arthur Morin | #3 |
+| Implementer l'Etape 3 : mise en scene de la falsification d'une transaction et rupture visuelle de l'attelage en cascade | Alban Chabalier | #2, #4 |
+| Stabiliser le socle interactif des 3 premieres notions pour preparer le premier banc de test complet | Binome | #1, #5 |
 
 ## 8. Signaux d'alerte
 
 - [ ] Le board n'a ete mis a jour qu'aujourd'hui.
 - [ ] La repartition est fortement desequilibree et non expliquee.
-- [ ] Nous n'avons pas encore atteint les 2 testeurs exterieurs requis (prevus en semaine 3 avec le prototype des notions 1 a 3).
+- [ ] Nous n'avons pas encore atteint les 2 testeurs exterieurs requis (normal a ce stade : les tests seront conduits des que le parcours des 3 premieres notions sera jouable).
 - [ ] Un choix de modelisation important n'est pas justifie.
 - [ ] Une notion n'a pas avance depuis 2 semaines.
 
