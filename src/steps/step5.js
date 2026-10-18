@@ -17,11 +17,6 @@ export const step5 = {
     ]);
     cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
 
-    const titleEl = document.getElementById('sequence-title');
-    const descEl = document.getElementById('sequence-desc');
-    if (titleEl) titleEl.textContent = "Sequence 5 : Validation et minage (PoW)";
-    if (descEl) descEl.textContent = "Resolution mecanique du Nonce : les machines scellent le bloc pour respecter la difficulte.";
-
     this.renderLeftPanel();
     const lastIndex = trainConvoy.wagonMeshes.length - 1;
     const pos = trainConvoy.getWagonPosition(lastIndex);
@@ -38,7 +33,6 @@ export const step5 = {
     panel.innerHTML = `
       <div class="step-panel-inner">
         <header class="step-panel-header">
-          <div class="step-badge-row"><span class="step-badge">Etape 5 sur 7</span><span class="step-concept-tag">Minage</span></div>
           <h2 class="step-panel-title">Le Minage (PoW)</h2>
           <p class="step-panel-subtitle">La course mathematique pour sceller le bloc</p>
         </header>

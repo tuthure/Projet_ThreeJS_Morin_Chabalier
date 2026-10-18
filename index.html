@@ -20,36 +20,11 @@
 
     <!-- Superposition HUD 2D -->
     <div id="hud">
-      <!-- En-tete superieur -->
+      <!-- En-tete superieur (Compteur FPS uniquement) -->
       <header class="hud-top">
-        <div class="hud-brand">
-          <div class="brand-row">
-            <h1>Visualisation Blockchain</h1>
-            <span class="metaphor-tag">Le Convoi Ferroviaire</span>
-          </div>
-          <h2 id="sequence-title" class="sequence-title">Sequence 1 : Structure d'un bloc</h2>
-          <p id="sequence-desc" class="sequence-desc">Anatomie d'un wagon : conteneurs de transactions, plaques de hachage et molette du nonce.</p>
-        </div>
-
-        <div class="hud-stats">
-          <div class="stats-pills">
-            <div id="chain-status-pill" class="stat-pill status-ok">
-              <span class="stat-dot"></span>
-              <span id="chain-status-text">Chaine valide (4 wagons)</span>
-            </div>
-            <div class="stat-pill">
-              <span class="stat-dot fps-dot"></span>
-              <span id="fps-counter">60 FPS</span>
-            </div>
-          </div>
-          <div class="hud-view-angles">
-            <span class="view-angles-label">Vues :</span>
-            <button id="btn-view-quarter" class="btn btn-view active" title="Vue de trois-quarts perspective">Perspective</button>
-            <button id="btn-view-profile" class="btn btn-view" title="Vue de profil sur les marchandises et la molette">Profil</button>
-            <button id="btn-view-coupler" class="btn btn-view" title="Vue rapprochée sur l'attelage et la plaque previousHash">Attelage</button>
-            <button id="btn-view-overview" class="btn btn-view" title="Vue d'ensemble sur le convoi complet">Convoi</button>
-          </div>
-          <div class="help-hint">Clic gauche pour inspecter un wagon | Orbite et zoom libres</div>
+        <div class="hud-fps-pill">
+          <span class="stat-dot fps-dot"></span>
+          <span id="fps-counter">60 FPS</span>
         </div>
       </header>
 

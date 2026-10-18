@@ -23,14 +23,6 @@ export const step2 = {
     ]);
     cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
 
-    const titleEl = document.getElementById('sequence-title');
-    const descEl = document.getElementById('sequence-desc');
-    const statusTextEl = document.getElementById('chain-status-text');
-
-    if (titleEl) titleEl.textContent = "Sequence 2 : Chainage cryptographique";
-    if (descEl) descEl.textContent = "L'attelage magnetique scelle le wagon precedent au suivant : chaque bloc integre l'empreinte du wagon qui le precede.";
-    if (statusTextEl) statusTextEl.textContent = "Chaine valide (2 wagons)";
-
     this.renderLeftPanel();
 
     // Oriente la camera vers l'attelage reliant le wagon #0 et le wagon #1
@@ -54,10 +46,6 @@ export const step2 = {
     panel.innerHTML = `
       <div class="step-panel-inner">
         <header class="step-panel-header">
-          <div class="step-badge-row">
-            <span class="step-badge">Etape 2 sur 7</span>
-            <span class="step-concept-tag">Liaison</span>
-          </div>
           <h2 class="step-panel-title">Le Chainage Cryptographique</h2>
           <p class="step-panel-subtitle">L'attelage qui lie les blocs pour l'eternite</p>
         </header>

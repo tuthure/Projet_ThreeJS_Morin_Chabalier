@@ -17,11 +17,6 @@ export const step4 = {
     ]);
     cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
 
-    const titleEl = document.getElementById('sequence-title');
-    const descEl = document.getElementById('sequence-desc');
-    if (titleEl) titleEl.textContent = "Sequence 4 : Reseau et decentralisation";
-    if (descEl) descEl.textContent = "Chaque gare et participant possede une copie conforme et synchronisee du convoi entier.";
-
     this.renderLeftPanel();
     const center = trainConvoy.getTrainCenter();
     cameraController.moveTo(new THREE.Vector3(center.x, 5.5, 13.0), center, 1.2);
@@ -37,7 +32,6 @@ export const step4 = {
     panel.innerHTML = `
       <div class="step-panel-inner">
         <header class="step-panel-header">
-          <div class="step-badge-row"><span class="step-badge">Etape 4 sur 7</span><span class="step-concept-tag">Reseau</span></div>
           <h2 class="step-panel-title">La Decentralisation</h2>
           <p class="step-panel-subtitle">Une copie identique dans chaque gare</p>
         </header>

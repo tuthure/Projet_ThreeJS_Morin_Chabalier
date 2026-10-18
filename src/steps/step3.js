@@ -16,11 +16,6 @@ export const step3 = {
     ]);
     cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
 
-    const titleEl = document.getElementById('sequence-title');
-    const descEl = document.getElementById('sequence-desc');
-    if (titleEl) titleEl.textContent = "Sequence 3 : Immutabilite et falsification";
-    if (descEl) descEl.textContent = "Toute modification frauduleuse d'une transaction brise la liaison magnetique et invalide les wagons suivants.";
-
     this.renderLeftPanel();
     const pos = trainConvoy.getWagonPosition(1);
     cameraController.moveTo(new THREE.Vector3(pos.x + 2.0, 2.0, 4.4), new THREE.Vector3(pos.x, 0.45, 0), 1.2);
@@ -36,7 +31,6 @@ export const step3 = {
     panel.innerHTML = `
       <div class="step-panel-inner">
         <header class="step-panel-header">
-          <div class="step-badge-row"><span class="step-badge">Etape 3 sur 7</span><span class="step-concept-tag">Securite</span></div>
           <h2 class="step-panel-title">L'Immutabilite</h2>
           <p class="step-panel-subtitle">Impossible de tricher sans briser la chaine</p>
         </header>

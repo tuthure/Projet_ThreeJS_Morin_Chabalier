@@ -16,11 +16,6 @@ export const step6 = {
     ]);
     cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
 
-    const titleEl = document.getElementById('sequence-title');
-    const descEl = document.getElementById('sequence-desc');
-    if (titleEl) titleEl.textContent = "Sequence 6 : Comparaison des consensus (PoW vs PoS)";
-    if (descEl) descEl.textContent = "Preuve de travail (effort de calcul) vs Preuve d'enjeu (sequestre et probabilite).";
-
     this.renderLeftPanel();
     const center = trainConvoy.getTrainCenter();
     cameraController.moveTo(new THREE.Vector3(center.x, 7.0, 15.0), center, 1.2);
@@ -36,7 +31,6 @@ export const step6 = {
     panel.innerHTML = `
       <div class="step-panel-inner">
         <header class="step-panel-header">
-          <div class="step-badge-row"><span class="step-badge">Etape 6 sur 7</span><span class="step-concept-tag">Consensus</span></div>
           <h2 class="step-panel-title">PoW contre PoS</h2>
           <p class="step-panel-subtitle">Deux philosophies de scellement</p>
         </header>

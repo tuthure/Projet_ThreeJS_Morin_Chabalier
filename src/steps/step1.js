@@ -47,19 +47,10 @@ export const step1 = {
       inspectionSidebar.setAttribute('aria-hidden', 'true');
     }
 
-    // 4. Met a jour les textes du bandeau haut
-    const titleEl = document.getElementById('sequence-title');
-    const descEl = document.getElementById('sequence-desc');
-    const statusTextEl = document.getElementById('chain-status-text');
-
-    if (titleEl) titleEl.textContent = "Sequence 1 : Structure d'un bloc";
-    if (descEl) descEl.textContent = "Anatomie d'un wagon : parois de verre, cargaison de transactions, molette de nonce et sceaux cryptographiques.";
-    if (statusTextEl) statusTextEl.textContent = "Bloc Genesis (1 wagon)";
-
-    // 5. Genere le volet gauche d'apprentissage
+    // 4. Genere le volet gauche d'apprentissage
     this.renderLeftPanel();
 
-    // 6. Oriente la camera sur la vue d'ensemble du wagon
+    // 5. Oriente la camera sur la vue d'ensemble du wagon
     this.focusOverview();
   },
 
@@ -85,10 +76,6 @@ export const step1 = {
     panel.innerHTML = `
       <div class="step-panel-inner">
         <header class="step-panel-header">
-          <div class="step-badge-row">
-            <span class="step-badge">Etape 1 sur 7</span>
-            <span class="step-concept-tag">Notion Fondamentale</span>
-          </div>
           <h2 class="step-panel-title">Qu'est-ce qu'un Bloc ?</h2>
           <p class="step-panel-subtitle">La metaphore du wagon aux parois de verre</p>
         </header>

@@ -15,20 +15,8 @@ import { StepManager } from './steps/StepManager.js';
 // ============================================================================
 const canvas = document.querySelector('#webgl');
 
-// HUD superieur (En-tete, sequence et indicateurs)
-const sequenceTitleEl = document.getElementById('sequence-title');
-const sequenceDescEl = document.getElementById('sequence-desc');
-const chainStatusPill = document.getElementById('chain-status-pill');
-const chainStatusText = document.getElementById('chain-status-text');
+// Indicateur de performances FPS (HUD superieur)
 const fpsCounterEl = document.getElementById('fps-counter');
-
-
-// Boutons de changement d'angle de vue
-const btnViewQuarter = document.getElementById('btn-view-quarter');
-const btnViewProfile = document.getElementById('btn-view-profile');
-const btnViewCoupler = document.getElementById('btn-view-coupler');
-const btnViewOverview = document.getElementById('btn-view-overview');
-const viewButtons = [btnViewQuarter, btnViewProfile, btnViewCoupler, btnViewOverview].filter(Boolean);
 
 // Panneau lateral droit d'inspection (Drawer)
 const sidebarEl = document.getElementById('inspection-sidebar');
@@ -203,13 +191,8 @@ const stepManager = new StepManager({
  * @param {number} [wagonIndex=inspectedBlockIndex] - Index du wagon concerne.
  * @param {number} [duration=1.0] - Duree de la transition camera en secondes.
  */
-function applyViewAngle(viewMode, wagonIndex = inspectedBlockIndex, duration = 1.0) {
+function applyViewAngle(viewMode = 'quarter', wagonIndex = inspectedBlockIndex, duration = 1.0) {
   currentViewMode = viewMode;
-
-  // Mise a jour visuelle des boutons d'angles de vue
-  viewButtons.forEach((btn) => {
-    btn.classList.toggle('active', btn.id === `btn-view-${viewMode}`);
-  });
 
   const wagonPos = trainConvoy.getWagonPosition(wagonIndex);
   let targetPos;
@@ -246,19 +229,6 @@ function applyViewAngle(viewMode, wagonIndex = inspectedBlockIndex, duration = 1
   }
 
   cameraController.moveTo(targetPos, targetLookAt, duration);
-}
-
-if (btnViewQuarter) {
-  btnViewQuarter.addEventListener('click', () => applyViewAngle('quarter'));
-}
-if (btnViewProfile) {
-  btnViewProfile.addEventListener('click', () => applyViewAngle('profile'));
-}
-if (btnViewCoupler) {
-  btnViewCoupler.addEventListener('click', () => applyViewAngle('coupler'));
-}
-if (btnViewOverview) {
-  btnViewOverview.addEventListener('click', () => applyViewAngle('overview'));
 }
 
 /**
@@ -356,18 +326,8 @@ if (btnCloseSidebar) {
   });
 }
 
-// Mise a jour visuelle des indicateurs du HUD lors des mutations de chaine
+// Mise a jour visuelle lors des mutations de chaine
 function handleChainStateChange(summary) {
-  if (chainStatusPill && chainStatusText && summary) {
-    if (summary.isValid) {
-      chainStatusPill.className = 'stat-pill status-ok';
-      chainStatusText.textContent = `Chaine valide (${summary.totalWagons} wagons)`;
-    } else {
-      chainStatusPill.className = 'stat-pill status-error';
-      chainStatusText.textContent = `Alerte : Rupture au wagon #${summary.firstInvalidIndex}`;
-    }
-  }
-
   // Si le panneau est ouvert, rafraichit l'indicateur d'etat du bloc courant
   const validityList = summary?.validityList;
   if (sidebarEl && sidebarEl.classList.contains('open') && validityList) {
