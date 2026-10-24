@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { CameraController } from './cameraController.js';
 import { TrainConvoy, WAGON_SPACING } from './train.js';
 import { StepManager } from './steps/StepManager.js';
+import { Environment } from './environment.js';
 
 /**
  * Visualisation pedagogique de la blockchain - Le Convoi Ferroviaire
@@ -81,67 +82,9 @@ fillLight.position.set(0, 8, -8);
 scene.add(fillLight);
 
 // ============================================================================
-// 4. Decor ferroviaire (Rails metalliques et traverses)
+// 4. Decor ferroviaire dynamique (Rails, traverses mobiles et environnement)
 // ============================================================================
-function setupEnvironment() {
-  const envGroup = new THREE.Group();
-
-  // Grille au sol industrielle
-  const gridHelper = new THREE.GridHelper(90, 90, 0x1e293b, 0x0f172a);
-  gridHelper.position.y = -0.5;
-  envGroup.add(gridHelper);
-
-  // Plan de sol sombre
-  const groundGeometry = new THREE.PlaneGeometry(90, 90);
-  const groundMaterial = new THREE.MeshStandardMaterial({
-    color: 0x050811,
-    roughness: 0.95,
-    metalness: 0.1
-  });
-  const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
-  groundMesh.rotation.x = -Math.PI / 2;
-  groundMesh.position.y = -0.52;
-  envGroup.add(groundMesh);
-
-  // Rails longitudinaux le long de l'axe X (espacement de 1.32 adapte aux essieux)
-  const railLength = 100;
-  const railDistance = 1.32;
-  const railGeometry = new THREE.BoxGeometry(railLength, 0.12, 0.08);
-  const railMaterial = new THREE.MeshStandardMaterial({
-    color: 0x94a3b8,
-    metalness: 0.9,
-    roughness: 0.2
-  });
-
-  const railCenterX = 6;
-  const railLeft = new THREE.Mesh(railGeometry, railMaterial);
-  railLeft.position.set(railCenterX, -0.32, -railDistance / 2);
-  envGroup.add(railLeft);
-
-  const railRight = new THREE.Mesh(railGeometry, railMaterial);
-  railRight.position.set(railCenterX, -0.32, railDistance / 2);
-  envGroup.add(railRight);
-
-  // Traverses de voie ferree regulieres
-  const sleeperCount = 90;
-  const sleeperSpacing = 1.1;
-  const sleeperGeometry = new THREE.BoxGeometry(0.3, 0.08, 1.9);
-  const sleeperMaterial = new THREE.MeshStandardMaterial({
-    color: 0x1f2937,
-    roughness: 0.85,
-    metalness: 0.2
-  });
-
-  const startX = railCenterX - (sleeperCount * sleeperSpacing) / 2;
-  for (let i = 0; i < sleeperCount; i++) {
-    const sleeper = new THREE.Mesh(sleeperGeometry, sleeperMaterial);
-    sleeper.position.set(startX + i * sleeperSpacing, -0.42, 0);
-    envGroup.add(sleeper);
-  }
-
-  scene.add(envGroup);
-}
-setupEnvironment();
+const environment = new Environment(scene);
 
 // ============================================================================
 // 5. Initialisation du Convoi Ferroviaire (TrainConvoy)
@@ -170,13 +113,14 @@ const cameraController = new CameraController(camera, renderer.domElement, (bloc
 cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
 
 // ============================================================================
-// 7. Navigation Pedagogique Modulaire des 7 Notions (StepManager)
+// 7. Navigation Pedagogique Modulaire des Notions (StepManager)
 // ============================================================================
 const stepManager = new StepManager({
   scene,
   camera,
   cameraController,
   trainConvoy,
+  environment,
   selectWagon: (idx) => selectWagon(idx, false)
 });
 
@@ -383,8 +327,11 @@ function animate() {
   // Mise a jour de la camera
   cameraController.update(delta);
 
-  // Suspension et legere oscillation des wagons
-  trainConvoy.animateSuspension(elapsedTime);
+  // Mise a jour du decor ferroviaire defilant
+  environment.update(delta, elapsedTime);
+
+  // Suspension et legere oscillation des wagons adaptee a la vitesse
+  trainConvoy.animateSuspension(elapsedTime, environment.currentSpeed);
 
   // Rendu WebGL
   renderer.render(scene, camera);
@@ -446,8 +393,8 @@ window.blockchain = {
   }
 };
 
-// Initialisation sur la premiere etape pedagogique et demarrage de la boucle
-stepManager.goToStep(1);
+// Initialisation sur l'etape d'accueil (Etape 0) et demarrage de la boucle
+stepManager.goToStep(0);
 animate();
 
 console.log('[LE CONVOI FERROVIAIRE - BLOCKCHAIN 3D]');

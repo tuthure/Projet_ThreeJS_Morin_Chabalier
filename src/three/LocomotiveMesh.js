@@ -482,10 +482,12 @@ export class LocomotiveMesh extends THREE.Group {
   /**
    * Anime les bielles laterales pour donner vie a la motrice ferroviaire.
    * @param {number} elapsedTime
+   * @param {number} [speed=0] - Vitesse de translation du convoi.
    */
-  animate(elapsedTime) {
-    const offsetX = Math.sin(elapsedTime * 4) * 0.05;
-    const offsetY = Math.cos(elapsedTime * 4) * 0.03;
+  animate(elapsedTime, speed = 0) {
+    const timeScale = speed > 0.5 ? elapsedTime * 8.5 : elapsedTime * 3.5;
+    const offsetX = Math.sin(timeScale) * 0.05;
+    const offsetY = Math.cos(timeScale) * 0.03;
     this.rods.forEach((rod) => {
       rod.position.x = offsetX;
       rod.position.y = -0.18 + offsetY;

@@ -1,3 +1,4 @@
+import { step0 } from './step0.js';
 import { step1 } from './step1.js';
 import { step2 } from './step2.js';
 import { step3 } from './step3.js';
@@ -7,8 +8,8 @@ import { step6 } from './step6.js';
 import { step7 } from './step7.js';
 
 /**
- * Gestionnaire modulaire des 7 etapes de la visualisation.
- * Pilote l'activation de chaque fichier d'etape dedie (step1.js, step2.js...).
+ * Gestionnaire modulaire des etapes de la visualisation (Introduction + 7 notions).
+ * Pilote l'activation de chaque fichier d'etape dedie (step0.js, step1.js...).
  */
 export class StepManager {
   /**
@@ -24,9 +25,10 @@ export class StepManager {
 
     this.steps = new Map();
     this.currentStep = null;
-    this.currentStepNum = 1;
+    this.currentStepNum = 0;
 
-    // Enregistrement des 7 modules d'etape
+    // Enregistrement des modules d'etape (Etape 0 d'accueil + Etapes 1 a 7)
+    this.registerStep(step0);
     this.registerStep(step1);
     this.registerStep(step2);
     this.registerStep(step3);
@@ -74,11 +76,11 @@ export class StepManager {
   }
 
   /**
-   * Bascule vers une etape donnee (1 a 7).
+   * Bascule vers une etape donnee (0 a 7).
    * @param {number} stepNumber
    */
   goToStep(stepNumber) {
-    const targetNum = Math.max(1, Math.min(stepNumber, 7));
+    const targetNum = Math.max(0, Math.min(stepNumber, 7));
     if (targetNum === this.currentStepNum && this.currentStep) return;
 
     // 1. Sortie propre de l'etape precedente
@@ -98,7 +100,7 @@ export class StepManager {
 
     const btnPrev = document.getElementById('btn-prev');
     const btnNext = document.getElementById('btn-next');
-    if (btnPrev) btnPrev.disabled = targetNum === 1;
+    if (btnPrev) btnPrev.disabled = targetNum === 0;
     if (btnNext) btnNext.disabled = targetNum === 7;
 
     // 4. Entree dans la nouvelle etape
@@ -120,7 +122,7 @@ export class StepManager {
    * Revient a l'etape precedente.
    */
   prev() {
-    if (this.currentStepNum > 1) {
+    if (this.currentStepNum > 0) {
       this.goToStep(this.currentStepNum - 1);
     }
   }

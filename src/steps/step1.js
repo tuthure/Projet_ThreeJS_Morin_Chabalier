@@ -32,7 +32,12 @@ export const step1 = {
    * - Positionne la camera sur une vue accueillante
    */
   enter() {
-    const { trainConvoy, cameraController } = this.ctx;
+    const { trainConvoy, cameraController, environment } = this.ctx;
+
+    // 0. Arrete le train au quai d'inspection pour etudier le bloc
+    if (environment) {
+      environment.setSpeed(0.0);
+    }
 
     // 1. Reinitialise le train avec UNIQUEMENT le wagon Genesis (wagon #0)
     trainConvoy.resetConvoy([]);
@@ -159,11 +164,14 @@ export const step1 = {
 
           <!-- 3. Actions d'observation -->
           <div class="step-actions-row">
+            <button id="btn-step1-prev" class="btn-step-action secondary" title="Retour a l'introduction">
+              &larr; Intro
+            </button>
             <button id="btn-step1-overview" class="btn-step-action secondary">
-              Prendre du recul (Vue globale)
+              Vue globale
             </button>
             <button id="btn-step1-next" class="btn-step-action primary">
-              Etape suivante : Le Chainage &rarr;
+              Etape 2 : Le Chainage &rarr;
             </button>
           </div>
         </div>
@@ -185,6 +193,15 @@ export const step1 = {
         this.selectComponent(compName);
       });
     });
+
+    const btnPrev = document.getElementById('btn-step1-prev');
+    if (btnPrev) {
+      btnPrev.addEventListener('click', () => {
+        if (typeof this.ctx.onPrevStep === 'function') {
+          this.ctx.onPrevStep();
+        }
+      });
+    }
 
     const btnOverview = document.getElementById('btn-step1-overview');
     if (btnOverview) {

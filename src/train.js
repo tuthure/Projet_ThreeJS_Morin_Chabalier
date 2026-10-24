@@ -284,15 +284,20 @@ export class TrainConvoy {
   /**
    * Animation douce d'oscillation verticale reproduisant la suspension sur rails.
    * @param {number} elapsedTime - Temps ecoule en secondes.
+   * @param {number} [speed=0] - Vitesse de translation du convoi.
    */
-  animateSuspension(elapsedTime) {
+  animateSuspension(elapsedTime, speed = 0) {
+    const isRolling = speed > 0.5;
+    const freq = isRolling ? 4.2 : 1.8;
+    const amp = isRolling ? 0.038 : 0.022;
+
     if (this.locomotiveMesh) {
-      this.locomotiveMesh.position.y = Math.sin(elapsedTime * 1.8 - 0.7) * 0.025;
-      this.locomotiveMesh.animate(elapsedTime);
+      this.locomotiveMesh.position.y = Math.sin(elapsedTime * freq - 0.7) * amp;
+      this.locomotiveMesh.animate(elapsedTime, speed);
     }
     for (let i = 0; i < this.wagonMeshes.length; i++) {
       const wagon = this.wagonMeshes[i];
-      wagon.position.y = Math.sin(elapsedTime * 1.8 + i * 0.7) * 0.025;
+      wagon.position.y = Math.sin(elapsedTime * freq + i * 0.7) * amp;
     }
   }
 
