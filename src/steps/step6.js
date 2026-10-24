@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 /**
- * Etape 6 : Comparaison des consensus (PoW vs PoS).
+ * Étape 6 : Comparaison des consensus (PoW vs PoS).
  */
 export const step6 = {
   id: 6,
@@ -45,13 +45,12 @@ export const step6 = {
         </header>
         <div class="step-panel-scroll">
           <section class="step-card metaphor-card">
-
-            <h3>Calcul ou mise sous sequestre ?</h3>
-            <p>La preuve de travail utilise de l'energie pour faire tourner la molette, tandis que la preuve d'enjeu confie le scellement a des validateurs bloquant des fonds en caution.</p>
+            <h3>Calcul ou mise sous séquestre ?</h3>
+            <p>La preuve de travail utilise de l'énergie pour faire tourner la molette, tandis que la preuve d'enjeu confie le scellement à des validateurs bloquant des fonds en caution.</p>
           </section>
           <div class="step-actions-row">
-            <button id="btn-step6-prev" class="btn-step-action secondary">&larr; Etape 5</button>
-            <button id="btn-step6-next" class="btn-step-action primary">Etape 7 &rarr;</button>
+            <button id="btn-step6-prev" class="btn-step-action secondary">&larr; Étape 5</button>
+            <button id="btn-step6-next" class="btn-step-action primary">Étape 7 &rarr;</button>
           </div>
         </div>
     `;

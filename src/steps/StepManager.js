@@ -88,13 +88,13 @@ export class StepManager {
       tabsNav = document.createElement('nav');
       tabsNav.id = 'step-bookmark-tabs';
       tabsNav.className = 'step-bookmark-tabs';
-      tabsNav.setAttribute('aria-label', 'Marque-pages des etapes');
+      tabsNav.setAttribute('aria-label', 'Marque-pages des étapes');
       tabsNav.innerHTML = `
         <button class="step-tab-btn" data-step="0" title="Notion 0 : Introduction">0</button>
         <button class="step-tab-btn" data-step="1" title="Notion 1 : Structure du bloc">1</button>
-        <button class="step-tab-btn" data-step="2" title="Notion 2 : Chainage cryptographique">2</button>
-        <button class="step-tab-btn" data-step="3" title="Notion 3 : Immutabilite">3</button>
-        <button class="step-tab-btn" data-step="4" title="Notion 4 : Reseau distribue">4</button>
+        <button class="step-tab-btn" data-step="2" title="Notion 2 : Chaînage cryptographique">2</button>
+        <button class="step-tab-btn" data-step="3" title="Notion 3 : Immuabilité">3</button>
+        <button class="step-tab-btn" data-step="4" title="Notion 4 : Réseau distribué">4</button>
         <button class="step-tab-btn" data-step="5" title="Notion 5 : Minage">5</button>
         <button class="step-tab-btn" data-step="6" title="Notion 6 : Consensus">6</button>
         <button class="step-tab-btn" data-step="7" title="Notion 7 : Attaque des 51%">7</button>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visualisation pedagogique de la blockchain - Convoi Ferroviaire</title>
+  <title>Visualisation pédagogique de la blockchain - Convoi Ferroviaire</title>
   <link rel="stylesheet" href="./src/style.css">
   <script type="importmap">
   {
@@ -28,17 +28,17 @@
         </div>
       </header>
 
-      <!-- Ecran d'accueil initial (avant l'etape 0) -->
-      <div id="welcome-overlay" class="welcome-overlay active" aria-label="Ecran d'accueil">
+      <!-- Écran d'accueil initial (avant l'étape 0) -->
+      <div id="welcome-overlay" class="welcome-overlay active" aria-label="Écran d'accueil">
         <div class="welcome-card-top">
-          <h1 class="welcome-title">Bienvenue a bord !</h1>
-          <p class="welcome-lead">C'est ici que vous voyagerez a la decouverte de ce qu'est la blockchain</p>
+          <h1 class="welcome-title">Bienvenue à bord !</h1>
+          <p class="welcome-lead">C'est ici que vous voyagerez à la découverte de ce qu'est la blockchain</p>
           <div class="welcome-desc">
             <p>
-              Vous avez sans doute deja croise les termes <strong>blockchain</strong>, <em>registre infalsifiable</em> ou <em>crypto</em> sans representation visuelle concrete de leur fonctionnement.
+              Vous avez sans doute déjà croisé les termes <strong>blockchain</strong>, <em>registre infalsifiable</em> ou <em>crypto</em> sans représentation visuelle concrète de leur fonctionnement.
             </p>
             <p>
-              Pas d'inquietude : ici, aucun calcul complexe ni jargon incomprehensible. Nous decouvrons cette technologie a travers une image tangible : <strong>un convoi ferroviaire transparent en circulation</strong>.
+              Pas d'inquiétude : ici, aucun calcul complexe ni jargon incompréhensible. Nous découvrons cette technologie à travers une image tangible : <strong>un convoi ferroviaire transparent en circulation</strong>.
             </p>
           </div>
         </div>
@@ -51,22 +51,22 @@
         </div>
       </div>
 
-      <!-- Volet pedagogique gauche pour les etapes avec marque-pages sur le bord droit -->
-      <aside id="step-panel-left" class="hud-step-panel" aria-label="Volet pedagogique de l'etape">
-        <!-- Marque-pages des etapes sur le bord droit (uniquement les numeros 0 a 7) -->
-        <nav id="step-bookmark-tabs" class="step-bookmark-tabs" aria-label="Marque-pages des etapes">
+      <!-- Volet pédagogique gauche pour les étapes avec marque-pages sur le bord droit -->
+      <aside id="step-panel-left" class="hud-step-panel" aria-label="Volet pédagogique de l'étape">
+        <!-- Marque-pages des étapes sur le bord droit (uniquement les numéros 0 à 7) -->
+        <nav id="step-bookmark-tabs" class="step-bookmark-tabs" aria-label="Marque-pages des étapes">
           <button class="step-tab-btn active" data-step="0" title="Notion 0 : Introduction">0</button>
           <button class="step-tab-btn" data-step="1" title="Notion 1 : Structure du bloc">1</button>
-          <button class="step-tab-btn" data-step="2" title="Notion 2 : Chainage cryptographique">2</button>
-          <button class="step-tab-btn" data-step="3" title="Notion 3 : Immutabilite">3</button>
-          <button class="step-tab-btn" data-step="4" title="Notion 4 : Reseau distribue">4</button>
+          <button class="step-tab-btn" data-step="2" title="Notion 2 : Chaînage cryptographique">2</button>
+          <button class="step-tab-btn" data-step="3" title="Notion 3 : Immuabilité">3</button>
+          <button class="step-tab-btn" data-step="4" title="Notion 4 : Réseau distribué">4</button>
           <button class="step-tab-btn" data-step="5" title="Notion 5 : Minage">5</button>
           <button class="step-tab-btn" data-step="6" title="Notion 6 : Consensus">6</button>
           <button class="step-tab-btn" data-step="7" title="Notion 7 : Attaque des 51%">7</button>
         </nav>
       </aside>
 
-      <!-- Panneau lateral droit d'inspection du wagon -->
+      <!-- Panneau latéral droit d'inspection du wagon -->
       <aside id="inspection-sidebar" class="hud-sidebar" aria-hidden="true">
         <div class="sidebar-header">
           <div class="sidebar-title-group">
@@ -87,17 +87,17 @@
           </div>
 
           <div class="field-group">
-            <label for="field-data">Marchandises transportees (Transactions)</label>
+            <label for="field-data">Marchandises transportées (Transactions)</label>
             <textarea id="field-data" rows="3" readonly></textarea>
           </div>
 
           <div class="field-group">
-            <label for="field-prev-hash">Attelage precedent (previousHash)</label>
+            <label for="field-prev-hash">Attelage précédent (previousHash)</label>
             <input type="text" id="field-prev-hash" class="code-font" readonly value="0000000000000000">
           </div>
 
           <div class="field-group">
-            <label for="field-hash">Plaque d'empreinte gravee (hash)</label>
+            <label for="field-hash">Plaque d'empreinte gravée (hash)</label>
             <input type="text" id="field-hash" class="code-font" readonly value="0000a89f41b2c3d4">
           </div>
 
@@ -107,10 +107,10 @@
           </div>
 
           <div class="field-group">
-            <label>Etat de l'attelage magnetique</label>
+            <label>État de l'attelage magnétique</label>
             <div id="field-status" class="status-indicator valid">
               <span class="status-bulb"></span>
-              <span id="field-status-text">Attelage magnetique actif</span>
+              <span id="field-status-text">Attelage magnétique actif</span>
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 /**
- * Etape 5 : Validation et minage (Proof of Work).
+ * Étape 5 : Validation et minage (Proof of Work).
  */
 export const step5 = {
   id: 5,
@@ -43,17 +43,16 @@ export const step5 = {
     inner.innerHTML = `
         <header class="step-panel-header">
           <h2 class="step-panel-title">Le Minage (PoW)</h2>
-          <p class="step-panel-subtitle">La course mathematique pour sceller le bloc</p>
+          <p class="step-panel-subtitle">La course mathématique pour sceller le bloc</p>
         </header>
         <div class="step-panel-scroll">
           <section class="step-card metaphor-card">
-
             <h3>Comment scelle-t-on un nouveau wagon ?</h3>
-            <p>Les mineurs testent des millions de combinaisons sur la molette (le Nonce) jusqu'a trouver celle qui produit un sceau respectant la regle de difficulte.</p>
+            <p>Les mineurs testent des millions de combinaisons sur la molette (le Nonce) jusqu'à trouver celle qui produit un sceau respectant la règle de difficulté.</p>
           </section>
           <div class="step-actions-row">
-            <button id="btn-step5-prev" class="btn-step-action secondary">&larr; Etape 4</button>
-            <button id="btn-step5-next" class="btn-step-action primary">Etape 6 &rarr;</button>
+            <button id="btn-step5-prev" class="btn-step-action secondary">&larr; Étape 4</button>
+            <button id="btn-step5-next" class="btn-step-action primary">Étape 6 &rarr;</button>
           </div>
         </div>
     `;

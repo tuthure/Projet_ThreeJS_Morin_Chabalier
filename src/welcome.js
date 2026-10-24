@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 
 /**
- * Module de bienvenue (Ecran d'accueil avant l'etape 0).
- * Met en scene le convoi ferroviaire au complet (une dizaine de wagons)
- * en plan demi-ensemble cinematique, servant de fond vivant
- * pour accueillir les apprenants avec un bloc central superieur et un bouton hero inferieur.
+ * Module de bienvenue (Écran d'accueil avant l'étape 0).
+ * Met en scène le convoi ferroviaire au complet (une dizaine de wagons)
+ * en plan demi-ensemble cinématique, servant de fond vivant
+ * pour accueillir les apprenants avec un bloc central supérieur et un bouton héros inférieur.
  */
 export const welcome = {
   ctx: null,
@@ -70,9 +70,9 @@ export const welcome = {
     // 4. Initialise le convoi avec une dizaine de cargaisons variees (Genesis + 9 wagons)
     const demoTransactions = [
       { emetteur: 'Gare Centrale', destinataire: 'Gare du Nord', montant: 45, unite: 'MMI' },
-      { emetteur: 'Entrepot Alpha', destinataire: 'Terminal Fret', montant: 18, unite: 'MMI' },
+      { emetteur: 'Entrepôt Alpha', destinataire: 'Terminal Fret', montant: 18, unite: 'MMI' },
       { emetteur: 'Quai #03', destinataire: 'Gare de l\'Est', montant: 105, unite: 'MMI' },
-      { emetteur: 'Depot Sud', destinataire: 'Plateforme Beta', montant: 64, unite: 'MMI' },
+      { emetteur: 'Dépôt Sud', destinataire: 'Plateforme Bêta', montant: 64, unite: 'MMI' },
       { emetteur: 'Gare Maritime', destinataire: 'Hub Transit', montant: 30, unite: 'MMI' },
       { emetteur: 'Ligne 07', destinataire: 'Gare Centrale', montant: 85, unite: 'MMI' },
       { emetteur: 'Quai #12', destinataire: 'Terminal Sud', montant: 12, unite: 'MMI' },

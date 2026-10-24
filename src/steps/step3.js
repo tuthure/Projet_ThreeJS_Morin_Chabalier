@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 
 /**
- * Etape 3 : Immutabilite et falsification.
+ * Étape 3 : Immuabilité et falsification.
  */
 export const step3 = {
   id: 3,
-  title: "Immutabilite et falsification",
+  title: "Immuabilité et falsification",
   ctx: null,
   init(context) { this.ctx = context; },
   enter() {
@@ -40,18 +40,17 @@ export const step3 = {
     inner.className = 'step-panel-inner';
     inner.innerHTML = `
         <header class="step-panel-header">
-          <h2 class="step-panel-title">L'Immutabilite</h2>
-          <p class="step-panel-subtitle">Impossible de tricher sans briser la chaine</p>
+          <h2 class="step-panel-title">L'Immuabilité</h2>
+          <p class="step-panel-subtitle">Impossible de tricher sans briser la chaîne</p>
         </header>
         <div class="step-panel-scroll">
           <section class="step-card metaphor-card">
-
             <h3>Que se passe-t-il en cas de tentative de fraude ?</h3>
-            <p>Si quelqu'un essaie d'ouvrir le wagon pour modifier les transactions, le sceau du wagon change instantanement, provoquant une rupture visible de l'attelage avec les wagons suivants.</p>
+            <p>Si quelqu'un essaie d'ouvrir le wagon pour modifier les transactions, le sceau du wagon change instantanément, provoquant une rupture visible de l'attelage avec les wagons suivants.</p>
           </section>
           <div class="step-actions-row">
-            <button id="btn-step3-prev" class="btn-step-action secondary">&larr; Etape 2</button>
-            <button id="btn-step3-next" class="btn-step-action primary">Etape 4 &rarr;</button>
+            <button id="btn-step3-prev" class="btn-step-action secondary">&larr; Étape 2</button>
+            <button id="btn-step3-next" class="btn-step-action primary">Étape 4 &rarr;</button>
           </div>
         </div>
     `;

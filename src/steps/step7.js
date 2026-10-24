@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 /**
- * Etape 7 : Cycle de vie et illustration d'attaque.
+ * Étape 7 : Cycle de vie et illustration d'attaque.
  */
 export const step7 = {
   id: 7,
@@ -41,17 +41,16 @@ export const step7 = {
     inner.innerHTML = `
         <header class="step-panel-header">
           <h2 class="step-panel-title">Cycle de Vie & Attaque</h2>
-          <p class="step-panel-subtitle">De l'emission a l'inviolabilite</p>
+          <p class="step-panel-subtitle">De l'émission à l'inviolabilité</p>
         </header>
         <div class="step-panel-scroll">
           <section class="step-card metaphor-card">
-
             <h3>Du colis sur le quai jusqu'au convoi</h3>
-            <p>Une transaction attend d'abord dans une salle d'embarquement (mempool), puis est chargee dans un wagon, scellee par un mineur et validee par le reste du reseau.</p>
+            <p>Une transaction attend d'abord dans une salle d'embarquement (mempool), puis est chargée dans un wagon, scellée par un mineur et validée par le reste du réseau.</p>
           </section>
           <div class="step-actions-row">
-            <button id="btn-step7-prev" class="btn-step-action secondary">&larr; Etape 6</button>
-            <button id="btn-step7-restart" class="btn-step-action primary">&#8634; Recommencer a l'Etape 1</button>
+            <button id="btn-step7-prev" class="btn-step-action secondary">&larr; Étape 6</button>
+            <button id="btn-step7-restart" class="btn-step-action primary">&#8634; Recommencer à l'Étape 1</button>
           </div>
         </div>
     `;

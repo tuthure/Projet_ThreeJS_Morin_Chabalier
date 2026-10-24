@@ -269,7 +269,7 @@ function updateSidebarStatus(isValid) {
   if (!fieldStatus || !fieldStatusText) return;
   if (isValid) {
     fieldStatus.className = 'status-indicator valid';
-    fieldStatusText.textContent = 'Attelage magnetique actif (valide)';
+    fieldStatusText.textContent = 'Attelage magnétique actif (valide)';
   } else {
     fieldStatus.className = 'status-indicator invalid';
     fieldStatusText.textContent = 'Rupture d\'attelage (hash corrompu)';
