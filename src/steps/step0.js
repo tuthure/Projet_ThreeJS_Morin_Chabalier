@@ -24,7 +24,7 @@ export const step0 = {
    * - Met le convoi en mouvement (decor defilant a vitesse de croisiere)
    * - Affiche la locomotive et le wagon Genesis (#0)
    * - Positionne la camera en vue panoramique dynamique
-   * - Affiche le volet d'accueil gauche
+   * - Affiche le volet d'accueil gauche (Carnet de bord du convoi)
    */
   enter() {
     const { trainConvoy, cameraController, environment } = this.ctx;
@@ -66,7 +66,7 @@ export const step0 = {
   },
 
   /**
-   * Genere le contenu HTML du volet d'accueil des debutants.
+   * Genere le contenu HTML du carnet de bord ferroviaire (prologue).
    */
   renderLeftPanel() {
     const panel = document.getElementById('step-panel-left');
@@ -75,42 +75,54 @@ export const step0 = {
     panel.classList.add('active');
     panel.innerHTML = `
       <div class="step-panel-inner">
+        <!-- Pince metallique superieure façon carnet de chef de train -->
+        <div class="sheet-clip">
+          <span class="sheet-clip-title">CONVOI FERROVIAIRE</span>
+        </div>
+
         <header class="step-panel-header">
-          <div class="step-panel-kicker">PROLOGUE</div>
-          <h2 class="step-panel-title">Bienvenue a bord</h2>
-          <p class="step-panel-subtitle">Une immersion visuelle pour comprendre la blockchain sans jargon</p>
+          <!-- Tampon de gare officiel -->
+          <div class="railway-stamp">
+            <div class="stamp-circle">0</div>
+            <div class="stamp-meta">
+              <span class="stamp-title">NOTION 0 &middot; INTRODUCTION</span>
+              <span class="stamp-sub">GARE DE DEPART</span>
+            </div>
+          </div>
+          <h2 class="step-panel-title">Bienvenue a bord !</h2>
+          <p class="step-panel-subtitle">Comprendre la blockchain sans aucun jargon</p>
         </header>
 
         <div class="step-panel-scroll">
-          <section class="editorial-section">
-            <h3 class="editorial-heading">Le voyage commence ici</h3>
+          <section class="railway-section">
+            <h3 class="railway-heading">Le voyage commence ici</h3>
             <p>
-              Vous avez sans doute deja croise les termes <strong>blockchain</strong>, <em>registre infalsifiable</em> ou <em>crypto-actifs</em> sans representation visuelle concrete de leur fonctionnement.
+              Vous avez sans doute deja croise les termes <strong>blockchain</strong>, <em>registre infalsifiable</em> ou <em>crypto</em> sans representation visuelle concrete de leur fonctionnement.
             </p>
             <p>
-              Ici, nul besoin d'equations complexes. Nous explorons cette technologie a travers une metaphore tangible : <strong>un convoi ferroviaire transparent en circulation</strong>.
+              Pas d'inquietude : ici, aucun calcul complexe ni jargon incomprehensible. Nous decouvrons cette technologie a travers une image tangible : <strong>un convoi ferroviaire en circulation</strong>.
             </p>
           </section>
 
-          <section class="editorial-section">
-            <h3 class="editorial-heading">L'analogie du convoi</h3>
+          <section class="railway-section">
+            <h3 class="railway-heading">Comment ca marche ?</h3>
             <p>
-              Chaque wagon represente un <strong>bloc</strong> contenant des donnees certifiees : des transactions, des contrats ou des titres de propriete.
+              Dans ce train, chaque wagon represente un <strong>bloc</strong> contenant des donnees certifiees (des echanges d'argent, des contrats ou des certificats numeriques).
             </p>
             <p>
-              Ces wagons sont scelles entre eux par des <strong>attelages cryptographiques inviolables</strong>. Si une personne tentait de modifier le contenu d'un wagon passe, l'attelage se briserait instantanement a la vue de l'ensemble du reseau.
+              Ces wagons sont scelles les uns aux autres par des <strong>attelages magnetiques invisibles</strong>. Si quelqu'un tente d'ouvrir un wagon passe pour frauder, l'attelage se brise instantanement sous les yeux de tous les observateurs !
             </p>
 
-            <div class="editorial-callout">
-              <span class="callout-label">L'EXPERIENCE</span>
-              <p class="callout-text">
-                En 7 etapes interactives, vous inspecterez les wagons, manipulerez leurs composants et decouvrirez pourquoi ce systeme est concu pour resister a toute falsification.
+            <div class="railway-note">
+              <div class="railway-note-title">CONSIGNE DU CHEF DE TRAIN</div>
+              <p class="railway-note-body">
+                En 7 etapes interactives, vous inspecterez les wagons, manipulerez leurs composants et comprendrez pourquoi ce reseau est impossible a pirater.
               </p>
             </div>
           </section>
 
-          <div class="editorial-actions">
-            <button id="btn-start-exploration" class="btn-primary-pill">
+          <div class="railway-actions">
+            <button id="btn-start-exploration" class="btn-rail-primary">
               <span>Commencer l'exploration</span>
               <span class="btn-arrow">&rarr;</span>
             </button>

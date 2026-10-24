@@ -31,7 +31,7 @@ export const step1 = {
    * - Arrete le defilement du decor (train a l'arret a quai pour inspection tranquille)
    * - Reinitialise le convoi avec uniquement la locomotive et le wagon #0
    * - Positionne la camera en vue 3/4 ideale
-   * - Affiche le volet d'inspection gauche
+   * - Affiche le volet d'inspection gauche (Carnet de bord du convoi)
    */
   enter() {
     const { trainConvoy, cameraController, environment } = this.ctx;
@@ -54,7 +54,7 @@ export const step1 = {
       inspectionSidebar.setAttribute('aria-hidden', 'true');
     }
 
-    // 5. Genere le panneau pedagogique de gauche dedie a l'etape 1
+    // 5. Genere le carnet de bord ferroviaire dedie a l'etape 1
     this.renderLeftPanel();
 
     // 6. Cadre la camera sur la locomotive et le wagon Genesis (#0)
@@ -73,7 +73,7 @@ export const step1 = {
   },
 
   /**
-   * Genere le contenu HTML interactif du volet lateral gauche.
+   * Genere le contenu HTML interactif du volet lateral gauche (Feuille de route).
    */
   renderLeftPanel() {
     const panel = document.getElementById('step-panel-left');
@@ -82,32 +82,44 @@ export const step1 = {
     panel.classList.add('active');
     panel.innerHTML = `
       <div class="step-panel-inner">
+        <!-- Pince metallique superieure -->
+        <div class="sheet-clip">
+          <span class="sheet-clip-title">CONVOI FERROVIAIRE</span>
+        </div>
+
         <header class="step-panel-header">
-          <div class="step-panel-kicker">ETAPE 01 / ANATOMIE</div>
+          <!-- Tampon de gare officiel -->
+          <div class="railway-stamp">
+            <div class="stamp-circle">1</div>
+            <div class="stamp-meta">
+              <span class="stamp-title">NOTION 1 &middot; STRUCTURE DU BLOC</span>
+              <span class="stamp-sub">MANIFESTE DU WAGON #0</span>
+            </div>
+          </div>
           <h2 class="step-panel-title">Qu'est-ce qu'un Bloc ?</h2>
-          <p class="step-panel-subtitle">Le wagon aux parois de verre et ses 4 constituants</p>
+          <p class="step-panel-subtitle">La metaphore du wagon aux parois de verre</p>
         </header>
 
         <div class="step-panel-scroll">
           <!-- 1. Explication vulgarisee de la metaphore -->
-          <section class="editorial-section">
-            <h3 class="editorial-heading">La transparence absolue</h3>
+          <section class="railway-section">
+            <h3 class="railway-heading">Pourquoi un wagon en verre ?</h3>
             <p>
-              Dans ce convoi, chaque wagon represente un <strong>bloc</strong>. Ses parois sont faites de <strong>verre parfaitement transparent</strong> : n'importe quel observateur peut inspecter son contenu sans jamais ouvrir ses portes.
+              Dans ce convoi, chaque wagon represente un <strong>bloc</strong>. Ses parois sont faites de <strong>verre parfaitement transparent</strong> : n'importe qui sur le quai peut regarder a l'interieur et verifier ce qu'il transporte, sans jamais avoir besoin d'ouvrir la porte.
             </p>
-            <div class="editorial-callout warning">
-              <span class="callout-label">PRINCIPE FONDAMENTAL</span>
-              <p class="callout-text">
-                Tout le monde peut verifier l'interieur d'un bloc. En revanche, tenter d'en forcer l'acces ou d'en alterer la cargaison brise instantanement son sceau d'inviolabilite.
+            <div class="railway-note warning">
+              <div class="railway-note-title">REGLE D'OR DU CONVOI</div>
+              <p class="railway-note-body">
+                Tout le monde peut voir l'interieur, mais forcer le wagon ou modifier son contenu briserait immediatement son sceau d'inviolabilite !
               </p>
             </div>
           </section>
 
           <!-- 2. Les 4 elements anatomiques du wagon -->
-          <section class="editorial-section">
+          <section class="railway-section">
             <div class="section-lead-row">
-              <h3 class="editorial-heading">Anatomie du wagon</h3>
-              <span class="section-hint">Cliquez sur un composant pour zoomer</span>
+              <h3 class="railway-heading">Regardons dans le wagon</h3>
+              <span class="section-hint">Cliquez sur un composant pour vous en approcher :</span>
             </div>
 
             <div class="inspector-list">
@@ -116,7 +128,7 @@ export const step1 = {
                 <span class="inspector-index">01</span>
                 <div class="inspector-info">
                   <div class="inspector-title">La Marchandise</div>
-                  <div class="inspector-subtitle">Transactions et contrats certifiees</div>
+                  <div class="inspector-subtitle">Les Transactions & Contrats</div>
                 </div>
                 <span class="inspector-location">Interieur</span>
               </button>
@@ -126,7 +138,7 @@ export const step1 = {
                 <span class="inspector-index">02</span>
                 <div class="inspector-info">
                   <div class="inspector-title">Le Nombre Magique</div>
-                  <div class="inspector-subtitle">Molette de verrouillage (Nonce)</div>
+                  <div class="inspector-subtitle">La Molette du Nonce</div>
                 </div>
                 <span class="inspector-location">Flanc droit</span>
               </button>
@@ -135,8 +147,8 @@ export const step1 = {
               <button class="inspector-item" data-comp="hash" id="btn-comp-hash">
                 <span class="inspector-index">03</span>
                 <div class="inspector-info">
-                  <div class="inspector-title">Le Sceau Officiel</div>
-                  <div class="inspector-subtitle">Empreinte cryptographique (SHA-256)</div>
+                  <div class="inspector-title">Le Sceau du Wagon</div>
+                  <div class="inspector-subtitle">L'Empreinte HASH (SHA-256)</div>
                 </div>
                 <span class="inspector-location">Plaque vitree</span>
               </button>
@@ -146,7 +158,7 @@ export const step1 = {
                 <span class="inspector-index">04</span>
                 <div class="inspector-info">
                   <div class="inspector-title">Le Sceau d'Avant</div>
-                  <div class="inspector-subtitle">Attelage au vehicule precedent</div>
+                  <div class="inspector-subtitle">L'Attelage (Previous Hash)</div>
                 </div>
                 <span class="inspector-location">Face avant</span>
               </button>
@@ -155,21 +167,21 @@ export const step1 = {
             <!-- Fiche d'inspection dynamique -->
             <div id="component-detail-box" class="inspector-detail-box">
               <div class="detail-placeholder">
-                Cliquez sur l'un des 4 composants ci-dessus pour vous en approcher et decouvrir son role.
+                Cliquez sur un des 4 elements ci-dessus pour zoomer dessus et comprendre son secret !
               </div>
             </div>
           </section>
 
           <!-- 3. Actions de navigation -->
           <div class="step-nav-bar">
-            <button id="btn-step1-prev" class="btn-ghost-pill" title="Retour a l'introduction">
-              &larr; Prologue
+            <button id="btn-step1-prev" class="btn-rail-ghost" title="Retour a l'introduction">
+              &larr; Intro
             </button>
-            <button id="btn-step1-overview" class="btn-ghost-pill">
-              Vue d'ensemble
+            <button id="btn-step1-overview" class="btn-rail-ghost">
+              Vue globale
             </button>
-            <button id="btn-step1-next" class="btn-primary-pill">
-              <span>Etape 2</span>
+            <button id="btn-step1-next" class="btn-rail-primary">
+              <span>Etape 2 : Le Chainage</span>
               <span class="btn-arrow">&rarr;</span>
             </button>
           </div>
@@ -245,14 +257,14 @@ export const step1 = {
         camTarget = new THREE.Vector3(wagonPos.x, 0.52, 0);
         detailHtml = `
           <div class="detail-card animate-fade">
-            <div class="detail-kicker">COMPOSANT 01</div>
-            <h4 class="detail-title">La Marchandise &middot; Les Transactions</h4>
+            <div class="detail-kicker">COMPOSANT 01 &middot; MARCHANDISES</div>
+            <h4 class="detail-title">Ce que transporte le wagon</h4>
             <p class="detail-body">
-              Dans un train classique, on transporte des marchandises physiques. Dans la blockchain, ce wagon transporte <strong>des transactions</strong> : echanges de valeur, signatures de contrats ou titres numeriques.
+              Dans un train classique, on transporte du fret ou des colis. Dans une blockchain, on transporte <strong>des transactions</strong> : transferts de monnaie, contrats ou certificats numeriques.
             </p>
-            <p class="detail-insight">
-              Grace aux parois transparentes du wagon, ces echanges sont verifiables par tous sans intermediaire. Une fois le wagon scelle, ces donnees deviennent <strong>invariables et eternelles</strong>.
-            </p>
+            <div class="detail-insight">
+              Grace aux parois en verre du wagon, tout le monde peut consulter publiquement ces donnees. Une fois scellees, il est <strong>impossible de les modifier ou de les supprimer</strong>.
+            </div>
           </div>
         `;
         break;
@@ -263,14 +275,14 @@ export const step1 = {
         camTarget = new THREE.Vector3(wagonPos.x, 0.22, 0.7);
         detailHtml = `
           <div class="detail-card animate-fade">
-            <div class="detail-kicker">COMPOSANT 02</div>
-            <h4 class="detail-title">Le Nombre Magique &middot; Le Nonce</h4>
+            <div class="detail-kicker">COMPOSANT 02 &middot; LE NONCE</div>
+            <h4 class="detail-title">La combinaison secrete de verrouillage</h4>
             <p class="detail-body">
-              Cette molette crantee sur le flanc du chassis affiche un nombre entier specifique nomme le <strong>Nonce</strong> (abreviation de <em>number used once</em>).
+              Cette molette crantee sur le flanc du chassis affiche un nombre nomme le <strong>Nonce</strong> (<em>"number used once"</em>).
             </p>
-            <p class="detail-insight">
-              Trouver cette valeur exacte est le but du <strong>minage</strong> : un calcul intensif consistant a tester des millions de nombres jusqu'a trouver celui qui permet au sceau de respecter la regle mathematique du reseau.
-            </p>
+            <div class="detail-insight">
+              Trouver le bon nombre est le resultat d'un calcul informatique intense (le <strong>minage</strong>). C'est ce chiffre precis qui permet au wagon d'obtenir une empreinte cryptographique valide.
+            </div>
           </div>
         `;
         break;
@@ -281,14 +293,14 @@ export const step1 = {
         camTarget = new THREE.Vector3(wagonPos.x, 0.62, 0.6);
         detailHtml = `
           <div class="detail-card animate-fade">
-            <div class="detail-kicker">COMPOSANT 03</div>
-            <h4 class="detail-title">Le Sceau Officiel &middot; L'Empreinte HASH</h4>
+            <div class="detail-kicker">COMPOSANT 03 &middot; EMPREINTE HASH</div>
+            <h4 class="detail-title">L'empreinte digitale unique du wagon</h4>
             <p class="detail-body">
-              Inscrit sur la plaque vitree, ce code hexadecimal unique est calcule par l'algorithme <strong>SHA-256</strong>. C'est la signature cryptographique du wagon entier.
+              Grave sur cette grande plaque centrale, ce code est genere par la formule mathematique <strong>SHA-256</strong>. C'est l'empreinte digitale exacte du wagon.
             </p>
-            <p class="detail-insight">
-              Ce sceau depend mathematiquement de tout le contenu du wagon. Modifier un seul caractere de transaction briserait instantanement cette valeur et invaliderait le bloc.
-            </p>
+            <div class="detail-insight">
+              Ce sceau depend mathematiquement de tout le wagon. <strong>Si vous changiez une seule virgule a l'interieur, ce sceau changerait completement</strong> !
+            </div>
           </div>
         `;
         break;
@@ -299,14 +311,14 @@ export const step1 = {
         camTarget = new THREE.Vector3(wagonPos.x - 1.4, 0.45, 0);
         detailHtml = `
           <div class="detail-card animate-fade">
-            <div class="detail-kicker">COMPOSANT 04</div>
-            <h4 class="detail-title">Le Sceau d'Avant &middot; L'Attelage</h4>
+            <div class="detail-kicker">COMPOSANT 04 &middot; ATTELAGE PREVIOUS HASH</div>
+            <h4 class="detail-title">L'attelage qui relie le wagon au convoi</h4>
             <p class="detail-body">
-              Pour etre raccorde au convoi, chaque wagon doit imperativement porter sur son crochet avant <strong>l'empreinte exacte du wagon qui le precede</strong>.
+              Pour s'accrocher au convoi, le wagon doit obligatoirement porter sur son crochet avant <strong>le sceau exact du vehicule qui roule devant lui</strong>.
             </p>
-            <p class="detail-insight">
-              Puisque ce wagon est le tout premier du train (le <strong>Bloc Genesis</strong>), il est arrime a la locomotive motrice avec une signature originelle formee exclusivement de zeros : <code>0000000000000000</code>.
-            </p>
+            <div class="detail-insight">
+              Comme ce wagon est le premier du train (le <strong>Bloc Genesis</strong>), il est arrime directement a la locomotive avec un sceau compose exclusivement de zeros : <code>0000000000000000</code>.
+            </div>
           </div>
         `;
         break;
@@ -332,7 +344,7 @@ export const step1 = {
     if (detailBox) {
       detailBox.innerHTML = `
         <div class="detail-placeholder">
-          Cliquez sur l'un des 4 composants ci-dessus pour vous en approcher et decouvrir son role.
+          Cliquez sur un des 4 elements ci-dessus pour zoomer dessus et comprendre son secret !
         </div>
       `;
     }
