@@ -181,11 +181,9 @@ export class Environment {
     });
 
     const snowMat = new THREE.MeshStandardMaterial({
-      color: 0xdbeafe,
-      roughness: 0.85,
-      metalness: 0.05,
-      emissive: 0x1e293b,
-      emissiveIntensity: 0.12,
+      color: 0x25384e,
+      roughness: 0.98,
+      metalness: 0.0,
       flatShading: true,
       polygonOffset: true,
       polygonOffsetFactor: -2,
@@ -202,12 +200,12 @@ export class Environment {
       cone.position.y = height / 2 - 2;
       mtnGroup.add(cone);
 
-      // Sommet givre avec leger debordement et polygonOffset pour eliminer tout z-fighting
-      const peakRadius = radius * 0.395;
-      const peakHeight = height * 0.39;
+      // Sommet rocheux sombre et discret, sans emission ni contraste criard
+      const peakRadius = radius * 0.255;
+      const peakHeight = height * 0.25;
       const peakGeo = new THREE.ConeGeometry(peakRadius, peakHeight, 7);
       const peak = new THREE.Mesh(peakGeo, snowMat);
-      peak.position.y = height - peakHeight / 2 - 2 + 0.06;
+      peak.position.y = height - peakHeight / 2 - 2 + 0.04;
       mtnGroup.add(peak);
 
       const x = this.mountainMinX + i * this.mountainSpacing;
