@@ -10,6 +10,7 @@ import { step7 } from './step7.js';
 /**
  * Gestionnaire modulaire des etapes de la visualisation (Introduction + 7 notions).
  * Pilote l'activation de chaque fichier d'etape dedie (step0.js, step1.js...).
+ * Gere les marque-pages numerotes situes sur le bord droit du volet gauche.
  */
 export class StepManager {
   /**
@@ -51,10 +52,10 @@ export class StepManager {
   }
 
   /**
-   * Initialise les ecouteurs sur les boutons de navigation inferieurs.
+   * Initialise les ecouteurs sur les marque-pages et boutons d'etapes.
    */
   setupNavigationUI() {
-    const stepButtons = document.querySelectorAll('.step-btn');
+    const stepButtons = document.querySelectorAll('.step-tab-btn, .step-btn');
     stepButtons.forEach((btn) => {
       btn.addEventListener('click', () => {
         const stepNum = parseInt(btn.dataset.step);
@@ -76,6 +77,34 @@ export class StepManager {
   }
 
   /**
+   * S'assure que les marque-pages sur le bord droit sont toujours presents dans le DOM.
+   */
+  ensureBookmarkTabs() {
+    const panel = document.getElementById('step-panel-left');
+    if (!panel) return;
+
+    let tabsNav = document.getElementById('step-bookmark-tabs');
+    if (!tabsNav) {
+      tabsNav = document.createElement('nav');
+      tabsNav.id = 'step-bookmark-tabs';
+      tabsNav.className = 'step-bookmark-tabs';
+      tabsNav.setAttribute('aria-label', 'Marque-pages des etapes');
+      tabsNav.innerHTML = `
+        <button class="step-tab-btn" data-step="0" title="Notion 0 : Introduction">0</button>
+        <button class="step-tab-btn" data-step="1" title="Notion 1 : Structure du bloc">1</button>
+        <button class="step-tab-btn" data-step="2" title="Notion 2 : Chainage cryptographique">2</button>
+        <button class="step-tab-btn" data-step="3" title="Notion 3 : Immutabilite">3</button>
+        <button class="step-tab-btn" data-step="4" title="Notion 4 : Reseau distribue">4</button>
+        <button class="step-tab-btn" data-step="5" title="Notion 5 : Minage">5</button>
+        <button class="step-tab-btn" data-step="6" title="Notion 6 : Consensus">6</button>
+        <button class="step-tab-btn" data-step="7" title="Notion 7 : Attaque des 51%">7</button>
+      `;
+      panel.appendChild(tabsNav);
+      this.setupNavigationUI();
+    }
+  }
+
+  /**
    * Bascule vers une etape donnee (0 a 7).
    * @param {number} stepNumber
    */
@@ -92,8 +121,15 @@ export class StepManager {
     this.currentStepNum = targetNum;
     this.currentStep = this.steps.get(targetNum) || null;
 
-    // 3. Mise a jour de la barre d'etapes du HUD
-    const stepButtons = document.querySelectorAll('.step-btn');
+    // 3. Entree dans la nouvelle etape
+    if (this.currentStep && typeof this.currentStep.enter === 'function') {
+      this.currentStep.enter();
+    }
+
+    // 4. Verifie la presence des marque-pages et met a jour la classe active
+    this.ensureBookmarkTabs();
+
+    const stepButtons = document.querySelectorAll('.step-tab-btn, .step-btn');
     stepButtons.forEach((btn) => {
       btn.classList.toggle('active', parseInt(btn.dataset.step) === targetNum);
     });
@@ -102,11 +138,6 @@ export class StepManager {
     const btnNext = document.getElementById('btn-next');
     if (btnPrev) btnPrev.disabled = targetNum === 0;
     if (btnNext) btnNext.disabled = targetNum === 7;
-
-    // 4. Entree dans la nouvelle etape
-    if (this.currentStep && typeof this.currentStep.enter === 'function') {
-      this.currentStep.enter();
-    }
   }
 
   /**

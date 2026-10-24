@@ -28,56 +28,23 @@
         </div>
       </header>
 
-      <!-- Barre de navigation inferieure (7 notions) -->
-      <nav class="hud-bottom" aria-label="Navigation des sequences">
-        <div class="nav-bar">
-          <button id="btn-prev" class="nav-arrow" title="Sequence precedente" aria-label="Precedent">
-            &larr; Precedent
-          </button>
+      <!-- Volet pedagogique gauche pour les etapes avec marque-pages sur le bord droit -->
+      <aside id="step-panel-left" class="hud-step-panel" aria-label="Volet pedagogique de l'etape">
+        <!-- Contenu dynamique de l'etape -->
+        <div id="step-panel-content" class="step-panel-content"></div>
 
-          <div class="nav-steps">
-            <button class="step-btn active" data-step="0" title="Introduction et bienvenue">
-              <span class="step-num">0</span>
-              <span class="step-name">Intro</span>
-            </button>
-            <button class="step-btn" data-step="1">
-              <span class="step-num">1</span>
-              <span class="step-name">Structure</span>
-            </button>
-            <button class="step-btn" data-step="2">
-              <span class="step-num">2</span>
-              <span class="step-name">Chainage</span>
-            </button>
-            <button class="step-btn" data-step="3">
-              <span class="step-num">3</span>
-              <span class="step-name">Immutabilite</span>
-            </button>
-            <button class="step-btn" data-step="4">
-              <span class="step-num">4</span>
-              <span class="step-name">Reseau</span>
-            </button>
-            <button class="step-btn" data-step="5">
-              <span class="step-num">5</span>
-              <span class="step-name">Minage</span>
-            </button>
-            <button class="step-btn" data-step="6">
-              <span class="step-num">6</span>
-              <span class="step-name">Consensus</span>
-            </button>
-            <button class="step-btn" data-step="7">
-              <span class="step-num">7</span>
-              <span class="step-name">Attaque</span>
-            </button>
-          </div>
-
-          <button id="btn-next" class="nav-arrow" title="Sequence suivante" aria-label="Suivant">
-            Suivant &rarr;
-          </button>
-        </div>
-      </nav>
-
-      <!-- Volet pedagogique gauche pour les etapes -->
-      <aside id="step-panel-left" class="hud-step-panel" aria-label="Volet pedagogique de l'etape"></aside>
+        <!-- Marque-pages des etapes sur le bord droit (uniquement les numeros 0 a 7) -->
+        <nav id="step-bookmark-tabs" class="step-bookmark-tabs" aria-label="Marque-pages des etapes">
+          <button class="step-tab-btn active" data-step="0" title="Notion 0 : Introduction">0</button>
+          <button class="step-tab-btn" data-step="1" title="Notion 1 : Structure du bloc">1</button>
+          <button class="step-tab-btn" data-step="2" title="Notion 2 : Chainage cryptographique">2</button>
+          <button class="step-tab-btn" data-step="3" title="Notion 3 : Immutabilite">3</button>
+          <button class="step-tab-btn" data-step="4" title="Notion 4 : Reseau distribue">4</button>
+          <button class="step-tab-btn" data-step="5" title="Notion 5 : Minage">5</button>
+          <button class="step-tab-btn" data-step="6" title="Notion 6 : Consensus">6</button>
+          <button class="step-tab-btn" data-step="7" title="Notion 7 : Attaque des 51%">7</button>
+        </nav>
+      </aside>
 
       <!-- Panneau lateral droit d'inspection du wagon -->
       <aside id="inspection-sidebar" class="hud-sidebar" aria-hidden="true">

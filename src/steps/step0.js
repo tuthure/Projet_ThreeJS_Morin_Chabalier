@@ -58,10 +58,9 @@ export const step0 = {
    * Quitte l'etape 0.
    */
   exit() {
-    const panel = document.getElementById('step-panel-left');
-    if (panel) {
-      panel.classList.remove('active');
-      panel.innerHTML = '';
+    const content = document.getElementById('step-panel-content') || document.getElementById('step-panel-left');
+    if (content) {
+      content.innerHTML = '';
     }
   },
 
@@ -70,10 +69,11 @@ export const step0 = {
    */
   renderLeftPanel() {
     const panel = document.getElementById('step-panel-left');
-    if (!panel) return;
+    const content = document.getElementById('step-panel-content') || panel;
+    if (panel) panel.classList.add('active');
+    if (!content) return;
 
-    panel.classList.add('active');
-    panel.innerHTML = `
+    content.innerHTML = `
       <div class="step-panel-inner">
         <header class="step-panel-header">
           <div class="panel-kicker">

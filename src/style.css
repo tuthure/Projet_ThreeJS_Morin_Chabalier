@@ -431,7 +431,7 @@ body {
 }
 
 /* ==========================================================================
-   Volet pedagogique lateral gauche (Design Moderne Haute Lisibilite)
+   Volet pedagogique lateral gauche (Design Moderne avec Marque-pages)
    ========================================================================== */
 .hud-step-panel {
   position: absolute;
@@ -439,7 +439,25 @@ body {
   left: 24px;
   bottom: 20px;
   width: 430px;
-  max-width: calc(100vw - 48px);
+  max-width: calc(100vw - 80px);
+  display: flex;
+  overflow: visible; /* Permet aux marque-pages numerotes de depasser sur la droite */
+  pointer-events: auto;
+  z-index: 25;
+  transform: translateX(-120%);
+  opacity: 0;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+}
+
+.hud-step-panel.active {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* Conteneur principal du volet avec flou et bordure */
+.step-panel-content {
+  width: 100%;
+  height: 100%;
   background: rgba(13, 20, 36, 0.94);
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
@@ -451,17 +469,62 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  pointer-events: auto;
-  z-index: 25;
   color: #f1f5f9;
-  transform: translateX(-120%);
-  opacity: 0;
-  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
 }
 
-.hud-step-panel.active {
-  transform: translateX(0);
-  opacity: 1;
+/* Marque-pages / Onglets numerotes sur le bord droit du volet */
+.step-bookmark-tabs {
+  position: absolute;
+  left: 100%;
+  top: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: auto;
+  z-index: 5;
+}
+
+.step-tab-btn {
+  appearance: none;
+  background: rgba(13, 20, 36, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: none;
+  border-radius: 0 10px 10px 0;
+  width: 38px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.35);
+  position: relative;
+  user-select: none;
+}
+
+.step-tab-btn:hover {
+  background: rgba(30, 41, 59, 0.96);
+  color: #ffffff;
+  width: 46px; /* Glisse vers la droite a la façon d'un marque-page */
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.step-tab-btn.active {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff;
+  width: 48px; /* Se detache vers la droite pour marquer la page */
+  border-color: #38bdf8;
+  font-weight: 800;
+  font-size: 1.05rem;
+  box-shadow: 
+    0 0 16px rgba(56, 189, 248, 0.45),
+    4px 4px 14px rgba(0, 0, 0, 0.5);
 }
 
 .step-panel-inner {
@@ -956,12 +1019,6 @@ body {
   transform: translateY(-1px);
 }
 
-@media (min-width: 1024px) {
-  body:has(.hud-step-panel.active) .hud-bottom {
-    padding-left: 450px;
-  }
-}
-
 /* --------------------------------------------------------------------------
    Responsive
    -------------------------------------------------------------------------- */
@@ -972,46 +1029,24 @@ body {
     gap: 8px;
   }
 
-  .hud-stats {
-    align-items: flex-start;
-  }
-
-  .hud-view-angles {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-  }
-
-  .sequence-title {
-    font-size: 1.1rem;
-  }
-
-  .sequence-desc {
-    display: none;
-  }
-
-  .hud-bottom {
-    padding: 12px 14px;
-  }
-
-  .nav-bar {
-    padding: 4px 6px;
-  }
-
-  .step-btn .step-name {
-    display: none;
-  }
-
-  .step-btn {
-    padding: 6px 10px;
-  }
-
   .hud-step-panel {
-    top: 70px;
-    left: 10px;
-    right: 10px;
-    bottom: 75px;
+    top: 50px;
+    left: 8px;
+    right: 48px;
+    bottom: 20px;
     width: auto;
     max-width: none;
+  }
+
+  .step-tab-btn {
+    width: 32px;
+    height: 36px;
+    font-size: 0.82rem;
+  }
+
+  .step-tab-btn.active,
+  .step-tab-btn:hover {
+    width: 38px;
   }
 
   .hud-sidebar {
