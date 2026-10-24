@@ -181,11 +181,15 @@ export class Environment {
     });
 
     const snowMat = new THREE.MeshStandardMaterial({
-      color: 0x38bdf8,
-      roughness: 0.9,
+      color: 0xdbeafe,
+      roughness: 0.85,
+      metalness: 0.05,
       emissive: 0x1e293b,
-      emissiveIntensity: 0.2,
-      flatShading: true
+      emissiveIntensity: 0.12,
+      flatShading: true,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -4
     });
 
     for (let i = 0; i < this.mountainCount; i++) {
@@ -198,10 +202,12 @@ export class Environment {
       cone.position.y = height / 2 - 2;
       mtnGroup.add(cone);
 
-      // Sommet givré lumineux
-      const peakGeo = new THREE.ConeGeometry(radius * 0.38, height * 0.38, 7);
+      // Sommet givre avec leger debordement et polygonOffset pour eliminer tout z-fighting
+      const peakRadius = radius * 0.395;
+      const peakHeight = height * 0.39;
+      const peakGeo = new THREE.ConeGeometry(peakRadius, peakHeight, 7);
       const peak = new THREE.Mesh(peakGeo, snowMat);
-      peak.position.y = height - (height * 0.38) / 2 - 2;
+      peak.position.y = height - peakHeight / 2 - 2 + 0.06;
       mtnGroup.add(peak);
 
       const x = this.mountainMinX + i * this.mountainSpacing;
