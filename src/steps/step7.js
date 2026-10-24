@@ -22,14 +22,23 @@ export const step7 = {
   },
   exit() {
     const panel = document.getElementById('step-panel-left');
-    if (panel) { panel.classList.remove('active'); panel.innerHTML = ''; }
+    if (panel) {
+      const inner = panel.querySelector('.step-panel-inner');
+      if (inner) inner.remove();
+    }
   },
   renderLeftPanel() {
     const panel = document.getElementById('step-panel-left');
     if (!panel) return;
+
     panel.classList.add('active');
-    panel.innerHTML = `
-      <div class="step-panel-inner">
+
+    const oldInner = panel.querySelector('.step-panel-inner');
+    if (oldInner) oldInner.remove();
+
+    const inner = document.createElement('div');
+    inner.className = 'step-panel-inner';
+    inner.innerHTML = `
         <header class="step-panel-header">
           <h2 class="step-panel-title">Cycle de Vie & Attaque</h2>
           <p class="step-panel-subtitle">De l'emission a l'inviolabilite</p>
@@ -45,8 +54,10 @@ export const step7 = {
             <button id="btn-step7-restart" class="btn-step-action primary">&#8634; Recommencer a l'Etape 1</button>
           </div>
         </div>
-      </div>
     `;
+
+    panel.prepend(inner);
+
     document.getElementById('btn-step7-prev')?.addEventListener('click', () => this.ctx.onPrevStep?.());
     document.getElementById('btn-step7-restart')?.addEventListener('click', () => this.ctx.onGoToStep?.(1));
   }

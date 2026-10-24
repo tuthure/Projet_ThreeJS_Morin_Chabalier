@@ -31,20 +31,25 @@ export const step2 = {
   },
 
   exit() {
-    const content = document.getElementById('step-panel-content') || document.getElementById('step-panel-left');
-    if (content) {
-      content.innerHTML = '';
+    const panel = document.getElementById('step-panel-left');
+    if (panel) {
+      const inner = panel.querySelector('.step-panel-inner');
+      if (inner) inner.remove();
     }
   },
 
   renderLeftPanel() {
     const panel = document.getElementById('step-panel-left');
-    const content = document.getElementById('step-panel-content') || panel;
-    if (panel) panel.classList.add('active');
-    if (!content) return;
+    if (!panel) return;
 
-    content.innerHTML = `
-      <div class="step-panel-inner">
+    panel.classList.add('active');
+
+    const oldInner = panel.querySelector('.step-panel-inner');
+    if (oldInner) oldInner.remove();
+
+    const inner = document.createElement('div');
+    inner.className = 'step-panel-inner';
+    inner.innerHTML = `
         <header class="step-panel-header">
           <h2 class="step-panel-title">Le Chainage Cryptographique</h2>
           <p class="step-panel-subtitle">L'attelage qui lie les blocs pour l'eternite</p>
@@ -71,8 +76,9 @@ export const step2 = {
             </button>
           </div>
         </div>
-      </div>
     `;
+
+    panel.prepend(inner);
 
     document.getElementById('btn-step2-prev')?.addEventListener('click', () => {
       this.ctx.onPrevStep?.();

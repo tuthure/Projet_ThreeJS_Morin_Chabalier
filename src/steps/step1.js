@@ -65,9 +65,10 @@ export const step1 = {
    * Quitte l'etape 1 et nettoie l'interface.
    */
   exit() {
-    const content = document.getElementById('step-panel-content') || document.getElementById('step-panel-left');
-    if (content) {
-      content.innerHTML = '';
+    const panel = document.getElementById('step-panel-left');
+    if (panel) {
+      const inner = panel.querySelector('.step-panel-inner');
+      if (inner) inner.remove();
     }
   },
 
@@ -76,109 +77,114 @@ export const step1 = {
    */
   renderLeftPanel() {
     const panel = document.getElementById('step-panel-left');
-    const content = document.getElementById('step-panel-content') || panel;
-    if (panel) panel.classList.add('active');
-    if (!content) return;
+    if (!panel) return;
 
-    content.innerHTML = `
-      <div class="step-panel-inner">
-        <header class="step-panel-header">
-          <div class="panel-kicker">
-            <span class="kicker-dot"></span>
-            <span class="kicker-text">CONVOI // NOTION 01</span>
-          </div>
-          <h2 class="step-panel-title">Qu'est-ce qu'un Bloc ?</h2>
-          <p class="step-panel-subtitle">La metaphore du wagon aux parois de verre</p>
-        </header>
+    panel.classList.add('active');
 
-        <div class="step-panel-scroll">
-          <!-- 1. Explication vulgarisee de la metaphore -->
-          <section class="panel-section">
-            <h3 class="section-title">Pourquoi un wagon en verre ?</h3>
-            <p>
-              Dans ce convoi, chaque wagon represente un <strong>bloc</strong>. Ses parois sont faites de <strong>verre parfaitement transparent</strong> : n'importe qui sur le quai peut regarder a l'interieur et verifier ce qu'il transporte, sans jamais avoir besoin d'ouvrir la porte.
+    const oldInner = panel.querySelector('.step-panel-inner');
+    if (oldInner) oldInner.remove();
+
+    const inner = document.createElement('div');
+    inner.className = 'step-panel-inner';
+    inner.innerHTML = `
+      <header class="step-panel-header">
+        <div class="panel-kicker">
+          <span class="kicker-dot"></span>
+          <span class="kicker-text">CONVOI // NOTION 01</span>
+        </div>
+        <h2 class="step-panel-title">Qu'est-ce qu'un Bloc ?</h2>
+        <p class="step-panel-subtitle">La metaphore du wagon aux parois de verre</p>
+      </header>
+
+      <div class="step-panel-scroll">
+        <!-- 1. Explication vulgarisee de la metaphore -->
+        <section class="panel-section">
+          <h3 class="section-title">Pourquoi un wagon en verre ?</h3>
+          <p>
+            Dans ce convoi, chaque wagon represente un <strong>bloc</strong>. Ses parois sont faites de <strong>verre parfaitement transparent</strong> : n'importe qui sur le quai peut regarder a l'interieur et verifier ce qu'il transporte, sans jamais avoir besoin d'ouvrir la porte.
+          </p>
+          <div class="panel-callout warning">
+            <span class="callout-tag">REGLE D'OR DU RESEAU</span>
+            <p class="callout-text">
+              Tout le monde peut voir l'interieur, mais forcer le wagon ou modifier son contenu briserait immediatement son sceau d'inviolabilite !
             </p>
-            <div class="panel-callout warning">
-              <span class="callout-tag">REGLE D'OR DU RESEAU</span>
-              <p class="callout-text">
-                Tout le monde peut voir l'interieur, mais forcer le wagon ou modifier son contenu briserait immediatement son sceau d'inviolabilite !
-              </p>
-            </div>
-          </section>
+          </div>
+        </section>
 
-          <!-- 2. Les 4 elements anatomiques du wagon -->
-          <section class="panel-section">
-            <div class="section-lead-row">
-              <h3 class="section-title">Regardons dans le wagon</h3>
-              <span class="section-hint">Cliquez sur un composant pour vous en approcher :</span>
-            </div>
+        <!-- 2. Les 4 elements anatomiques du wagon -->
+        <section class="panel-section">
+          <div class="section-lead-row">
+            <h3 class="section-title">Regardons dans le wagon</h3>
+            <span class="section-hint">Cliquez sur un composant pour vous en approcher :</span>
+          </div>
 
-            <div class="inspector-list">
-              <!-- Composant 1 : Marchandises / Transactions -->
-              <button class="inspector-item" data-comp="transactions" id="btn-comp-transactions">
-                <span class="inspector-index">01</span>
-                <div class="inspector-info">
-                  <div class="inspector-title">La Marchandise</div>
-                  <div class="inspector-subtitle">Les Transactions & Contrats</div>
-                </div>
-                <span class="inspector-location">Interieur</span>
-              </button>
-
-              <!-- Composant 2 : Le Nonce -->
-              <button class="inspector-item" data-comp="nonce" id="btn-comp-nonce">
-                <span class="inspector-index">02</span>
-                <div class="inspector-info">
-                  <div class="inspector-title">Le Nombre Magique</div>
-                  <div class="inspector-subtitle">La Molette du Nonce</div>
-                </div>
-                <span class="inspector-location">Flanc droit</span>
-              </button>
-
-              <!-- Composant 3 : Le Sceau (Hash actuel) -->
-              <button class="inspector-item" data-comp="hash" id="btn-comp-hash">
-                <span class="inspector-index">03</span>
-                <div class="inspector-info">
-                  <div class="inspector-title">Le Sceau du Wagon</div>
-                  <div class="inspector-subtitle">L'Empreinte HASH (SHA-256)</div>
-                </div>
-                <span class="inspector-location">Plaque vitree</span>
-              </button>
-
-              <!-- Composant 4 : Le Sceau d'avant (Previous Hash) -->
-              <button class="inspector-item" data-comp="prev" id="btn-comp-prev">
-                <span class="inspector-index">04</span>
-                <div class="inspector-info">
-                  <div class="inspector-title">Le Sceau d'Avant</div>
-                  <div class="inspector-subtitle">L'Attelage (Previous Hash)</div>
-                </div>
-                <span class="inspector-location">Face avant</span>
-              </button>
-            </div>
-
-            <!-- Fiche d'inspection dynamique -->
-            <div id="component-detail-box" class="inspector-detail-box">
-              <div class="detail-placeholder">
-                Cliquez sur un des 4 elements ci-dessus pour zoomer dessus et comprendre son secret !
+          <div class="inspector-list">
+            <!-- Composant 1 : Marchandises / Transactions -->
+            <button class="inspector-item" data-comp="transactions" id="btn-comp-transactions">
+              <span class="inspector-index">01</span>
+              <div class="inspector-info">
+                <div class="inspector-title">La Marchandise</div>
+                <div class="inspector-subtitle">Les Transactions & Contrats</div>
               </div>
-            </div>
-          </section>
+              <span class="inspector-location">Interieur</span>
+            </button>
 
-          <!-- 3. Actions de navigation -->
-          <div class="step-nav-bar">
-            <button id="btn-step1-prev" class="btn-panel-ghost" title="Retour a l'introduction">
-              &larr; Intro
+            <!-- Composant 2 : Le Nonce -->
+            <button class="inspector-item" data-comp="nonce" id="btn-comp-nonce">
+              <span class="inspector-index">02</span>
+              <div class="inspector-info">
+                <div class="inspector-title">Le Nombre Magique</div>
+                <div class="inspector-subtitle">La Molette du Nonce</div>
+              </div>
+              <span class="inspector-location">Flanc droit</span>
             </button>
-            <button id="btn-step1-overview" class="btn-panel-ghost">
-              Vue globale
+
+            <!-- Composant 3 : Le Sceau (Hash actuel) -->
+            <button class="inspector-item" data-comp="hash" id="btn-comp-hash">
+              <span class="inspector-index">03</span>
+              <div class="inspector-info">
+                <div class="inspector-title">Le Sceau du Wagon</div>
+                <div class="inspector-subtitle">L'Empreinte HASH (SHA-256)</div>
+              </div>
+              <span class="inspector-location">Plaque vitree</span>
             </button>
-            <button id="btn-step1-next" class="btn-panel-primary">
-              <span>Etape 2 : Le Chainage</span>
-              <span class="btn-arrow">&rarr;</span>
+
+            <!-- Composant 4 : Le Sceau d'avant (Previous Hash) -->
+            <button class="inspector-item" data-comp="prev" id="btn-comp-prev">
+              <span class="inspector-index">04</span>
+              <div class="inspector-info">
+                <div class="inspector-title">Le Sceau d'Avant</div>
+                <div class="inspector-subtitle">L'Attelage (Previous Hash)</div>
+              </div>
+              <span class="inspector-location">Face avant</span>
             </button>
           </div>
+
+          <!-- Fiche d'inspection dynamique -->
+          <div id="component-detail-box" class="inspector-detail-box">
+            <div class="detail-placeholder">
+              Cliquez sur un des 4 elements ci-dessus pour zoomer dessus et comprendre son secret !
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. Actions de navigation -->
+        <div class="step-nav-bar">
+          <button id="btn-step1-prev" class="btn-panel-ghost" title="Retour a l'introduction">
+            &larr; Intro
+          </button>
+          <button id="btn-step1-overview" class="btn-panel-ghost">
+            Vue globale
+          </button>
+          <button id="btn-step1-next" class="btn-panel-primary">
+            <span>Etape 2 : Le Chainage</span>
+            <span class="btn-arrow">&rarr;</span>
+          </button>
         </div>
       </div>
     `;
+
+    panel.prepend(inner);
 
     // Attachement des evenements aux cartes
     this.setupPanelEvents();
@@ -305,7 +311,7 @@ export const step1 = {
             <div class="detail-kicker">COMPOSANT 04 &middot; ATTELAGE PREVIOUS HASH</div>
             <h4 class="detail-title">L'attelage qui relie le wagon au convoi</h4>
             <p class="detail-body">
-              Pour etre raccorde au convoi, chaque wagon doit obligatoirement porter sur son crochet avant <strong>le sceau exact du vehicule qui roule devant lui</strong>.
+              Pour etre raccorde au convoi, chaque wagon doit obligatoirement porter sur son crochet avant <strong>l'empreinte exacte du wagon qui le precede</strong>.
             </p>
             <div class="detail-insight">
               Comme ce wagon est le tout premier du train (le <strong>Bloc Genesis</strong>), il est arrime a la locomotive motrice avec une signature originelle formee exclusivement de zeros : <code>0000000000000000</code>.

@@ -22,14 +22,23 @@ export const step6 = {
   },
   exit() {
     const panel = document.getElementById('step-panel-left');
-    if (panel) { panel.classList.remove('active'); panel.innerHTML = ''; }
+    if (panel) {
+      const inner = panel.querySelector('.step-panel-inner');
+      if (inner) inner.remove();
+    }
   },
   renderLeftPanel() {
     const panel = document.getElementById('step-panel-left');
     if (!panel) return;
+
     panel.classList.add('active');
-    panel.innerHTML = `
-      <div class="step-panel-inner">
+
+    const oldInner = panel.querySelector('.step-panel-inner');
+    if (oldInner) oldInner.remove();
+
+    const inner = document.createElement('div');
+    inner.className = 'step-panel-inner';
+    inner.innerHTML = `
         <header class="step-panel-header">
           <h2 class="step-panel-title">PoW contre PoS</h2>
           <p class="step-panel-subtitle">Deux philosophies de scellement</p>
@@ -45,8 +54,10 @@ export const step6 = {
             <button id="btn-step6-next" class="btn-step-action primary">Etape 7 &rarr;</button>
           </div>
         </div>
-      </div>
     `;
+
+    panel.prepend(inner);
+
     document.getElementById('btn-step6-prev')?.addEventListener('click', () => this.ctx.onPrevStep?.());
     document.getElementById('btn-step6-next')?.addEventListener('click', () => this.ctx.onNextStep?.());
   }

@@ -58,9 +58,10 @@ export const step0 = {
    * Quitte l'etape 0.
    */
   exit() {
-    const content = document.getElementById('step-panel-content') || document.getElementById('step-panel-left');
-    if (content) {
-      content.innerHTML = '';
+    const panel = document.getElementById('step-panel-left');
+    if (panel) {
+      const inner = panel.querySelector('.step-panel-inner');
+      if (inner) inner.remove();
     }
   },
 
@@ -69,58 +70,63 @@ export const step0 = {
    */
   renderLeftPanel() {
     const panel = document.getElementById('step-panel-left');
-    const content = document.getElementById('step-panel-content') || panel;
-    if (panel) panel.classList.add('active');
-    if (!content) return;
+    if (!panel) return;
 
-    content.innerHTML = `
-      <div class="step-panel-inner">
-        <header class="step-panel-header">
-          <div class="panel-kicker">
-            <span class="kicker-dot"></span>
-            <span class="kicker-text">CONVOI // NOTION 00</span>
+    panel.classList.add('active');
+
+    const oldInner = panel.querySelector('.step-panel-inner');
+    if (oldInner) oldInner.remove();
+
+    const inner = document.createElement('div');
+    inner.className = 'step-panel-inner';
+    inner.innerHTML = `
+      <header class="step-panel-header">
+        <div class="panel-kicker">
+          <span class="kicker-dot"></span>
+          <span class="kicker-text">CONVOI // NOTION 00</span>
+        </div>
+        <h2 class="step-panel-title">Bienvenue a bord !</h2>
+        <p class="step-panel-subtitle">Comprendre la blockchain sans aucun jargon</p>
+      </header>
+
+      <div class="step-panel-scroll">
+        <section class="panel-section">
+          <h3 class="section-title">Le voyage commence ici</h3>
+          <p>
+            Vous avez sans doute deja croise les termes <strong>blockchain</strong>, <em>registre infalsifiable</em> ou <em>crypto</em> sans representation visuelle concrete de leur fonctionnement.
+          </p>
+          <p>
+            Pas d'inquietude : ici, aucun calcul complexe ni jargon incomprehensible. Nous decouvrons cette technologie a travers une image tangible : <strong>un convoi ferroviaire transparent en circulation</strong>.
+          </p>
+        </section>
+
+        <section class="panel-section">
+          <h3 class="section-title">Comment ca marche ?</h3>
+          <p>
+            Dans ce train, chaque wagon represente un <strong>bloc</strong> contenant des donnees certifiees (des echanges d'argent, des contrats ou des certificats numeriques).
+          </p>
+          <p>
+            Ces wagons sont scelles les uns aux autres par des <strong>attelages cryptographiques invisibles</strong>. Si quelqu'un tente d'ouvrir un wagon passe pour frauder, l'attelage se brise instantanement sous les yeux de tous les observateurs !
+          </p>
+
+          <div class="panel-callout">
+            <span class="callout-tag">VOTRE PARCOURS</span>
+            <p class="callout-text">
+              En 7 etapes courtes et interactives, vous allez pouvoir inspecter les wagons, tester les attelages et comprendre pourquoi ce reseau est impossible a pirater.
+            </p>
           </div>
-          <h2 class="step-panel-title">Bienvenue a bord !</h2>
-          <p class="step-panel-subtitle">Comprendre la blockchain sans aucun jargon</p>
-        </header>
+        </section>
 
-        <div class="step-panel-scroll">
-          <section class="panel-section">
-            <h3 class="section-title">Le voyage commence ici</h3>
-            <p>
-              Vous avez sans doute deja croise les termes <strong>blockchain</strong>, <em>registre infalsifiable</em> ou <em>crypto</em> sans representation visuelle concrete de leur fonctionnement.
-            </p>
-            <p>
-              Pas d'inquietude : ici, aucun calcul complexe ni jargon incomprehensible. Nous decouvrons cette technologie a travers une image tangible : <strong>un convoi ferroviaire transparent en circulation</strong>.
-            </p>
-          </section>
-
-          <section class="panel-section">
-            <h3 class="section-title">Comment ca marche ?</h3>
-            <p>
-              Dans ce train, chaque wagon represente un <strong>bloc</strong> contenant des donnees certifiees (des echanges d'argent, des contrats ou des certificats numeriques).
-            </p>
-            <p>
-              Ces wagons sont scelles les uns aux autres par des <strong>attelages cryptographiques invisibles</strong>. Si quelqu'un tente d'ouvrir un wagon passe pour frauder, l'attelage se brise instantanement sous les yeux de tous les observateurs !
-            </p>
-
-            <div class="panel-callout">
-              <span class="callout-tag">VOTRE PARCOURS</span>
-              <p class="callout-text">
-                En 7 etapes courtes et interactives, vous inspecterez les wagons, manipulerez leurs composants et comprendrez pourquoi ce reseau est impossible a pirater.
-              </p>
-            </div>
-          </section>
-
-          <div class="panel-actions">
-            <button id="btn-start-exploration" class="btn-panel-primary">
-              <span>Commencer l'exploration</span>
-              <span class="btn-arrow">&rarr;</span>
-            </button>
-          </div>
+        <div class="panel-actions">
+          <button id="btn-start-exploration" class="btn-panel-primary">
+            <span>Commencer l'exploration</span>
+            <span class="btn-arrow">&rarr;</span>
+          </button>
         </div>
       </div>
     `;
+
+    panel.prepend(inner);
 
     document.getElementById('btn-start-exploration')?.addEventListener('click', () => {
       if (typeof this.ctx.onGoToStep === 'function') {
