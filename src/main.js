@@ -41,8 +41,8 @@ let currentViewMode = 'quarter';
 // 2. Scene, Canvas et Moteur de Rendu Three.js
 // ============================================================================
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x070b14);
-scene.fog = new THREE.FogExp2(0x070b14, 0.018);
+scene.background = new THREE.Color(0x0c192e);
+scene.fog = new THREE.Fog(0x0c192e, 25, 95);
 
 const sizes = {
   width: window.innerWidth,
@@ -61,24 +61,24 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
+renderer.toneMappingExposure = 1.15;
 
 // ============================================================================
 // 3. Eclairage cinematique
 // ============================================================================
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.75);
 scene.add(ambientLight);
 
-const keyLight = new THREE.DirectionalLight(0x7dd3fc, 2.0);
-keyLight.position.set(12, 16, 10);
+const keyLight = new THREE.DirectionalLight(0xa5f3fc, 2.2);
+keyLight.position.set(14, 20, 12);
 scene.add(keyLight);
 
-const rimLight = new THREE.DirectionalLight(0xf59e0b, 0.7);
-rimLight.position.set(-12, -4, -10);
+const rimLight = new THREE.DirectionalLight(0xfef08a, 1.2);
+rimLight.position.set(-20, 15, -15);
 scene.add(rimLight);
 
-const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.9);
-fillLight.position.set(0, 8, -8);
+const fillLight = new THREE.DirectionalLight(0x38bdf8, 1.0);
+fillLight.position.set(0, 8, 12);
 scene.add(fillLight);
 
 // ============================================================================
