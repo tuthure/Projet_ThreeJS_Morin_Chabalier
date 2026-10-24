@@ -47,7 +47,7 @@ export const step5 = {
         </header>
         <div class="step-panel-scroll">
           <section class="step-card metaphor-card">
-            <div class="card-icon-badge">CONSENSUS</div>
+
             <h3>Comment scelle-t-on un nouveau wagon ?</h3>
             <p>Les mineurs testent des millions de combinaisons sur la molette (le Nonce) jusqu'a trouver celle qui produit un sceau respectant la regle de difficulte.</p>
           </section>

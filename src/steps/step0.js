@@ -92,10 +92,6 @@ export const step0 = {
     inner.className = 'step-panel-inner';
     inner.innerHTML = `
       <header class="step-panel-header">
-        <div class="panel-kicker">
-          <span class="kicker-dot"></span>
-          <span class="kicker-text">CONVOI // NOTION 00</span>
-        </div>
         <h2 class="step-panel-title">Le Principe du Convoi</h2>
         <p class="step-panel-subtitle">L'analogie ferroviaire de la blockchain</p>
       </header>

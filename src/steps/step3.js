@@ -45,7 +45,7 @@ export const step3 = {
         </header>
         <div class="step-panel-scroll">
           <section class="step-card metaphor-card">
-            <div class="card-icon-badge">INVIOLABILITE</div>
+
             <h3>Que se passe-t-il en cas de tentative de fraude ?</h3>
             <p>Si quelqu'un essaie d'ouvrir le wagon pour modifier les transactions, le sceau du wagon change instantanement, provoquant une rupture visible de l'attelage avec les wagons suivants.</p>
           </section>

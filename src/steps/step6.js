@@ -45,7 +45,7 @@ export const step6 = {
         </header>
         <div class="step-panel-scroll">
           <section class="step-card metaphor-card">
-            <div class="card-icon-badge">ENERGIE</div>
+
             <h3>Calcul ou mise sous sequestre ?</h3>
             <p>La preuve de travail utilise de l'energie pour faire tourner la molette, tandis que la preuve d'enjeu confie le scellement a des validateurs bloquant des fonds en caution.</p>
           </section>

@@ -46,7 +46,7 @@ export const step4 = {
         </header>
         <div class="step-panel-scroll">
           <section class="step-card metaphor-card">
-            <div class="card-icon-badge">SYNCHRONISATION</div>
+
             <h3>Pas de chef de gare unique !</h3>
             <p>Il n'existe aucun serveur central. Chaque noeud du reseau possede la copie conforme de tous les wagons.</p>
           </section>

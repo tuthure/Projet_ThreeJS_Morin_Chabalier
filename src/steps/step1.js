@@ -88,10 +88,6 @@ export const step1 = {
     inner.className = 'step-panel-inner';
     inner.innerHTML = `
       <header class="step-panel-header">
-        <div class="panel-kicker">
-          <span class="kicker-dot"></span>
-          <span class="kicker-text">CONVOI // NOTION 01</span>
-        </div>
         <h2 class="step-panel-title">Qu'est-ce qu'un Bloc ?</h2>
         <p class="step-panel-subtitle">La metaphore du wagon aux parois de verre</p>
       </header>

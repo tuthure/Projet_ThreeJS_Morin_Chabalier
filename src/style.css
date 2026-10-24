@@ -488,32 +488,7 @@ body {
   }
 }
 
-.welcome-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 12px;
-  background: rgba(56, 189, 248, 0.08);
-  border: 1px solid rgba(56, 189, 248, 0.22);
-  border-radius: 999px;
-}
 
-.welcome-kicker-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #38bdf8;
-  box-shadow: 0 0 8px #38bdf8;
-}
-
-.welcome-kicker-text {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: #38bdf8;
-  text-transform: uppercase;
-}
 
 .welcome-title {
   font-size: 1.85rem;
@@ -725,29 +700,7 @@ body {
   position: relative;
 }
 
-.panel-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
 
-.kicker-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #38bdf8;
-  box-shadow: 0 0 10px #38bdf8;
-}
-
-.kicker-text {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #38bdf8;
-}
 
 .step-panel-title {
   font-size: 1.35rem;
@@ -1129,14 +1082,7 @@ body {
   gap: 10px;
 }
 
-.card-icon-badge {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: #38bdf8;
-  text-transform: uppercase;
-}
+
 
 .alert-box-warning {
   background: rgba(245, 158, 11, 0.08);

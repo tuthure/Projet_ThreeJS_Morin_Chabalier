@@ -45,7 +45,7 @@ export const step7 = {
         </header>
         <div class="step-panel-scroll">
           <section class="step-card metaphor-card">
-            <div class="card-icon-badge">CYCLE DE VIE</div>
+
             <h3>Du colis sur le quai jusqu'au convoi</h3>
             <p>Une transaction attend d'abord dans une salle d'embarquement (mempool), puis est chargee dans un wagon, scellee par un mineur et validee par le reste du reseau.</p>
           </section>

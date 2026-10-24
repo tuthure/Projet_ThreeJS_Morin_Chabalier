@@ -57,7 +57,7 @@ export const step2 = {
 
         <div class="step-panel-scroll">
           <section class="step-card metaphor-card">
-            <div class="card-icon-badge">LIAISON</div>
+
             <h3>Comment s'attachent deux wagons ?</h3>
             <p>
               Pour qu'un nouveau wagon (le <strong>Wagon #1</strong>) puisse s'accrocher derriere le <strong>Wagon #0</strong>, son attelage avant doit correspondre exactement a la couleur et a la valeur du sceau du wagon precedent.
