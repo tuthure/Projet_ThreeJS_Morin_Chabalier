@@ -76,39 +76,43 @@ export const step0 = {
     panel.innerHTML = `
       <div class="step-panel-inner">
         <header class="step-panel-header">
-          <h2 class="step-panel-title">Bienvenue a bord !</h2>
-          <p class="step-panel-subtitle">Comprendre la blockchain sans aucun jargon</p>
+          <div class="step-panel-kicker">PROLOGUE</div>
+          <h2 class="step-panel-title">Bienvenue a bord</h2>
+          <p class="step-panel-subtitle">Une immersion visuelle pour comprendre la blockchain sans jargon</p>
         </header>
 
         <div class="step-panel-scroll">
-          <section class="step-card intro-welcome-card">
-            <div class="card-icon-badge">DECOUVERTE</div>
-            <h3>Qu'allez-vous explorer ?</h3>
+          <section class="editorial-section">
+            <h3 class="editorial-heading">Le voyage commence ici</h3>
             <p>
-              Vous avez sans doute deja croise les termes <strong>blockchain</strong>, <em>registre infalsifiable</em> ou <em>crypto</em> sans trop savoir ce que cela signifie concretement.
+              Vous avez sans doute deja croise les termes <strong>blockchain</strong>, <em>registre infalsifiable</em> ou <em>crypto-actifs</em> sans representation visuelle concrete de leur fonctionnement.
             </p>
             <p>
-              Pas d'inquietude : ici, aucun calcul complexe ni jargon incomprehensible. Nous allons decouvrir cette technologie a travers une image simple et vivante : <strong>un convoi ferroviaire</strong>.
+              Ici, nul besoin d'equations complexes. Nous explorons cette technologie a travers une metaphore tangible : <strong>un convoi ferroviaire transparent en circulation</strong>.
             </p>
           </section>
 
-          <section class="step-card intro-rules-card">
-            <div class="card-icon-badge">L'IDEE DU TRAIN</div>
-            <h3>Comment ca marche ?</h3>
+          <section class="editorial-section">
+            <h3 class="editorial-heading">L'analogie du convoi</h3>
             <p>
-              Dans ce train, chaque wagon represente un <strong>bloc</strong> contenant des donnees certifiees (des echanges d'argent, des contrats ou des certificats).
+              Chaque wagon represente un <strong>bloc</strong> contenant des donnees certifiees : des transactions, des contrats ou des titres de propriete.
             </p>
             <p>
-              Ces wagons sont scelles les uns aux autres par des <strong>attelages magnetiques invisibles</strong>. Si quelqu'un tente d'ouvrir un wagon passe pour frauder, l'attelage se brise instantanement sous les yeux de tous les observateurs !
+              Ces wagons sont scelles entre eux par des <strong>attelages cryptographiques inviolables</strong>. Si une personne tentait de modifier le contenu d'un wagon passe, l'attelage se briserait instantanement a la vue de l'ensemble du reseau.
             </p>
-            <div class="alert-box-info">
-              <strong>Pret pour le voyage ?</strong> En 7 etapes courtes et interactives, vous allez pouvoir inspecter les wagons, tester les attelages et comprendre pourquoi ce reseau est impossible a pirater.
+
+            <div class="editorial-callout">
+              <span class="callout-label">L'EXPERIENCE</span>
+              <p class="callout-text">
+                En 7 etapes interactives, vous inspecterez les wagons, manipulerez leurs composants et decouvrirez pourquoi ce systeme est concu pour resister a toute falsification.
+              </p>
             </div>
           </section>
 
-          <div class="intro-actions">
-            <button id="btn-start-exploration" class="btn-step-action primary btn-start-hero">
-              Commencer l'exploration &rarr;
+          <div class="editorial-actions">
+            <button id="btn-start-exploration" class="btn-primary-pill">
+              <span>Commencer l'exploration</span>
+              <span class="btn-arrow">&rarr;</span>
             </button>
           </div>
         </div>
