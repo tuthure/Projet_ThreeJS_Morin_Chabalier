@@ -3,6 +3,7 @@ import { CameraController } from './cameraController.js';
 import { TrainConvoy, WAGON_SPACING } from './train.js';
 import { StepManager } from './steps/StepManager.js';
 import { Environment } from './environment.js';
+import { welcome } from './welcome.js';
 
 /**
  * Visualisation pedagogique de la blockchain - Le Convoi Ferroviaire
@@ -113,16 +114,30 @@ const cameraController = new CameraController(camera, renderer.domElement, (bloc
 cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
 
 // ============================================================================
-// 7. Navigation Pedagogique Modulaire des Notions (StepManager)
+// 7. Navigation Pedagogique Modulaire des Notions (StepManager) & Accueil (Welcome)
 // ============================================================================
+const welcomeContext = {
+  scene,
+  camera,
+  cameraController,
+  trainConvoy,
+  environment,
+  stepManager: null
+};
+
+welcome.init(welcomeContext);
+
 const stepManager = new StepManager({
   scene,
   camera,
   cameraController,
   trainConvoy,
   environment,
+  welcome,
   selectWagon: (idx) => selectWagon(idx, false)
 });
+
+welcomeContext.stepManager = stepManager;
 
 // ============================================================================
 // 8. Gestion des Angles de Vue et Navigation Inter-Wagons
@@ -379,6 +394,10 @@ window.blockchain = {
 
   isValid: () => trainConvoy.blockchain.isChainValid(),
 
+  welcome: () => welcome.enter(),
+
+  goToStep: (num) => stepManager.goToStep(num),
+
   inspect: () => {
     const validityList = trainConvoy.blockchain.getBlockValidityList();
     console.table(
@@ -393,8 +412,8 @@ window.blockchain = {
   }
 };
 
-// Initialisation sur l'etape d'accueil (Etape 0) et demarrage de la boucle
-stepManager.goToStep(0);
+// Affichage initial de l'ecran d'accueil (avant l'etape 0) et demarrage de la boucle
+welcome.enter();
 animate();
 
 console.log('[LE CONVOI FERROVIAIRE - BLOCKCHAIN 3D]');

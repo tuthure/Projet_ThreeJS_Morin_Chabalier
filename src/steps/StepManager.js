@@ -112,6 +112,11 @@ export class StepManager {
     const targetNum = Math.max(0, Math.min(stepNumber, 7));
     if (targetNum === this.currentStepNum && this.currentStep) return;
 
+    // 0. Ferme l'ecran d'accueil s'il etait actif
+    if (this.ctx.welcome && typeof this.ctx.welcome.exit === 'function') {
+      this.ctx.welcome.exit();
+    }
+
     // 1. Sortie propre de l'etape precedente
     if (this.currentStep && typeof this.currentStep.exit === 'function') {
       this.currentStep.exit();

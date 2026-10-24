@@ -431,6 +431,195 @@ body {
 }
 
 /* ==========================================================================
+   Ecran d'accueil initial (Welcome Screen - Avant l'etape 0)
+   ========================================================================== */
+.welcome-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.45s ease;
+  z-index: 25;
+}
+
+.welcome-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.welcome-card-top {
+  pointer-events: auto;
+  position: absolute;
+  top: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 640px;
+  max-width: calc(100vw - 48px);
+  background: rgba(13, 20, 36, 0.92);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 28px 36px;
+  box-shadow:
+    0 24px 60px -12px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(56, 189, 248, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  animation: slideDownWelcome 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDownWelcome {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.welcome-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 999px;
+}
+
+.welcome-kicker-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+}
+
+.welcome-kicker-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #38bdf8;
+  text-transform: uppercase;
+}
+
+.welcome-title {
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.welcome-lead {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #93c5fd;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.welcome-desc {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.welcome-desc p {
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+.welcome-desc strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.welcome-desc em {
+  color: #e2e8f0;
+  font-style: italic;
+}
+
+.welcome-actions-bottom {
+  pointer-events: auto;
+  position: absolute;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: slideUpWelcome 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpWelcome {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.btn-welcome-hero {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  padding: 16px 36px;
+  border-radius: 999px;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  box-shadow:
+    0 12px 32px rgba(2, 132, 199, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-welcome-hero:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+  box-shadow:
+    0 16px 40px rgba(56, 189, 248, 0.6),
+    0 4px 10px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.btn-welcome-hero:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.btn-hero-arrow {
+  font-size: 1.25rem;
+  transition: transform 0.25s ease;
+}
+
+.btn-welcome-hero:hover .btn-hero-arrow {
+  transform: translateX(4px);
+}
+
+/* ==========================================================================
    Volet pedagogique lateral gauche (Design Moderne avec Marque-pages)
    ========================================================================== */
 .hud-step-panel {
@@ -1046,6 +1235,33 @@ body {
   .hud-sidebar {
     width: 100%;
     max-width: 100vw;
+  }
+
+  .welcome-card-top {
+    top: 20px;
+    width: calc(100vw - 32px);
+    padding: 20px 20px;
+  }
+
+  .welcome-title {
+    font-size: 1.4rem;
+  }
+
+  .welcome-lead {
+    font-size: 0.9rem;
+  }
+
+  .welcome-desc p {
+    font-size: 0.82rem;
+  }
+
+  .welcome-actions-bottom {
+    bottom: 24px;
+  }
+
+  .btn-welcome-hero {
+    padding: 12px 24px;
+    font-size: 0.95rem;
   }
 }
 

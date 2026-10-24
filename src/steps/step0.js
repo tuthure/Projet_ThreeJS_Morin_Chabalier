@@ -1,14 +1,16 @@
 import * as THREE from 'three';
 
 /**
- * Etape 0 : Introduction et accueil des decouvreurs.
- * Met en scene le convoi ferroviaire en mouvement dynamique,
- * et accueille chaleureusement les apprenants sans aucun prerequis technique.
+ * Etape 0 : Le Principe du Convoi.
+ * Introduit l'analogie ferroviaire de la blockchain :
+ * - La motrice (Locomotive) : Le moteur de consensus et le protocole reseau
+ * - Les wagons : Les blocs contenant les transactions certifiees
+ * - L'attelage magnetique : Le chainage cryptographique infalsifiable
  */
 export const step0 = {
   id: 0,
-  title: "Introduction",
-  subtitle: "Bienvenue a bord du convoi",
+  title: "Principe du Convoi",
+  subtitle: "L'analogie ferroviaire de la blockchain",
   ctx: null,
 
   /**
@@ -21,19 +23,26 @@ export const step0 = {
 
   /**
    * Active l'etape 0 :
-   * - Met le convoi en mouvement (decor defilant a vitesse de croisiere)
-   * - Affiche la locomotive et le wagon Genesis (#0)
-   * - Positionne la camera en vue panoramique dynamique
-   * - Affiche le volet d'accueil gauche
+   * - Met en place la locomotive, le wagon Genesis (#0) et le wagon #1
+   * - Active le defilement du decor a vitesse de croisiere
+   * - Positionne la camera sur les premiers maillons du convoi
+   * - Affiche le volet pedagogique explicatif
    */
   enter() {
     const { trainConvoy, cameraController, environment } = this.ctx;
 
-    // 1. Initialise le convoi avec la locomotive et le Wagon #0
-    trainConvoy.resetConvoy([]);
-    cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
+    // 1. Initialise le convoi avec la locomotive, le Genesis (#0) et un premier wagon attele (#1)
+    const initialBlocks = [
+      { emetteur: 'Gare Centrale', destinataire: 'Gare du Nord', montant: 50, unite: 'MMI' }
+    ];
+    if (trainConvoy) {
+      trainConvoy.resetConvoy(initialBlocks);
+      if (cameraController) {
+        cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
+      }
+    }
 
-    // 2. Active le defilement du decor pour simuler la marche du train
+    // 2. Active le defilement du decor
     if (environment) {
       environment.setSpeed(4.5);
     }
@@ -45,13 +54,15 @@ export const step0 = {
       inspectionSidebar.setAttribute('aria-hidden', 'true');
     }
 
-    // 4. Genere le volet gauche d'accueil
+    // 4. Genere le volet gauche pedagogique
     this.renderLeftPanel();
 
-    // 5. Oriente la camera sur une vue panoramique 3/4 eloignee montrant le convoi en marche
-    const camPos = new THREE.Vector3(1.8, 2.0, 5.2);
-    const camTarget = new THREE.Vector3(-1.0, 0.45, 0);
-    cameraController.moveTo(camPos, camTarget, 1.4);
+    // 5. Oriente la camera sur les premiers wagons et l'attelage
+    if (cameraController) {
+      const camPos = new THREE.Vector3(2.4, 2.2, 5.8);
+      const camTarget = new THREE.Vector3(0.8, 0.6, 0);
+      cameraController.moveTo(camPos, camTarget, 1.4);
+    }
   },
 
   /**
@@ -66,7 +77,7 @@ export const step0 = {
   },
 
   /**
-   * Genere le contenu HTML du volet d'accueil gauche.
+   * Genere le contenu HTML du volet pedagogique gauche.
    */
   renderLeftPanel() {
     const panel = document.getElementById('step-panel-left');
@@ -85,41 +96,47 @@ export const step0 = {
           <span class="kicker-dot"></span>
           <span class="kicker-text">CONVOI // NOTION 00</span>
         </div>
-        <h2 class="step-panel-title">Bienvenue a bord !</h2>
-        <p class="step-panel-subtitle">Comprendre la blockchain sans aucun jargon</p>
+        <h2 class="step-panel-title">Le Principe du Convoi</h2>
+        <p class="step-panel-subtitle">L'analogie ferroviaire de la blockchain</p>
       </header>
 
       <div class="step-panel-scroll">
         <section class="panel-section">
-          <h3 class="section-title">Le voyage commence ici</h3>
+          <h3 class="section-title">L'analogie ferroviaire</h3>
           <p>
-            Vous avez sans doute deja croise les termes <strong>blockchain</strong>, <em>registre infalsifiable</em> ou <em>crypto</em> sans representation visuelle concrete de leur fonctionnement.
+            Une blockchain fonctionne exactement comme un convoi de fret haute securite circulant a travers un reseau de gares interconnectees :
           </p>
           <p>
-            Pas d'inquietude : ici, aucun calcul complexe ni jargon incomprehensible. Nous decouvrons cette technologie a travers une image tangible : <strong>un convoi ferroviaire transparent en circulation</strong>.
+            <strong>La locomotive de tete</strong> incarne le protocole de communication et le moteur de consensus : elle dicte les regles du reseau et tracte le convoi.
+          </p>
+          <p>
+            <strong>Chaque wagon</strong> represente un <em>bloc</em> scelle transportant des marchandises numeriques (transactions financieres, registres ou contrats certifies).
+          </p>
+          <p>
+            <strong>L'attelage magnetique</strong> represente le <em>chainage cryptographique</em> (l'empreinte hash). Chaque wagon est indissociable du wagon precedent.
           </p>
         </section>
 
         <section class="panel-section">
-          <h3 class="section-title">Comment ca marche ?</h3>
+          <h3 class="section-title">Pourquoi est-ce infalsifiable ?</h3>
           <p>
-            Dans ce train, chaque wagon represente un <strong>bloc</strong> contenant des donnees certifiees (des echanges d'argent, des contrats ou des certificats numeriques).
-          </p>
-          <p>
-            Ces wagons sont scelles les uns aux autres par des <strong>attelages cryptographiques invisibles</strong>. Si quelqu'un tente d'ouvrir un wagon passe pour frauder, l'attelage se brise instantanement sous les yeux de tous les observateurs !
+            Si un tiers malveillant modifiait discretement le contenu d'un wagon passe, son empreinte changerait aussitot : <strong>l'attelage magnetique se briserait instantanement</strong> sous les yeux de tout le reseau.
           </p>
 
           <div class="panel-callout">
-            <span class="callout-tag">VOTRE PARCOURS</span>
+            <span class="callout-tag">FEUILLE DE ROUTE</span>
             <p class="callout-text">
-              En 7 etapes courtes et interactives, vous allez pouvoir inspecter les wagons, tester les attelages et comprendre pourquoi ce reseau est impossible a pirater.
+              En 7 notions interactives, vous allez inspecter un wagon, tester la resistance des attelages, simuler une falsification, miner de nouveaux blocs et synchroniser des gares distantes.
             </p>
           </div>
         </section>
 
         <div class="panel-actions">
-          <button id="btn-start-exploration" class="btn-panel-primary">
-            <span>Commencer l'exploration</span>
+          <button id="btn-step0-welcome" class="btn-step-action secondary" title="Retourner a l'ecran d'accueil">
+            <span>&larr; Accueil</span>
+          </button>
+          <button id="btn-step0-next" class="btn-step-action primary">
+            <span>Etape 1 : Structure</span>
             <span class="btn-arrow">&rarr;</span>
           </button>
         </div>
@@ -128,7 +145,13 @@ export const step0 = {
 
     panel.prepend(inner);
 
-    document.getElementById('btn-start-exploration')?.addEventListener('click', () => {
+    document.getElementById('btn-step0-welcome')?.addEventListener('click', () => {
+      if (this.ctx.welcome && typeof this.ctx.welcome.enter === 'function') {
+        this.ctx.welcome.enter();
+      }
+    });
+
+    document.getElementById('btn-step0-next')?.addEventListener('click', () => {
       if (typeof this.ctx.onGoToStep === 'function') {
         this.ctx.onGoToStep(1);
       }
