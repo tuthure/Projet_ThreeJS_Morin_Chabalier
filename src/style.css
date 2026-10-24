@@ -431,31 +431,29 @@ body {
 }
 
 /* ==========================================================================
-   Volet pedagogique lateral gauche (DA Carnet de Bord / Feuille de Route)
+   Volet pedagogique lateral gauche (Design Moderne Haute Lisibilite)
    ========================================================================== */
 .hud-step-panel {
   position: absolute;
-  top: 18px;
+  top: 20px;
   left: 24px;
   bottom: 20px;
-  width: 440px;
+  width: 430px;
   max-width: calc(100vw - 48px);
-  background: #faf8f3;
-  background-image: 
-    linear-gradient(rgba(0, 0, 0, 0.035) 1px, transparent 1px),
-    linear-gradient(to right, transparent 38px, rgba(185, 28, 28, 0.25) 38px, rgba(185, 28, 28, 0.25) 40px, transparent 40px, transparent 43px, rgba(185, 28, 28, 0.25) 43px, rgba(185, 28, 28, 0.25) 45px, transparent 45px);
-  background-size: 100% 24px, 100% 100%;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(13, 20, 36, 0.94);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
   box-shadow: 
-    0 20px 50px -10px rgba(0, 0, 0, 0.75),
-    0 4px 16px rgba(0, 0, 0, 0.35);
+    0 24px 60px -12px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   pointer-events: auto;
   z-index: 25;
-  color: #1e293b;
+  color: #f1f5f9;
   transform: translateX(-120%);
   opacity: 0;
   transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
@@ -471,101 +469,44 @@ body {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  position: relative;
 }
 
-/* Attache métallique façon clipboard de chef de train */
-.sheet-clip {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 140px;
-  height: 14px;
-  background: linear-gradient(180deg, #475569 0%, #1e293b 100%);
-  border-radius: 0 0 6px 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.35);
-  border: 1px solid #64748b;
-  border-top: none;
-  z-index: 5;
-}
-
-.sheet-clip-title {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  color: #cbd5e1;
-  text-transform: uppercase;
-}
-
-/* En-tête de la feuille de route avec tampon ferroviaire */
+/* En-tête sobre avec indicateur de notion */
 .step-panel-header {
-  padding: 24px 28px 16px 28px;
-  border-bottom: 2px solid #e2e8f0;
-  background: rgba(0, 0, 0, 0.015);
+  padding: 22px 26px 18px 26px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
   position: relative;
 }
 
-/* Tampon encreur de gare / Notion */
-.railway-stamp {
+.panel-kicker {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 14px 6px 8px;
-  border: 2px dashed #b91c1c;
-  border-radius: 9999px;
-  background: rgba(185, 28, 28, 0.05);
-  margin-bottom: 12px;
-  transform: rotate(-1.5deg);
-  align-self: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
-.stamp-circle {
-  width: 28px;
-  height: 28px;
-  border: 2px solid #b91c1c;
+.kicker-dot {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 0.88rem;
-  color: #b91c1c;
-  line-height: 1;
-  font-family: ui-monospace, monospace;
+  background: #38bdf8;
+  box-shadow: 0 0 10px #38bdf8;
 }
 
-.stamp-meta {
-  display: flex;
-  flex-direction: column;
-}
-
-.stamp-title {
+.kicker-text {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #b91c1c;
-}
-
-.stamp-sub {
-  font-size: 0.62rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #7f1d1d;
-  opacity: 0.8;
+  color: #38bdf8;
 }
 
 .step-panel-title {
-  font-size: 1.38rem;
-  font-weight: 800;
-  color: #0f172a;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #ffffff;
   letter-spacing: -0.02em;
   line-height: 1.25;
   margin-bottom: 4px;
@@ -573,22 +514,22 @@ body {
 
 .step-panel-subtitle {
   font-size: 0.86rem;
-  color: #64748b;
+  color: #94a3b8;
   line-height: 1.45;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .step-panel-scroll {
-  padding: 20px 28px 24px 28px;
+  padding: 22px 26px 26px 26px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 22px;
   user-select: text;
 }
 
 .step-panel-scroll::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 
 .step-panel-scroll::-webkit-scrollbar-track {
@@ -596,125 +537,124 @@ body {
 }
 
 .step-panel-scroll::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 9999px;
 }
 
 .step-panel-scroll::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: rgba(56, 189, 248, 0.4);
 }
 
-/* Sections du carnet ferroviaire */
-.railway-section {
+/* Sections fluides et aérées */
+.panel-section {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.railway-heading {
+.section-title {
   font-size: 1rem;
-  font-weight: 700;
-  color: #0f172a;
+  font-weight: 600;
+  color: #f8fafc;
   letter-spacing: -0.01em;
   margin: 0;
 }
 
-.railway-section p {
+.panel-section p {
   font-size: 0.88rem;
   line-height: 1.65;
-  color: #334155;
+  color: #cbd5e1;
   margin: 0;
 }
 
-.railway-section p strong {
-  color: #0f172a;
-  font-weight: 700;
+.panel-section p strong {
+  color: #ffffff;
+  font-weight: 600;
 }
 
-.railway-section p em {
-  color: #475569;
+.panel-section p em {
+  color: #94a3b8;
   font-style: italic;
 }
 
-/* Consignes officielles et avertissements ferroviaires */
-.railway-note {
-  background: #fffbeb;
-  border-left: 3px solid #d97706;
-  border-radius: 0 8px 8px 0;
-  padding: 12px 16px;
+/* Encadres de synthèse et alertes */
+.panel-callout {
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 10px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  gap: 6px;
 }
 
-.railway-note.warning {
-  background: #fef2f2;
-  border-left-color: #dc2626;
+.panel-callout.warning {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.3);
 }
 
-.railway-note-title {
+.panel-callout-tag {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #b45309;
+  color: #38bdf8;
 }
 
-.railway-note.warning .railway-note-title {
-  color: #b91c1c;
+.panel-callout.warning .panel-callout-tag {
+  color: #fbbf24;
 }
 
-.railway-note-body {
+.panel-callout-text {
   font-size: 0.84rem;
   line-height: 1.55;
-  color: #78350f;
+  color: #e2e8f0;
   margin: 0;
 }
 
-.railway-note.warning .railway-note-body {
-  color: #7f1d1d;
+.panel-callout.warning .panel-callout-text {
+  color: #fef3c7;
 }
 
-/* Boutons tactiles de la feuille de route */
-.railway-actions {
+/* Boutons d'action */
+.panel-actions {
   margin-top: 4px;
   display: flex;
 }
 
-.btn-rail-primary {
+.btn-panel-primary {
   appearance: none;
-  background: #0f172a;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
   color: #ffffff;
-  border: 1px solid #0f172a;
-  border-radius: 8px;
-  padding: 12px 20px;
-  font-size: 0.88rem;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 10px;
+  padding: 13px 20px;
+  font-size: 0.9rem;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
   transition: all 0.2s ease;
   width: 100%;
   font-family: inherit;
 }
 
-.btn-rail-primary:hover {
-  background: #1e293b;
+.btn-panel-primary:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.5);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
 }
 
-.btn-rail-primary .btn-arrow {
+.btn-panel-primary .btn-arrow {
   transition: transform 0.2s ease;
-  font-size: 1rem;
+  font-size: 1.05rem;
 }
 
-.btn-rail-primary:hover .btn-arrow {
+.btn-panel-primary:hover .btn-arrow {
   transform: translateX(4px);
 }
 
@@ -725,18 +665,18 @@ body {
   margin-top: 6px;
 }
 
-.step-nav-bar .btn-rail-primary {
+.step-nav-bar .btn-panel-primary {
   flex: 1.4;
 }
 
-.btn-rail-ghost {
+.btn-panel-ghost {
   appearance: none;
-  background: #ffffff;
-  color: #334155;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.04);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 11px 16px;
+  font-size: 0.82rem;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
@@ -748,10 +688,10 @@ body {
   white-space: nowrap;
 }
 
-.btn-rail-ghost:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-  border-color: #94a3b8;
+.btn-panel-ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* Liste d'inspection technique du wagon (Etape 1) */
@@ -764,7 +704,7 @@ body {
 
 .section-hint {
   font-size: 0.74rem;
-  color: #64748b;
+  color: #94a3b8;
   font-style: italic;
 }
 
@@ -776,44 +716,44 @@ body {
 
 .inspector-item {
   appearance: none;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 11px 14px;
   display: flex;
   align-items: center;
   gap: 12px;
   cursor: pointer;
   text-align: left;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  color: #f1f5f9;
   font-family: inherit;
+  position: relative;
 }
 
 .inspector-item:hover {
-  border-color: #0284c7;
-  background: #f8fafc;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(56, 189, 248, 0.4);
   transform: translateX(3px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .inspector-item.active {
-  border-color: #0284c7;
-  background: #f0f9ff;
-  border-left: 4px solid #0284c7;
-  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.15);
+  background: rgba(56, 189, 248, 0.12);
+  border-color: #38bdf8;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.2), inset 0 0 12px rgba(56, 189, 248, 0.06);
 }
 
 .inspector-index {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.82rem;
-  font-weight: 800;
+  font-weight: 700;
   color: #64748b;
   transition: color 0.2s ease;
 }
 
-.inspector-item.active .inspector-index {
-  color: #0284c7;
+.inspector-item.active .inspector-index,
+.inspector-item:hover .inspector-index {
+  color: #38bdf8;
 }
 
 .inspector-info {
@@ -824,37 +764,38 @@ body {
 }
 
 .inspector-title {
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #f8fafc;
 }
 
 .inspector-subtitle {
   font-size: 0.74rem;
-  color: #64748b;
+  color: #94a3b8;
 }
 
 .inspector-location {
   font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #475569;
-  background: #f1f5f9;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.05);
   padding: 3px 8px;
   border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .inspector-detail-box {
   margin-top: 6px;
   min-height: 96px;
-  border-radius: 8px;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.25);
   padding: 16px;
   display: flex;
   align-items: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   transition: all 0.25s ease;
 }
 
@@ -885,53 +826,54 @@ body {
 
 .detail-kicker {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  color: #0284c7;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #38bdf8;
   text-transform: uppercase;
 }
 
 .detail-title {
   font-size: 0.98rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #ffffff;
   margin: 0;
 }
 
 .detail-body {
   font-size: 0.86rem;
-  color: #334155;
-  line-height: 1.6;
+  color: #cbd5e1;
+  line-height: 1.65;
   margin: 0;
 }
 
 .detail-body strong {
-  color: #0f172a;
+  color: #ffffff;
 }
 
 .detail-insight {
   font-size: 0.82rem;
-  color: #0369a1;
-  line-height: 1.55;
-  padding: 8px 12px;
-  border-radius: 0 6px 6px 0;
-  background: #f0f9ff;
-  border-left: 3px solid #0284c7;
+  color: #e0f2fe;
+  line-height: 1.6;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(56, 189, 248, 0.08);
+  border-left: 3px solid #38bdf8;
   margin-top: 4px;
 }
 
 .detail-insight strong {
-  color: #0c4a6e;
+  color: #ffffff;
 }
 
 .detail-insight code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.76rem;
-  color: #0369a1;
-  background: #e0f2fe;
-  padding: 1px 4px;
-  border-radius: 3px;
+  font-size: 0.74rem;
+  color: #38bdf8;
+  background: rgba(15, 23, 42, 0.9);
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
 }
 
 /* Compatibilite avec les autres etapes squelettes */
@@ -946,28 +888,28 @@ body {
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.12em;
-  color: #b91c1c;
+  color: #38bdf8;
   text-transform: uppercase;
 }
 
 .alert-box-warning {
-  background: #fef2f2;
-  border-left: 3px solid #dc2626;
+  background: rgba(245, 158, 11, 0.08);
+  border-left: 3px solid #f59e0b;
   padding: 10px 14px;
   border-radius: 0 8px 8px 0;
   font-size: 0.84rem;
   line-height: 1.5;
-  color: #7f1d1d;
+  color: #fef3c7;
 }
 
 .alert-box-info {
-  background: #f0f9ff;
-  border-left: 3px solid #0284c7;
+  background: rgba(56, 189, 248, 0.08);
+  border-left: 3px solid #38bdf8;
   padding: 10px 14px;
   border-radius: 0 8px 8px 0;
   font-size: 0.84rem;
   line-height: 1.5;
-  color: #0369a1;
+  color: #e0f2fe;
 }
 
 .step-actions-row {
@@ -990,27 +932,27 @@ body {
 }
 
 .btn-step-action.secondary {
-  background: #ffffff;
-  border-color: #cbd5e1;
-  color: #334155;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
 }
 
 .btn-step-action.secondary:hover {
-  background: #f1f5f9;
-  border-color: #94a3b8;
-  color: #0f172a;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
 .btn-step-action.primary {
-  background: #0f172a;
-  border-color: #0f172a;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  border-color: rgba(56, 189, 248, 0.4);
   color: #ffffff;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
 }
 
 .btn-step-action.primary:hover {
-  background: #1e293b;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+  box-shadow: 0 6px 18px rgba(56, 189, 248, 0.5);
   transform: translateY(-1px);
 }
 

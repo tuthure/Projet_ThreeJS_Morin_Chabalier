@@ -31,7 +31,7 @@ export const step1 = {
    * - Arrete le defilement du decor (train a l'arret a quai pour inspection tranquille)
    * - Reinitialise le convoi avec uniquement la locomotive et le wagon #0
    * - Positionne la camera en vue 3/4 ideale
-   * - Affiche le volet d'inspection gauche (Carnet de bord du convoi)
+   * - Affiche le volet d'inspection gauche
    */
   enter() {
     const { trainConvoy, cameraController, environment } = this.ctx;
@@ -54,7 +54,7 @@ export const step1 = {
       inspectionSidebar.setAttribute('aria-hidden', 'true');
     }
 
-    // 5. Genere le carnet de bord ferroviaire dedie a l'etape 1
+    // 5. Genere le volet pedagogique dedie a l'etape 1
     this.renderLeftPanel();
 
     // 6. Cadre la camera sur la locomotive et le wagon Genesis (#0)
@@ -73,7 +73,7 @@ export const step1 = {
   },
 
   /**
-   * Genere le contenu HTML interactif du volet lateral gauche (Feuille de route).
+   * Genere le contenu HTML interactif du volet lateral gauche.
    */
   renderLeftPanel() {
     const panel = document.getElementById('step-panel-left');
@@ -82,19 +82,10 @@ export const step1 = {
     panel.classList.add('active');
     panel.innerHTML = `
       <div class="step-panel-inner">
-        <!-- Pince metallique superieure -->
-        <div class="sheet-clip">
-          <span class="sheet-clip-title">CONVOI FERROVIAIRE</span>
-        </div>
-
         <header class="step-panel-header">
-          <!-- Tampon de gare officiel -->
-          <div class="railway-stamp">
-            <div class="stamp-circle">1</div>
-            <div class="stamp-meta">
-              <span class="stamp-title">NOTION 1 &middot; STRUCTURE DU BLOC</span>
-              <span class="stamp-sub">MANIFESTE DU WAGON #0</span>
-            </div>
+          <div class="panel-kicker">
+            <span class="kicker-dot"></span>
+            <span class="kicker-text">CONVOI // NOTION 01</span>
           </div>
           <h2 class="step-panel-title">Qu'est-ce qu'un Bloc ?</h2>
           <p class="step-panel-subtitle">La metaphore du wagon aux parois de verre</p>
@@ -102,23 +93,23 @@ export const step1 = {
 
         <div class="step-panel-scroll">
           <!-- 1. Explication vulgarisee de la metaphore -->
-          <section class="railway-section">
-            <h3 class="railway-heading">Pourquoi un wagon en verre ?</h3>
+          <section class="panel-section">
+            <h3 class="section-title">Pourquoi un wagon en verre ?</h3>
             <p>
               Dans ce convoi, chaque wagon represente un <strong>bloc</strong>. Ses parois sont faites de <strong>verre parfaitement transparent</strong> : n'importe qui sur le quai peut regarder a l'interieur et verifier ce qu'il transporte, sans jamais avoir besoin d'ouvrir la porte.
             </p>
-            <div class="railway-note warning">
-              <div class="railway-note-title">REGLE D'OR DU CONVOI</div>
-              <p class="railway-note-body">
+            <div class="panel-callout warning">
+              <span class="callout-tag">REGLE D'OR DU RESEAU</span>
+              <p class="callout-text">
                 Tout le monde peut voir l'interieur, mais forcer le wagon ou modifier son contenu briserait immediatement son sceau d'inviolabilite !
               </p>
             </div>
           </section>
 
           <!-- 2. Les 4 elements anatomiques du wagon -->
-          <section class="railway-section">
+          <section class="panel-section">
             <div class="section-lead-row">
-              <h3 class="railway-heading">Regardons dans le wagon</h3>
+              <h3 class="section-title">Regardons dans le wagon</h3>
               <span class="section-hint">Cliquez sur un composant pour vous en approcher :</span>
             </div>
 
@@ -174,13 +165,13 @@ export const step1 = {
 
           <!-- 3. Actions de navigation -->
           <div class="step-nav-bar">
-            <button id="btn-step1-prev" class="btn-rail-ghost" title="Retour a l'introduction">
+            <button id="btn-step1-prev" class="btn-panel-ghost" title="Retour a l'introduction">
               &larr; Intro
             </button>
-            <button id="btn-step1-overview" class="btn-rail-ghost">
+            <button id="btn-step1-overview" class="btn-panel-ghost">
               Vue globale
             </button>
-            <button id="btn-step1-next" class="btn-rail-primary">
+            <button id="btn-step1-next" class="btn-panel-primary">
               <span>Etape 2 : Le Chainage</span>
               <span class="btn-arrow">&rarr;</span>
             </button>
@@ -260,7 +251,7 @@ export const step1 = {
             <div class="detail-kicker">COMPOSANT 01 &middot; MARCHANDISES</div>
             <h4 class="detail-title">Ce que transporte le wagon</h4>
             <p class="detail-body">
-              Dans un train classique, on transporte du fret ou des colis. Dans une blockchain, on transporte <strong>des transactions</strong> : transferts de monnaie, contrats ou certificats numeriques.
+              Dans un train classique, on transporte des caisses ou du fret. Dans une blockchain, on transporte <strong>des transactions</strong> : echanges de monnaie, signatures de contrats ou certificats numeriques.
             </p>
             <div class="detail-insight">
               Grace aux parois en verre du wagon, tout le monde peut consulter publiquement ces donnees. Une fois scellees, il est <strong>impossible de les modifier ou de les supprimer</strong>.
@@ -278,10 +269,10 @@ export const step1 = {
             <div class="detail-kicker">COMPOSANT 02 &middot; LE NONCE</div>
             <h4 class="detail-title">La combinaison secrete de verrouillage</h4>
             <p class="detail-body">
-              Cette molette crantee sur le flanc du chassis affiche un nombre nomme le <strong>Nonce</strong> (<em>"number used once"</em>).
+              Cette molette crantee sur le flanc du chassis affiche un nombre entier specifique nomme le <strong>Nonce</strong> (<em>"number used once"</em>).
             </p>
             <div class="detail-insight">
-              Trouver le bon nombre est le resultat d'un calcul informatique intense (le <strong>minage</strong>). C'est ce chiffre precis qui permet au wagon d'obtenir une empreinte cryptographique valide.
+              Trouver cette valeur exacte est le but du <strong>minage</strong> : un calcul informatique intense consistant a tester des millions de nombres jusqu'a trouver celui qui permet au sceau de respecter la regle mathematique du reseau.
             </div>
           </div>
         `;
@@ -299,7 +290,7 @@ export const step1 = {
               Grave sur cette grande plaque centrale, ce code est genere par la formule mathematique <strong>SHA-256</strong>. C'est l'empreinte digitale exacte du wagon.
             </p>
             <div class="detail-insight">
-              Ce sceau depend mathematiquement de tout le wagon. <strong>Si vous changiez une seule virgule a l'interieur, ce sceau changerait completement</strong> !
+              Ce sceau depend mathematiquement de tout ce qui compose le wagon. <strong>Si vous changiez une seule virgule a l'interieur, ce sceau changerait completement</strong> !
             </div>
           </div>
         `;
@@ -314,10 +305,10 @@ export const step1 = {
             <div class="detail-kicker">COMPOSANT 04 &middot; ATTELAGE PREVIOUS HASH</div>
             <h4 class="detail-title">L'attelage qui relie le wagon au convoi</h4>
             <p class="detail-body">
-              Pour s'accrocher au convoi, le wagon doit obligatoirement porter sur son crochet avant <strong>le sceau exact du vehicule qui roule devant lui</strong>.
+              Pour etre raccorde au convoi, chaque wagon doit obligatoirement porter sur son crochet avant <strong>le sceau exact du vehicule qui roule devant lui</strong>.
             </p>
             <div class="detail-insight">
-              Comme ce wagon est le premier du train (le <strong>Bloc Genesis</strong>), il est arrime directement a la locomotive avec un sceau compose exclusivement de zeros : <code>0000000000000000</code>.
+              Comme ce wagon est le tout premier du train (le <strong>Bloc Genesis</strong>), il est arrime a la locomotive motrice avec une signature originelle formee exclusivement de zeros : <code>0000000000000000</code>.
             </div>
           </div>
         `;

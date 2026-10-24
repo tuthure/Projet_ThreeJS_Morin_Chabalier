@@ -24,7 +24,7 @@ export const step0 = {
    * - Met le convoi en mouvement (decor defilant a vitesse de croisiere)
    * - Affiche la locomotive et le wagon Genesis (#0)
    * - Positionne la camera en vue panoramique dynamique
-   * - Affiche le volet d'accueil gauche (Carnet de bord du convoi)
+   * - Affiche le volet d'accueil gauche
    */
   enter() {
     const { trainConvoy, cameraController, environment } = this.ctx;
@@ -45,7 +45,7 @@ export const step0 = {
       inspectionSidebar.setAttribute('aria-hidden', 'true');
     }
 
-    // 4. Genere le volet gauche d'accueil inclusif
+    // 4. Genere le volet gauche d'accueil
     this.renderLeftPanel();
 
     // 5. Oriente la camera sur une vue panoramique 3/4 eloignee montrant le convoi en marche
@@ -66,7 +66,7 @@ export const step0 = {
   },
 
   /**
-   * Genere le contenu HTML du carnet de bord ferroviaire (prologue).
+   * Genere le contenu HTML du volet d'accueil gauche.
    */
   renderLeftPanel() {
     const panel = document.getElementById('step-panel-left');
@@ -75,54 +75,45 @@ export const step0 = {
     panel.classList.add('active');
     panel.innerHTML = `
       <div class="step-panel-inner">
-        <!-- Pince metallique superieure façon carnet de chef de train -->
-        <div class="sheet-clip">
-          <span class="sheet-clip-title">CONVOI FERROVIAIRE</span>
-        </div>
-
         <header class="step-panel-header">
-          <!-- Tampon de gare officiel -->
-          <div class="railway-stamp">
-            <div class="stamp-circle">0</div>
-            <div class="stamp-meta">
-              <span class="stamp-title">NOTION 0 &middot; INTRODUCTION</span>
-              <span class="stamp-sub">GARE DE DEPART</span>
-            </div>
+          <div class="panel-kicker">
+            <span class="kicker-dot"></span>
+            <span class="kicker-text">CONVOI // NOTION 00</span>
           </div>
           <h2 class="step-panel-title">Bienvenue a bord !</h2>
           <p class="step-panel-subtitle">Comprendre la blockchain sans aucun jargon</p>
         </header>
 
         <div class="step-panel-scroll">
-          <section class="railway-section">
-            <h3 class="railway-heading">Le voyage commence ici</h3>
+          <section class="panel-section">
+            <h3 class="section-title">Le voyage commence ici</h3>
             <p>
               Vous avez sans doute deja croise les termes <strong>blockchain</strong>, <em>registre infalsifiable</em> ou <em>crypto</em> sans representation visuelle concrete de leur fonctionnement.
             </p>
             <p>
-              Pas d'inquietude : ici, aucun calcul complexe ni jargon incomprehensible. Nous decouvrons cette technologie a travers une image tangible : <strong>un convoi ferroviaire en circulation</strong>.
+              Pas d'inquietude : ici, aucun calcul complexe ni jargon incomprehensible. Nous decouvrons cette technologie a travers une image tangible : <strong>un convoi ferroviaire transparent en circulation</strong>.
             </p>
           </section>
 
-          <section class="railway-section">
-            <h3 class="railway-heading">Comment ca marche ?</h3>
+          <section class="panel-section">
+            <h3 class="section-title">Comment ca marche ?</h3>
             <p>
               Dans ce train, chaque wagon represente un <strong>bloc</strong> contenant des donnees certifiees (des echanges d'argent, des contrats ou des certificats numeriques).
             </p>
             <p>
-              Ces wagons sont scelles les uns aux autres par des <strong>attelages magnetiques invisibles</strong>. Si quelqu'un tente d'ouvrir un wagon passe pour frauder, l'attelage se brise instantanement sous les yeux de tous les observateurs !
+              Ces wagons sont scelles les uns aux autres par des <strong>attelages cryptographiques invisibles</strong>. Si quelqu'un tente d'ouvrir un wagon passe pour frauder, l'attelage se brise instantanement sous les yeux de tous les observateurs !
             </p>
 
-            <div class="railway-note">
-              <div class="railway-note-title">CONSIGNE DU CHEF DE TRAIN</div>
-              <p class="railway-note-body">
-                En 7 etapes interactives, vous inspecterez les wagons, manipulerez leurs composants et comprendrez pourquoi ce reseau est impossible a pirater.
+            <div class="panel-callout">
+              <span class="callout-tag">VOTRE PARCOURS</span>
+              <p class="callout-text">
+                En 7 etapes courtes et interactives, vous inspecterez les wagons, manipulerez leurs composants et comprendrez pourquoi ce reseau est impossible a pirater.
               </p>
             </div>
           </section>
 
-          <div class="railway-actions">
-            <button id="btn-start-exploration" class="btn-rail-primary">
+          <div class="panel-actions">
+            <button id="btn-start-exploration" class="btn-panel-primary">
               <span>Commencer l'exploration</span>
               <span class="btn-arrow">&rarr;</span>
             </button>
