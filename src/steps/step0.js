@@ -325,10 +325,6 @@ export const step0 = {
     if (this.subStep === 0) {
       subStepContentHTML = `
         <article class="step-card context-card animate-fade">
-          <div class="card-header-tag">
-            <span class="card-tag-dot"></span>
-            <span>CONTEXTE &middot; LE CONVOI PUBLIC</span>
-          </div>
           <h3 class="card-title">Un train qui roule au grand jour</h3>
           <p>
             Imagine que la blockchain est ce train de marchandises qui avance sur les rails sans jamais s'arrêter.
@@ -351,11 +347,7 @@ export const step0 = {
     } else if (this.subStep === 1) {
       subStepContentHTML = `
         <article class="step-card context-card animate-fade">
-          <div class="card-header-tag">
-            <span class="card-tag-dot"></span>
-            <span>OBSERVATION &middot; LA MOTRICE AUTONOME</span>
-          </div>
-          <h3 class="card-title">Qui conduit le train ?</h3>
+          <h3 class="card-title">Une locomotive sans conducteur</h3>
           <p>
             La cabine à l'avant est vide : il n'y a pas de conducteur. La locomotive avance toute seule en obéissant à un programme informatique que personne ne peut soudoyer.
           </p>
@@ -377,11 +369,7 @@ export const step0 = {
     } else if (this.subStep === 2) {
       subStepContentHTML = `
         <article class="step-card context-card animate-fade">
-          <div class="card-header-tag">
-            <span class="card-tag-dot"></span>
-            <span>OBSERVATION &middot; LES BLOCS DE VERRE</span>
-          </div>
-          <h3 class="card-title">Des wagons aux parois transparentes</h3>
+          <h3 class="card-title">Des wagons aux parois vitrées</h3>
           <p>
             Dans une banque classique, les comptes sont enfermés dans un coffre secret. Ici, chaque wagon est un <strong>bloc</strong> vitré : tout le monde peut lire les échanges rangés à l'intérieur, comme <em>« Alice envoie 10 jetons à Bob »</em>.
           </p>
@@ -405,7 +393,6 @@ export const step0 = {
     inner.innerHTML = `
       <header class="step-panel-header">
         <div class="step-panel-header-top">
-          <span class="step-badge">INTRODUCTION</span>
           <span class="substep-progress-indicator">Partie 0.${this.subStep + 1} sur 0.3</span>
         </div>
         <h2 class="step-panel-title">Le Principe du Convoi</h2>

@@ -42,7 +42,6 @@ export const step4 = {
     inner.innerHTML = `
         <header class="step-panel-header">
           <div class="step-panel-header-top">
-            <span class="step-badge">NOTION 4</span>
             <span class="substep-progress-indicator">Vue générale</span>
           </div>
           <h2 class="step-panel-title">La Décentralisation</h2>
@@ -50,10 +49,6 @@ export const step4 = {
         </header>
         <div class="step-panel-scroll">
           <article class="step-card context-card">
-            <div class="card-header-tag">
-              <span class="card-tag-dot"></span>
-              <span>ARCHITECTURE &middot; RÉSEAU DISTRIBUÉ</span>
-            </div>
             <h3 class="card-title">Pas de chef de gare unique</h3>
             <p>Il n'existe aucun serveur central ni autorité centrale. Chaque nœud participant au réseau possède la copie conforme et synchronisée de l'ensemble des wagons du convoi.</p>
           </article>

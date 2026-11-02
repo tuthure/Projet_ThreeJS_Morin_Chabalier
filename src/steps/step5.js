@@ -43,7 +43,6 @@ export const step5 = {
     inner.innerHTML = `
         <header class="step-panel-header">
           <div class="step-panel-header-top">
-            <span class="step-badge">NOTION 5</span>
             <span class="substep-progress-indicator">Vue générale</span>
           </div>
           <h2 class="step-panel-title">Le Minage (PoW)</h2>
@@ -51,10 +50,6 @@ export const step5 = {
         </header>
         <div class="step-panel-scroll">
           <article class="step-card context-card">
-            <div class="card-header-tag">
-              <span class="card-tag-dot"></span>
-              <span>PREUVE DE TRAVAIL &middot; CALCUL</span>
-            </div>
             <h3 class="card-title">Comment scelle-t-on un nouveau wagon ?</h3>
             <p>Les validateurs (mineurs) testent des millions de combinaisons sur la molette (le Nonce) jusqu'à trouver celle qui produit un sceau respectant la règle de difficulté imposée par le protocole.</p>
           </article>

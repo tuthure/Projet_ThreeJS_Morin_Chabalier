@@ -41,7 +41,6 @@ export const step6 = {
     inner.innerHTML = `
         <header class="step-panel-header">
           <div class="step-panel-header-top">
-            <span class="step-badge">NOTION 6</span>
             <span class="substep-progress-indicator">Vue générale</span>
           </div>
           <h2 class="step-panel-title">PoW contre PoS</h2>
@@ -49,10 +48,6 @@ export const step6 = {
         </header>
         <div class="step-panel-scroll">
           <article class="step-card context-card">
-            <div class="card-header-tag">
-              <span class="card-tag-dot"></span>
-              <span>CONSENSUS &middot; COMPARAISON</span>
-            </div>
             <h3 class="card-title">Calcul ou mise sous séquestre ?</h3>
             <p>La preuve de travail utilise de l'énergie pour faire tourner la molette, tandis que la preuve d'enjeu confie le scellement à des validateurs bloquant des fonds en caution.</p>
           </article>

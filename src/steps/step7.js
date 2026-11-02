@@ -41,7 +41,6 @@ export const step7 = {
     inner.innerHTML = `
         <header class="step-panel-header">
           <div class="step-panel-header-top">
-            <span class="step-badge">NOTION 7</span>
             <span class="substep-progress-indicator">Vue générale</span>
           </div>
           <h2 class="step-panel-title">Cycle de Vie & Attaque</h2>
@@ -49,10 +48,6 @@ export const step7 = {
         </header>
         <div class="step-panel-scroll">
           <article class="step-card context-card">
-            <div class="card-header-tag">
-              <span class="card-tag-dot"></span>
-              <span>CYCLE DE VIE &middot; INVIOLABILITÉ</span>
-            </div>
             <h3 class="card-title">Du colis sur le quai jusqu'au convoi</h3>
             <p>Une transaction attend d'abord dans une salle d'embarquement (mempool), puis est chargée dans un wagon, scellée par un mineur et validée par le reste du réseau.</p>
           </article>

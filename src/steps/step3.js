@@ -41,7 +41,6 @@ export const step3 = {
     inner.innerHTML = `
         <header class="step-panel-header">
           <div class="step-panel-header-top">
-            <span class="step-badge">NOTION 3</span>
             <span class="substep-progress-indicator">Vue générale</span>
           </div>
           <h2 class="step-panel-title">L'Immuabilité</h2>
@@ -49,10 +48,6 @@ export const step3 = {
         </header>
         <div class="step-panel-scroll">
           <article class="step-card context-card">
-            <div class="card-header-tag">
-              <span class="card-tag-dot"></span>
-              <span>RÈGLE DU RÉSEAU &middot; SÉCURITÉ</span>
-            </div>
             <h3 class="card-title">Que se passe-t-il en cas de tentative de fraude ?</h3>
             <p>Si quelqu'un essaie d'ouvrir le wagon pour modifier les transactions, le sceau du wagon change instantanément, provoquant une rupture visible de l'attelage avec les wagons suivants.</p>
           </article>
