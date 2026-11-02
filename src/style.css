@@ -1648,18 +1648,17 @@ body {
    ========================================================================== */
 .glossary-term {
   position: relative;
-  display: inline-block;
+  display: inline;
   color: #38bdf8;
   font-weight: 600;
-  border-bottom: 1px dotted rgba(56, 189, 248, 0.65);
-  cursor: help;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  border-bottom: none;
+  cursor: default;
 }
 
 .glossary-term:hover,
 .glossary-term:focus {
-  color: #7dd3fc;
-  border-bottom-color: #38bdf8;
+  color: #38bdf8;
+  border-bottom: none;
   outline: none;
 }
 

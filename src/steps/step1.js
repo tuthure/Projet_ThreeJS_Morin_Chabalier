@@ -4,26 +4,20 @@ import { hashToColorHex } from '../three/WagonMesh.js';
 /**
  * Étape 1 : Structure d'un Bloc.
  * Anatomie d'un wagon aux parois de verre :
- * - Sous-partie 1.1 : Le compartiment des transactions (fret transporté et réaction visuelle 3D)
- * - Sous-partie 1.2 : L'empreinte numérique (Hash) et le lien parent (PreviousHash) avec surbrillance
- * - Sous-partie 1.3 : La molette du Nonce (rotation physique de la molette 3D et recalcul instantané du hash)
+ * - Sous-partie 1.1 : Transactions et empreinte numérique (Hash)
+ * - Sous-partie 1.2 : La molette mécanique du Nonce
  */
 export const step1 = {
   id: 1,
   title: "Structure d'un Bloc",
-  subtitle: "Anatomie d'un wagon : fret, empreinte et verrouillage",
+  subtitle: "Anatomie d'un wagon : chargement, empreinte et molette de Nonce",
   ctx: null,
 
-  subStep: 0, // 0: Transactions, 1: Hash/PreviousHash, 2: Nonce
+  subStep: 0, // 0: Transactions & Hash, 1: Nonce
   rafId: null,
 
-  // Éléments visuels d'animation 3D
+  // Animation de réaction 3D
   cargoPulseProgress: 1.0,
-  highlightLight: null,
-  highlightLightPrev: null,
-  centerPlateHalo: null,
-  prevPlateHalo: null,
-  highlightUntil: 0,
 
   /**
    * Initialise le module avec le contexte global de l'application.
@@ -35,16 +29,15 @@ export const step1 = {
 
   /**
    * Active l'étape 1 :
-   * - Met en place le train à quai avec la locomotive, le wagon #0 (Genesis) et le wagon #1
-   * - Arrête le défilement du décor pour une inspection précise
-   * - Active la première sous-partie
+   * - Met en place le train à quai avec le wagon #0 (Genesis) et le wagon #1
+   * - Arrête le décor pour observer le wagon en détail
+   * - Lance la première sous-partie
    */
   enter() {
-    const { trainConvoy, cameraController, environment, scene } = this.ctx;
+    const { trainConvoy, cameraController, environment } = this.ctx;
 
     this.subStep = 0;
     this.cargoPulseProgress = 1.0;
-    this.highlightUntil = 0;
 
     if (cameraController) {
       cameraController.setViewOffset(210);
@@ -64,60 +57,17 @@ export const step1 = {
       }
     }
 
-    // 2. Halo lumineux d'éclairage pour la sous-partie 1.2
-    if (scene && !this.highlightLight) {
-      this.highlightLight = new THREE.PointLight(0x38bdf8, 0, 5.0);
-      scene.add(this.highlightLight);
-
-      this.highlightLightPrev = new THREE.PointLight(0x00f5d4, 0, 4.5);
-      scene.add(this.highlightLightPrev);
-    }
-
-    // 3. Montage des halos visuels sur les plaques du wagon 1
-    const wagon1 = trainConvoy?.getWagon(1);
-    if (wagon1 && wagon1.platesGroup) {
-      if (!this.centerPlateHalo) {
-        const centerHaloGeo = new THREE.PlaneGeometry(1.24, 0.66);
-        const centerHaloMat = new THREE.MeshBasicMaterial({
-          color: 0x00f3ff,
-          transparent: true,
-          opacity: 0,
-          blending: THREE.AdditiveBlending,
-          side: THREE.DoubleSide,
-          depthWrite: false
-        });
-        this.centerPlateHalo = new THREE.Mesh(centerHaloGeo, centerHaloMat);
-        this.centerPlateHalo.position.set(0, 0.62, 0.608);
-        wagon1.platesGroup.add(this.centerPlateHalo);
-      }
-      if (!this.prevPlateHalo) {
-        const prevHaloGeo = new THREE.PlaneGeometry(0.86, 0.50);
-        const prevHaloMat = new THREE.MeshBasicMaterial({
-          color: 0x00f3ff,
-          transparent: true,
-          opacity: 0,
-          blending: THREE.AdditiveBlending,
-          side: THREE.DoubleSide,
-          depthWrite: false
-        });
-        this.prevPlateHalo = new THREE.Mesh(prevHaloGeo, prevHaloMat);
-        this.prevPlateHalo.rotation.set(0, -Math.PI / 2, 0);
-        this.prevPlateHalo.position.set(-1.182, 0.62, 0);
-        wagon1.platesGroup.add(this.prevPlateHalo);
-      }
-    }
-
-    // 4. Ferme le tiroir d'inspection droit s'il était ouvert
+    // 2. Ferme le tiroir d'inspection droit s'il était ouvert
     const inspectionSidebar = document.getElementById('inspection-sidebar');
     if (inspectionSidebar) {
       inspectionSidebar.classList.remove('open');
       inspectionSidebar.setAttribute('aria-hidden', 'true');
     }
 
-    // 5. Démarre la boucle d'animation dédiée de l'étape
+    // 3. Démarre la boucle d'animation dédiée
     this.startAnimationLoop();
 
-    // 6. Lance la sous-partie 1.1
+    // 4. Cadrage sur la première sous-partie
     this.goToSubStep(0);
   },
 
@@ -127,28 +77,6 @@ export const step1 = {
   exit() {
     this.stopAnimationLoop();
 
-    if (this.highlightLight && this.ctx?.scene) {
-      this.ctx.scene.remove(this.highlightLight);
-      this.highlightLight = null;
-    }
-    if (this.highlightLightPrev && this.ctx?.scene) {
-      this.ctx.scene.remove(this.highlightLightPrev);
-      this.highlightLightPrev = null;
-    }
-
-    if (this.centerPlateHalo) {
-      this.centerPlateHalo.parent?.remove(this.centerPlateHalo);
-      this.centerPlateHalo.geometry.dispose();
-      this.centerPlateHalo.material.dispose();
-      this.centerPlateHalo = null;
-    }
-    if (this.prevPlateHalo) {
-      this.prevPlateHalo.parent?.remove(this.prevPlateHalo);
-      this.prevPlateHalo.geometry.dispose();
-      this.prevPlateHalo.material.dispose();
-      this.prevPlateHalo = null;
-    }
-
     const panel = document.getElementById('step-panel-left');
     if (panel) {
       const inner = panel.querySelector('.step-panel-inner');
@@ -157,7 +85,7 @@ export const step1 = {
   },
 
   /**
-   * Lance la boucle requestAnimationFrame pour les animations légères de l'étape 1.
+   * Boucle d'animation légère pour le rebond 3D du chargement.
    */
   startAnimationLoop() {
     this.stopAnimationLoop();
@@ -166,7 +94,7 @@ export const step1 = {
       const { trainConvoy } = this.ctx;
       const wagon1 = trainConvoy?.getWagon(1);
 
-      // Animation de rebond du compartiment de fret lors d'un chargement (Sous-partie 1.1)
+      // Rebond physique du fret lors d'un chargement
       if (wagon1 && wagon1.cargoGroup && this.cargoPulseProgress < 1.0) {
         this.cargoPulseProgress += 0.045;
         const p = Math.min(this.cargoPulseProgress, 1.0);
@@ -186,54 +114,6 @@ export const step1 = {
             mat.emissiveIntensity = 0;
           });
         }
-      }
-
-      // Halo pulsant et surbrillance marquée sur les plaques (Sous-partie 1.2)
-      if (this.subStep === 1 && wagon1) {
-        const time = performance.now() * 0.003;
-        const wagonPos = trainConvoy.getWagonPosition(1);
-        const isHighlighting = performance.now() < (this.highlightUntil || 0);
-
-        if (isHighlighting) {
-          // Surbrillance vive déclenchée lors de l'interaction (2 à 3 secondes)
-          const strobe = 0.5 + 0.5 * Math.sin(performance.now() * 0.016);
-          const haloOpacity = 0.65 + 0.35 * strobe;
-
-          if (this.centerPlateHalo) this.centerPlateHalo.material.opacity = haloOpacity;
-          if (this.prevPlateHalo) this.prevPlateHalo.material.opacity = haloOpacity;
-
-          if (this.highlightLight) {
-            this.highlightLight.color.setHex(0x00f3ff);
-            this.highlightLight.position.set(wagonPos.x, 0.62, 1.1);
-            this.highlightLight.intensity = 7.5 + 3.0 * strobe;
-          }
-          if (this.highlightLightPrev) {
-            this.highlightLightPrev.color.setHex(0x00f3ff);
-            this.highlightLightPrev.position.set(wagonPos.x - 1.185, 0.62, 0.6);
-            this.highlightLightPrev.intensity = 7.5 + 3.0 * strobe;
-          }
-        } else {
-          // Ambiance douce au repos
-          if (this.centerPlateHalo) this.centerPlateHalo.material.opacity = 0;
-          if (this.prevPlateHalo) this.prevPlateHalo.material.opacity = 0;
-
-          const pulse = 1.3 + Math.sin(time * 3) * 0.4;
-          if (this.highlightLight) {
-            this.highlightLight.color.setHex(0x38bdf8);
-            this.highlightLight.position.set(wagonPos.x, 0.65, 1.2);
-            this.highlightLight.intensity = pulse;
-          }
-          if (this.highlightLightPrev) {
-            this.highlightLightPrev.color.setHex(0x38bdf8);
-            this.highlightLightPrev.position.set(wagonPos.x - 1.2, 0.65, 0.5);
-            this.highlightLightPrev.intensity = pulse * 0.85;
-          }
-        }
-      } else {
-        if (this.centerPlateHalo) this.centerPlateHalo.material.opacity = 0;
-        if (this.prevPlateHalo) this.prevPlateHalo.material.opacity = 0;
-        if (this.highlightLight) this.highlightLight.intensity = 0;
-        if (this.highlightLightPrev) this.highlightLightPrev.intensity = 0;
       }
 
       this.rafId = requestAnimationFrame(loop);
@@ -260,34 +140,25 @@ export const step1 = {
   },
 
   /**
-   * Bascule vers l'une des 3 sous-parties de l'étape 1.
-   * @param {number} subIndex - 0, 1 ou 2
+   * Bascule vers l'une des 2 sous-parties de l'étape 1.
+   * @param {number} subIndex - 0: Données & Hash, 1: Molette Nonce
    */
   goToSubStep(subIndex) {
-    this.subStep = Math.max(0, Math.min(subIndex, 2));
+    this.subStep = Math.max(0, Math.min(subIndex, 1));
     const { cameraController, trainConvoy } = this.ctx;
     const wagon1Pos = trainConvoy ? trainConvoy.getWagonPosition(1) : new THREE.Vector3(3.8, 0, 0);
 
     if (this.subStep === 0) {
-      // 1.1 — Vue rapprochée sur l'intérieur ouvert du wagon 1
+      // 1.1 — Vue cadrant l'intérieur du conteneur et les plaques
       if (cameraController) {
         cameraController.moveTo(
-          new THREE.Vector3(wagon1Pos.x + 0.85, 1.55, 2.05),
+          new THREE.Vector3(wagon1Pos.x + 0.65, 1.45, 2.3),
           new THREE.Vector3(wagon1Pos.x, 0.52, 0),
           1.1
         );
       }
     } else if (this.subStep === 1) {
-      // 1.2 — Vue cadrant l'empreinte centrale (Hash) et la plaque avant (PreviousHash)
-      if (cameraController) {
-        cameraController.moveTo(
-          new THREE.Vector3(wagon1Pos.x - 0.75, 1.25, 2.35),
-          new THREE.Vector3(wagon1Pos.x - 0.35, 0.55, 0.15),
-          1.1
-        );
-      }
-    } else if (this.subStep === 2) {
-      // 1.3 — Vue rapprochée sur la molette du Nonce sur le flanc du châssis
+      // 1.2 — Vue rapprochée sur la molette du Nonce sur le flanc
       if (cameraController) {
         cameraController.moveTo(
           new THREE.Vector3(wagon1Pos.x + 0.1, 0.38, 1.35),
@@ -342,7 +213,7 @@ export const step1 = {
     wagon1.block.nonce += delta;
     if (wagon1.block.nonce < 0) wagon1.block.nonce = 0;
 
-    // Rotation physique du mesh de la molette en 3D
+    // Rotation physique du maillage de la molette en 3D
     if (wagon1.nonceWheel) {
       wagon1.nonceWheel.rotateOnAxis(new THREE.Vector3(0, 1, 0), delta * 0.25);
     }
@@ -392,42 +263,37 @@ export const step1 = {
 
     if (this.subStep === 0) {
       // ----------------------------------------------------------------------
-      // SOUS-PARTIE 1.1 : LE COMPARTIMENT DES TRANSACTIONS
+      // SOUS-PARTIE 1.1 : TRANSACTIONS ET EMPREINTE (HASH)
       // ----------------------------------------------------------------------
       subStepContentHTML = `
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Chargement du wagon</h3>
+          <h3 class="card-title">Chargement et sceau numérique</h3>
           <p>
-            Dans ce convoi, chaque wagon aux parois transparentes transporte des échanges concrets :
-            transferts de monnaie, signatures de contrats ou messages chiffrés.
+            Chaque wagon transparent transporte des transactions vérifiables par tous.
+            Son contenu est résumé par une empreinte numérique unique de 64 caractères (le Hash SHA-256).
           </p>
           <p>
-            Tout le monde sur le quai peut observer le contenu du chargement, mais personne ne peut modifier une transaction
-            sans que son empreinte mathématique
-            <span class="glossary-term" data-tooltip="Empreinte cryptographique fixe de 64 caractères (SHA-256) qui résume parfaitement le contenu.">
-              Hash
-            </span>
-            ne change instantanément.
+            Sur la face avant, la plaque PreviousHash recopie le sceau du wagon précédent, assurant l'ancrage dans la chaîne.
           </p>
         </article>
 
         <article class="step-card action-card animate-fade">
-          <h3 class="card-title">Modifier la marchandise en direct</h3>
+          <h3 class="card-title">Modifier le chargement en direct</h3>
           <p class="card-instruction">
-            Choisissez un chargement pré-rempli ou saisissez votre propre transaction pour observer la réaction immédiate du conteneur en 3D :
+            Sélectionnez une transaction ou tapez une valeur personnalisée pour observer la réaction 3D du conteneur et le recalcul instantané du Hash :
           </p>
 
           <div class="action-choices">
             <button id="btn-load-btc" class="btn-choice active">
-              <span>Ajouter un chargement : 10 BTC</span>
+              <span>Ajouter : 10 BTC</span>
               <span class="btn-choice-icon">Alice &rarr; Bob</span>
             </button>
             <button id="btn-load-contract" class="btn-choice">
-              <span>Chargement express : Contrat signé</span>
-              <span class="btn-choice-icon">Contrat #402</span>
+              <span>Contrat validé</span>
+              <span class="btn-choice-icon">Bail #402</span>
             </button>
             <button id="btn-load-mmi" class="btn-choice">
-              <span>Chargement lourd : 150 MMI-Coin</span>
+              <span>Transfert : 150 MMI</span>
               <span class="btn-choice-icon">Promo MMI</span>
             </button>
           </div>
@@ -444,8 +310,12 @@ export const step1 = {
               <span id="step1-data-preview" class="feedback-val">Alice &rarr; Bob (10 BTC)</span>
             </div>
             <div class="feedback-row">
-              <span class="feedback-label">Empreinte SHA-256 :</span>
+              <span class="feedback-label">Empreinte propre (Hash) :</span>
               <span id="step1-hash-preview" class="feedback-val hash-val">${currentHash.substring(0, 20)}...</span>
+            </div>
+            <div class="feedback-row">
+              <span class="feedback-label">Lien parent (PreviousHash) :</span>
+              <span class="feedback-val">${currentPrev.substring(0, 20)}...</span>
             </div>
           </div>
         </article>
@@ -453,90 +323,31 @@ export const step1 = {
         <article class="step-card keypoint-card animate-fade">
           <h4 class="card-title keypoint-title">Point clé</h4>
           <p class="keypoint-text">
-            Chaque modification de marchandise recalculera automatiquement le sceau numérique du wagon.
-            Il est impossible d'altérer un seul octet en toute discrétion.
+            Chaque modification de marchandise recalcule automatiquement le sceau du wagon.
+            Il est impossible d'altérer un seul caractère sans bouleverser entièrement son empreinte.
           </p>
         </article>
       `;
     } else if (this.subStep === 1) {
       // ----------------------------------------------------------------------
-      // SOUS-PARTIE 1.2 : L'EMPREINTE NUMÉRIQUE ET LE LIEN PARENT
+      // SOUS-PARTIE 1.2 : LA MOLETTE DU NONCE
       // ----------------------------------------------------------------------
       subStepContentHTML = `
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Plaques d'empreinte et lien parent</h3>
+          <h3 class="card-title">La molette mécanique du Nonce</h3>
           <p>
-            Observez les deux plaques minéralogiques distinctes portées par le wagon :
-          </p>
-          <p>
-            1. <strong>La plaque centrale (Hash)</strong> : l'empreinte numérique propre calculée par l'algorithme
-            <span class="glossary-term" data-tooltip="Fonction de hachage cryptographique produisant une signature irréversible de 256 bits.">SHA-256</span>.
+            Sur le flanc du châssis se trouve un cadran rotatif numéroté : le Nonce (Number used once).
           </p>
           <p>
-            2. <strong>La plaque avant (PreviousHash)</strong> : le lien parent qui recopie fidèlement le sceau du wagon précédent.
-          </p>
-        </article>
-
-        <article class="step-card action-card animate-fade">
-          <h3 class="card-title">Vérifier la concordance des plaques</h3>
-          <p class="card-instruction">
-            Contrôlez la concordance entre la plaque avant de ce wagon (#1) et le sceau d'origine de la locomotive / Wagon #0 :
-          </p>
-
-          <div class="action-feedback-box">
-            <div class="feedback-row">
-              <span class="feedback-label">Sceau arrière du Wagon 0 :</span>
-              <span class="feedback-val">${currentPrev.substring(0, 18)}...</span>
-            </div>
-            <div class="feedback-row">
-              <span class="feedback-label">Crochet avant du Wagon 1 :</span>
-              <span class="feedback-val hash-val">${currentPrev.substring(0, 18)}...</span>
-            </div>
-            <div class="feedback-row">
-              <span class="feedback-label">Sceau propre du Wagon 1 :</span>
-              <span class="feedback-val">${currentHash.substring(0, 18)}...</span>
-            </div>
-          </div>
-
-          <button id="btn-step1-highlight-toggle" class="btn-panel-primary">
-            <span>Mettre en surbrillance les plaques</span>
-            <span class="btn-arrow">&rarr;</span>
-          </button>
-
-          <div id="step1-highlight-feedback" class="action-feedback-status"></div>
-        </article>
-
-        <article class="step-card keypoint-card animate-fade">
-          <h4 class="card-title keypoint-title">Point clé</h4>
-          <p class="keypoint-text">
-            Chaque bloc retient le sceau du bloc d'avant. C'est ce double ancrage qui forme une chaîne ininterrompue
-            d'événements vérifiables.
-          </p>
-        </article>
-      `;
-    } else if (this.subStep === 2) {
-      // ----------------------------------------------------------------------
-      // SOUS-PARTIE 1.3 : LA MOLETTE DU NONCE
-      // ----------------------------------------------------------------------
-      subStepContentHTML = `
-        <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Molette mécanique du Nonce</h3>
-          <p>
-            Sur le flanc droit du châssis sombre se trouve un cadran rotatif numéroté : le
-            <span class="glossary-term" data-tooltip="Number used once : nombre entier arbitraire ajusté pour faire varier le hash sans toucher aux transactions.">
-              Nonce
-            </span>.
-          </p>
-          <p>
-            Comme on ne peut pas modifier les transactions des utilisateurs pour changer le hash,
-            on fait tourner cette molette. Chaque cran change complètement l'empreinte mathématique.
+            Comme les transactions des utilisateurs sont intangibles, on fait tourner cette molette.
+            Chaque cran modifie entièrement le Hash calculé sans toucher au contenu transporté.
           </p>
         </article>
 
         <article class="step-card action-card animate-fade">
           <h3 class="card-title">Tourner la molette du Nonce</h3>
           <p class="card-instruction">
-            Actionnez les commandes pour faire pivoter la molette en 3D et observer le recalcul instantané du hash :
+            Actionnez les commandes pour faire pivoter la molette en 3D et constater la recalculation instantanée du Hash :
           </p>
 
           <div class="nonce-controller">
@@ -562,8 +373,8 @@ export const step1 = {
         <article class="step-card keypoint-card animate-fade">
           <h4 class="card-title keypoint-title">Point clé</h4>
           <p class="keypoint-text">
-            Trouver un Nonce qui donne un Hash commençant par plusieurs zéros est le fondement du minage.
-            C'est une loterie mathématique où seule la puissance de calcul permet d'essayer des millions de combinaisons.
+            Trouver un Nonce qui donne un Hash respectant une difficulté cible (ex: débuter par plusieurs zéros)
+            constitue le travail des mineurs en Preuve de Travail (PoW).
           </p>
         </article>
       `;
@@ -572,23 +383,19 @@ export const step1 = {
     inner.innerHTML = `
       <header class="step-panel-header">
         <div class="step-panel-header-top">
-          <span class="substep-progress-indicator">Partie 1.${this.subStep + 1} sur 1.3</span>
+          <span class="substep-progress-indicator">Partie 1.${this.subStep + 1} sur 1.2</span>
         </div>
         <h2 class="step-panel-title">Structure du Bloc</h2>
         <p class="step-panel-subtitle">Anatomie d'un wagon : fret, empreinte et verrouillage</p>
 
-        <!-- Stepper horizontal cliquable -->
+        <!-- Stepper horizontal cliquable à 2 sous-parties -->
         <div class="substep-stepper" role="tablist" aria-label="Sous-parties de l'étape 1">
           <button class="substep-pill ${this.subStep === 0 ? 'active' : 'completed'}" data-substep="0">
             <span class="substep-num">1.1</span>
-            <span class="substep-label">Transactions</span>
+            <span class="substep-label">Transactions & Hash</span>
           </button>
-          <button class="substep-pill ${this.subStep === 1 ? 'active' : (this.subStep > 1 ? 'completed' : '')}" data-substep="1">
+          <button class="substep-pill ${this.subStep === 1 ? 'active' : ''}" data-substep="1">
             <span class="substep-num">1.2</span>
-            <span class="substep-label">Plaques Hash</span>
-          </button>
-          <button class="substep-pill ${this.subStep === 2 ? 'active' : ''}" data-substep="2">
-            <span class="substep-num">1.3</span>
             <span class="substep-label">Molette Nonce</span>
           </button>
         </div>
@@ -604,7 +411,7 @@ export const step1 = {
           </button>
 
           <button id="btn-step1-next-sub" class="btn-panel-primary">
-            <span>${this.subStep === 2 ? 'Étape 2 : Le Chaînage' : 'Partie suivante'}</span>
+            <span>${this.subStep === 1 ? 'Étape 2 : Le Chaînage' : 'Partie suivante'}</span>
             <span class="btn-arrow">&rarr;</span>
           </button>
         </div>
@@ -640,7 +447,7 @@ export const step1 = {
     });
 
     document.getElementById('btn-step1-next-sub')?.addEventListener('click', () => {
-      if (this.subStep < 2) {
+      if (this.subStep < 1) {
         this.goToSubStep(this.subStep + 1);
       } else if (typeof this.ctx.onNextStep === 'function') {
         this.ctx.onNextStep();
@@ -686,33 +493,8 @@ export const step1 = {
       });
     }
 
-    // 4. Interactions Sous-partie 1.2 (Plaques)
+    // 4. Interactions Sous-partie 1.2 (Nonce)
     if (this.subStep === 1) {
-      document.getElementById('btn-step1-highlight-toggle')?.addEventListener('click', () => {
-        this.highlightUntil = performance.now() + 3000;
-
-        // 1. Gros plan caméra ciblé sur les deux plaques (avant et flanc)
-        const { trainConvoy, cameraController } = this.ctx;
-        if (cameraController && trainConvoy) {
-          const wagonPos = trainConvoy.getWagonPosition(1);
-          cameraController.moveTo(
-            new THREE.Vector3(wagonPos.x - 0.95, 1.1, 1.85),
-            new THREE.Vector3(wagonPos.x - 0.4, 0.62, 0.25),
-            0.85
-          );
-        }
-
-        // 2. Retour textuel direct dans le volet sous le bouton
-        const feedbackEl = document.getElementById('step1-highlight-feedback');
-        if (feedbackEl) {
-          feedbackEl.className = 'action-feedback-status visible status-info';
-          feedbackEl.textContent = 'Plaques identifiées : empreinte avant liée au wagon parent, empreinte arrière scellée';
-        }
-      });
-    }
-
-    // 5. Interactions Sous-partie 1.3 (Nonce)
-    if (this.subStep === 2) {
       document.getElementById('btn-nonce-plus1')?.addEventListener('click', () => {
         this.stepNonce(1);
       });
