@@ -324,8 +324,12 @@ export const step0 = {
 
     if (this.subStep === 0) {
       subStepContentHTML = `
-        <section class="panel-section animate-fade">
-          <h3 class="section-title">Un train qui roule au grand jour</h3>
+        <article class="step-card context-card animate-fade">
+          <div class="card-header-tag">
+            <span class="card-tag-dot"></span>
+            <span>CONTEXTE &middot; LE CONVOI PUBLIC</span>
+          </div>
+          <h3 class="card-title">Un train qui roule au grand jour</h3>
           <p>
             Imagine que la blockchain est ce train de marchandises qui avance sur les rails sans jamais s'arrêter.
           </p>
@@ -335,7 +339,7 @@ export const step0 = {
           <p>
             Pourtant, aucune banque ni aucun chef de gare ne dirige ce convoi. Approche-toi de la locomotive, et regarde qui est aux commandes.
           </p>
-        </section>
+        </article>
 
         <div class="substep-action-box animate-fade">
           <button id="btn-step0-action-loco" class="btn-panel-primary">
@@ -346,8 +350,12 @@ export const step0 = {
       `;
     } else if (this.subStep === 1) {
       subStepContentHTML = `
-        <section class="panel-section animate-fade">
-          <h3 class="section-title">Qui conduit le train ?</h3>
+        <article class="step-card context-card animate-fade">
+          <div class="card-header-tag">
+            <span class="card-tag-dot"></span>
+            <span>OBSERVATION &middot; LA MOTRICE AUTONOME</span>
+          </div>
+          <h3 class="card-title">Qui conduit le train ?</h3>
           <p>
             La cabine à l'avant est vide : il n'y a pas de conducteur. La locomotive avance toute seule en obéissant à un programme informatique que personne ne peut soudoyer.
           </p>
@@ -357,7 +365,7 @@ export const step0 = {
           <p>
             Déplace-toi vers les wagons pour voir ce qu'ils transportent à l'intérieur.
           </p>
-        </section>
+        </article>
 
         <div class="substep-action-box animate-fade">
           <button id="btn-step0-action-wagons" class="btn-panel-primary">
@@ -368,8 +376,12 @@ export const step0 = {
       `;
     } else if (this.subStep === 2) {
       subStepContentHTML = `
-        <section class="panel-section animate-fade">
-          <h3 class="section-title">Des wagons aux parois transparentes</h3>
+        <article class="step-card context-card animate-fade">
+          <div class="card-header-tag">
+            <span class="card-tag-dot"></span>
+            <span>OBSERVATION &middot; LES BLOCS DE VERRE</span>
+          </div>
+          <h3 class="card-title">Des wagons aux parois transparentes</h3>
           <p>
             Dans une banque classique, les comptes sont enfermés dans un coffre secret. Ici, chaque wagon est un <strong>bloc</strong> vitré : tout le monde peut lire les échanges rangés à l'intérieur, comme <em>« Alice envoie 10 jetons à Bob »</em>.
           </p>
@@ -379,7 +391,7 @@ export const step0 = {
           <p>
             Mais un wagon ne contient pas que des marchandises : il possède aussi des pièces de sécurité bien précises. Approchons-nous d'un seul wagon pour le démonter pièce par pièce.
           </p>
-        </section>
+        </article>
 
         <div class="substep-action-box animate-fade">
           <button id="btn-step0-next-step" class="btn-panel-primary">
@@ -392,8 +404,27 @@ export const step0 = {
 
     inner.innerHTML = `
       <header class="step-panel-header">
+        <div class="step-panel-header-top">
+          <span class="step-badge">INTRODUCTION</span>
+          <span class="substep-progress-indicator">Partie 0.${this.subStep + 1} sur 0.3</span>
+        </div>
         <h2 class="step-panel-title">Le Principe du Convoi</h2>
         <p class="step-panel-subtitle">Comprendre la blockchain grâce au train</p>
+
+        <div class="substep-stepper" role="tablist" aria-label="Sous-parties de l'étape 0">
+          <button class="substep-pill ${this.subStep === 0 ? 'active' : 'completed'}" data-substep="0">
+            <span class="substep-num">0.1</span>
+            <span class="substep-label">Convoi</span>
+          </button>
+          <button class="substep-pill ${this.subStep === 1 ? 'active' : (this.subStep > 1 ? 'completed' : '')}" data-substep="1">
+            <span class="substep-num">0.2</span>
+            <span class="substep-label">Locomotive</span>
+          </button>
+          <button class="substep-pill ${this.subStep === 2 ? 'active' : ''}" data-substep="2">
+            <span class="substep-num">0.3</span>
+            <span class="substep-label">Wagons</span>
+          </button>
+        </div>
       </header>
 
       <div class="step-panel-scroll">
@@ -411,6 +442,17 @@ export const step0 = {
     `;
 
     panel.prepend(inner);
+
+    // Clics sur les pilules du stepper
+    const pills = inner.querySelectorAll('.substep-stepper .substep-pill');
+    pills.forEach((pill) => {
+      pill.addEventListener('click', () => {
+        const targetSub = parseInt(pill.dataset.substep);
+        if (!isNaN(targetSub)) {
+          this.goToSubStep(targetSub);
+        }
+      });
+    });
 
     // Actions principales de chaque phase
     document.getElementById('btn-step0-action-loco')?.addEventListener('click', () => {

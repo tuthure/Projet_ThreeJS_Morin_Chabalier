@@ -40,15 +40,23 @@ export const step6 = {
     inner.className = 'step-panel-inner';
     inner.innerHTML = `
         <header class="step-panel-header">
+          <div class="step-panel-header-top">
+            <span class="step-badge">NOTION 6</span>
+            <span class="substep-progress-indicator">Vue générale</span>
+          </div>
           <h2 class="step-panel-title">PoW contre PoS</h2>
           <p class="step-panel-subtitle">Deux philosophies de scellement</p>
         </header>
         <div class="step-panel-scroll">
-          <section class="step-card metaphor-card">
-            <h3>Calcul ou mise sous séquestre ?</h3>
+          <article class="step-card context-card">
+            <div class="card-header-tag">
+              <span class="card-tag-dot"></span>
+              <span>CONSENSUS &middot; COMPARAISON</span>
+            </div>
+            <h3 class="card-title">Calcul ou mise sous séquestre ?</h3>
             <p>La preuve de travail utilise de l'énergie pour faire tourner la molette, tandis que la preuve d'enjeu confie le scellement à des validateurs bloquant des fonds en caution.</p>
-          </section>
-          <div class="step-actions-row">
+          </article>
+          <div class="step-actions-row panel-footer-nav">
             <button id="btn-step6-prev" class="btn-step-action secondary">&larr; Étape 5</button>
             <button id="btn-step6-next" class="btn-step-action primary">Étape 7 &rarr;</button>
           </div>

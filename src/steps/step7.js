@@ -40,17 +40,25 @@ export const step7 = {
     inner.className = 'step-panel-inner';
     inner.innerHTML = `
         <header class="step-panel-header">
+          <div class="step-panel-header-top">
+            <span class="step-badge">NOTION 7</span>
+            <span class="substep-progress-indicator">Vue générale</span>
+          </div>
           <h2 class="step-panel-title">Cycle de Vie & Attaque</h2>
           <p class="step-panel-subtitle">De l'émission à l'inviolabilité</p>
         </header>
         <div class="step-panel-scroll">
-          <section class="step-card metaphor-card">
-            <h3>Du colis sur le quai jusqu'au convoi</h3>
+          <article class="step-card context-card">
+            <div class="card-header-tag">
+              <span class="card-tag-dot"></span>
+              <span>CYCLE DE VIE &middot; INVIOLABILITÉ</span>
+            </div>
+            <h3 class="card-title">Du colis sur le quai jusqu'au convoi</h3>
             <p>Une transaction attend d'abord dans une salle d'embarquement (mempool), puis est chargée dans un wagon, scellée par un mineur et validée par le reste du réseau.</p>
-          </section>
-          <div class="step-actions-row">
+          </article>
+          <div class="step-actions-row panel-footer-nav">
             <button id="btn-step7-prev" class="btn-step-action secondary">&larr; Étape 6</button>
-            <button id="btn-step7-restart" class="btn-step-action primary">&#8634; Recommencer à l'Étape 1</button>
+            <button id="btn-step7-restart" class="btn-step-action primary">Recommencer &rarr;</button>
           </div>
         </div>
     `;

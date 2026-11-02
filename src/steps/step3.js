@@ -40,15 +40,23 @@ export const step3 = {
     inner.className = 'step-panel-inner';
     inner.innerHTML = `
         <header class="step-panel-header">
+          <div class="step-panel-header-top">
+            <span class="step-badge">NOTION 3</span>
+            <span class="substep-progress-indicator">Vue générale</span>
+          </div>
           <h2 class="step-panel-title">L'Immuabilité</h2>
           <p class="step-panel-subtitle">Impossible de tricher sans briser la chaîne</p>
         </header>
         <div class="step-panel-scroll">
-          <section class="step-card metaphor-card">
-            <h3>Que se passe-t-il en cas de tentative de fraude ?</h3>
+          <article class="step-card context-card">
+            <div class="card-header-tag">
+              <span class="card-tag-dot"></span>
+              <span>RÈGLE DU RÉSEAU &middot; SÉCURITÉ</span>
+            </div>
+            <h3 class="card-title">Que se passe-t-il en cas de tentative de fraude ?</h3>
             <p>Si quelqu'un essaie d'ouvrir le wagon pour modifier les transactions, le sceau du wagon change instantanément, provoquant une rupture visible de l'attelage avec les wagons suivants.</p>
-          </section>
-          <div class="step-actions-row">
+          </article>
+          <div class="step-actions-row panel-footer-nav">
             <button id="btn-step3-prev" class="btn-step-action secondary">&larr; Étape 2</button>
             <button id="btn-step3-next" class="btn-step-action primary">Étape 4 &rarr;</button>
           </div>
