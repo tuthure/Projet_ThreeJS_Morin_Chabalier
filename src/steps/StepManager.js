@@ -128,6 +128,10 @@ export class StepManager {
 
     // 3. Entree dans la nouvelle etape
     if (this.currentStep && typeof this.currentStep.enter === 'function') {
+      // Décale le centre optique de la caméra pour l'espace libre à droite du volet gauche (largeur 420px -> décalage +210px)
+      if (this.ctx.cameraController) {
+        this.ctx.cameraController.setViewOffset(210);
+      }
       this.currentStep.enter();
     }
 

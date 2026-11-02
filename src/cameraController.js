@@ -39,7 +39,37 @@ export class CameraController {
     this.interactiveObjects = [];
     this.pointerDownPos = new THREE.Vector2();
 
+    // Décalage visuel horizontal (en pixels) pour centrer la scène dans l'espace utile libre (ex: à droite du volet gauche)
+    this.viewOffsetX = 0;
+
     this._setupPointerEvents();
+  }
+
+  /**
+   * Définit le décalage horizontal (en pixels) pour centrer le point de mire
+   * dans la portion visible de l'écran (hors volets HUD).
+   * Une valeur positive décale le centre optique vers la droite.
+   * @param {number} offsetX
+   */
+  setViewOffset(offsetX = 0) {
+    this.viewOffsetX = offsetX;
+    this.updateCameraViewOffset();
+  }
+
+  /**
+   * Réapplique la matrice de vue décentrée sur la caméra Three.js.
+   */
+  updateCameraViewOffset() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    if (this.viewOffsetX !== 0 && width > 768) {
+      // Décaler vers la droite dans l'écran équivaut à un offset négatif sur l'origine du sous-frustum
+      this.camera.setViewOffset(width, height, -this.viewOffsetX, 0, width, height);
+    } else {
+      this.camera.clearViewOffset();
+    }
+    this.camera.updateProjectionMatrix();
   }
 
   /**

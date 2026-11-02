@@ -54,10 +54,13 @@ export const welcome = {
       stepButtons.forEach((btn) => btn.classList.remove('active'));
     }
 
-    // 2. Masque le volet gauche des etapes
+    // 2. Masque le volet gauche des etapes et recentre la camera pleine largeur
     const panel = document.getElementById('step-panel-left');
     if (panel) {
       panel.classList.remove('active');
+    }
+    if (cameraController) {
+      cameraController.setViewOffset(0);
     }
 
     // 3. Ferme le panneau d'inspection droit s'il etait ouvert
