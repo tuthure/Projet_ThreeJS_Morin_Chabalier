@@ -69,7 +69,7 @@ export class Environment {
 
     // 2. Lune stylisee et son halo
     const moonGroup = new THREE.Group();
-    moonGroup.position.set(-28, 22, -45);
+    moonGroup.position.set(-4, 16, -45);
 
     const moonGeo = new THREE.SphereGeometry(2.4, 24, 24);
     const moonMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
@@ -174,16 +174,18 @@ export class Environment {
     this.mountainMaxX = this.totalMountainsWidth / 2;
 
     const mountainMat = new THREE.MeshStandardMaterial({
-      color: 0x0f1d33,
-      roughness: 0.95,
+      color: 0x1e293b,
+      roughness: 0.9,
       metalness: 0.1,
       flatShading: true
     });
 
     const snowMat = new THREE.MeshStandardMaterial({
-      color: 0x25384e,
-      roughness: 0.98,
-      metalness: 0.0,
+      color: 0x64748b,
+      roughness: 0.85,
+      metalness: 0.1,
+      emissive: 0x1e3a5f,
+      emissiveIntensity: 0.25,
       flatShading: true,
       polygonOffset: true,
       polygonOffsetFactor: -2,
@@ -228,8 +230,8 @@ export class Environment {
     this.hillMaxX = this.totalHillsWidth / 2;
 
     const hillMat = new THREE.MeshStandardMaterial({
-      color: 0x162c26,
-      roughness: 0.95,
+      color: 0x1e3a34,
+      roughness: 0.92,
       metalness: 0.05,
       flatShading: true
     });

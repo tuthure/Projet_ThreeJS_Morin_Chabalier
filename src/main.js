@@ -43,7 +43,7 @@ let currentViewMode = 'quarter';
 // ============================================================================
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0c192e);
-scene.fog = new THREE.Fog(0x0c192e, 25, 95);
+scene.fog = new THREE.Fog(0x0c192e, 40, 160);
 
 const sizes = {
   width: window.innerWidth,
