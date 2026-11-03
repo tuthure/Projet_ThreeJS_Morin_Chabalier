@@ -104,7 +104,7 @@ export const step0 = {
         id: 'loco',
         label: 'Locomotive',
         title: 'Cabine sans conducteur',
-        text: 'Aucun chef ni banque centrale à bord : ce sont les règles informatiques du réseau qui font avancer le train automatiquement.',
+        text: 'Aucune compagnie centrale ni chef de gare à bord : ce sont les règles programmées du réseau qui font avancer le train automatiquement.',
         getPos: () => {
           const yOffset = this.ctx.trainConvoy?.locomotiveMesh?.position.y || 0;
           return new THREE.Vector3(-3.8, 1.95 + yOffset, 0);
@@ -325,15 +325,12 @@ export const step0 = {
     if (this.subStep === 0) {
       subStepContentHTML = `
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Un train qui roule au grand jour</h3>
+          <h3 class="card-title">Un réseau ferroviaire public</h3>
           <p>
-            Imagine que la blockchain est ce train de marchandises qui avance sur les rails sans jamais s'arrêter.
+            Imaginez un réseau ferroviaire public. Aucune compagnie centrale ou chef de gare unique ne contrôle ces rails. Le réseau est géré et vérifié collectivement par tous ceux qui se trouvent sur le quai.
           </p>
           <p>
-            Personne ne possède ce train à lui tout seul. En revanche, tout le monde sur le quai peut le regarder passer et vérifier ce qu'il transporte.
-          </p>
-          <p>
-            Pourtant, aucune banque ni aucun chef de gare ne dirige ce convoi. Approche-toi de la locomotive, et regarde qui est aux commandes.
+            Ce train de marchandises avance sur les rails sous les yeux de tous. Approchez-vous de la locomotive pour observer qui est aux commandes.
           </p>
         </article>
 
@@ -352,10 +349,10 @@ export const step0 = {
             La cabine à l'avant est vide : il n'y a pas de conducteur. La locomotive avance toute seule en obéissant à un programme informatique que personne ne peut soudoyer.
           </p>
           <p>
-            Regarde maintenant ce qu'elle tire derrière elle : toute une file de wagons aux parois entièrement vitrées.
+            Regardez maintenant ce qu'elle tire derrière elle : toute une file de wagons aux parois entièrement vitrées.
           </p>
           <p>
-            Déplace-toi vers les wagons pour voir ce qu'ils transportent à l'intérieur.
+            Déplacez-vous vers les wagons pour voir ce qu'ils transportent à l'intérieur.
           </p>
         </article>
 
@@ -371,10 +368,10 @@ export const step0 = {
         <article class="step-card context-card animate-fade">
           <h3 class="card-title">Des wagons aux parois vitrées</h3>
           <p>
-            Dans une banque classique, les comptes sont enfermés dans un coffre secret. Ici, chaque wagon est un <strong>bloc</strong> vitré : tout le monde peut lire les échanges rangés à l'intérieur, comme <em>« Alice envoie 10 jetons à Bob »</em>.
+            Contrairement à un entrepôt fermé à clé, chaque wagon est ici un <strong>bloc</strong> aux parois transparentes : tout le monde sur le quai peut vérifier les cargaisons rangées à l'intérieur.
           </p>
           <p>
-            Dès que de nouveaux échanges ont lieu sur le réseau, on remplit un nouveau wagon (comme celui de Lucas et Emma) et on l'ajoute à la suite du train.
+            Dès que de nouveaux échanges ont lieu sur le réseau, on remplit un nouveau wagon et on l'ajoute à la suite du train.
           </p>
           <p>
             Mais un wagon ne contient pas que des marchandises : il possède aussi des pièces de sécurité bien précises. Approchons-nous d'un seul wagon pour le démonter pièce par pièce.

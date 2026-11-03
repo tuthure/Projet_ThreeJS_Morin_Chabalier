@@ -50,7 +50,7 @@ export const step1 = {
     // 1. Initialise le convoi avec Wagon 0 (Genesis) et Wagon 1 (Bloc standard)
     if (trainConvoy) {
       trainConvoy.resetConvoy([
-        { emetteur: 'Alice', destinataire: 'Bob', montant: 10, unite: 'BTC' }
+        '50 caisses de matériel'
       ]);
       if (cameraController) {
         cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
@@ -267,34 +267,30 @@ export const step1 = {
       // ----------------------------------------------------------------------
       subStepContentHTML = `
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Chargement et sceau numérique</h3>
+          <h3 class="card-title">Chargement et empreinte numérique</h3>
           <p>
-            Chaque wagon transparent transporte des transactions vérifiables par tous.
-            Son contenu est résumé par une empreinte numérique unique de 64 caractères (le Hash SHA-256).
+            Chaque wagon transparent transporte des marchandises vérifiables par tous.
+            Son contenu est résumé par une empreinte numérique unique de 64 caractères (le Hash SHA-256), qui agit comme un sceau de cire inviolable : si le contenu change, l'empreinte change du tout au tout.
           </p>
           <p>
-            Sur la face avant, la plaque PreviousHash recopie le sceau du wagon précédent, assurant l'ancrage dans la chaîne.
+            Sur la face avant, la plaque PreviousHash recopie l'empreinte du wagon précédent, assurant l'ancrage solide dans la chaîne.
           </p>
         </article>
 
         <article class="step-card action-card animate-fade">
           <h3 class="card-title">Modifier le chargement en direct</h3>
           <p class="card-instruction">
-            Sélectionnez une transaction ou tapez une valeur personnalisée pour observer la réaction 3D du conteneur et le recalcul instantané du Hash :
+            Modifiez le texte ci-dessus pour comprendre : le moindre changement dans le chargement modifie instantanément l'empreinte globale (Hash) du wagon.
           </p>
 
           <div class="action-choices">
-            <button id="btn-load-btc" class="btn-choice active">
-              <span>Ajouter : 10 BTC</span>
-              <span class="btn-choice-icon">Alice &rarr; Bob</span>
+            <button id="btn-load-cargo1" class="btn-choice active">
+              <span>Charger 50 caisses de matériel</span>
+              <span class="btn-choice-icon">Fret #1</span>
             </button>
-            <button id="btn-load-contract" class="btn-choice">
-              <span>Contrat validé</span>
-              <span class="btn-choice-icon">Bail #402</span>
-            </button>
-            <button id="btn-load-mmi" class="btn-choice">
-              <span>Transfert : 150 MMI</span>
-              <span class="btn-choice-icon">Promo MMI</span>
+            <button id="btn-load-cargo2" class="btn-choice">
+              <span>Ajouter un bon de livraison</span>
+              <span class="btn-choice-icon">Bon #402</span>
             </button>
           </div>
 
@@ -307,7 +303,7 @@ export const step1 = {
           <div class="action-feedback-box">
             <div class="feedback-row">
               <span class="feedback-label">Données en boîte :</span>
-              <span id="step1-data-preview" class="feedback-val">Alice &rarr; Bob (10 BTC)</span>
+              <span id="step1-data-preview" class="feedback-val">50 caisses de matériel</span>
             </div>
             <div class="feedback-row">
               <span class="feedback-label">Empreinte propre (Hash) :</span>
@@ -323,8 +319,8 @@ export const step1 = {
         <article class="step-card keypoint-card animate-fade">
           <h4 class="card-title keypoint-title">Point clé</h4>
           <p class="keypoint-text">
-            Chaque modification de marchandise recalcule automatiquement le sceau du wagon.
-            Il est impossible d'altérer un seul caractère sans bouleverser entièrement son empreinte.
+            Chaque modification de marchandise recalcule automatiquement l'empreinte numérique (Hash) du wagon.
+            Il est impossible d'altérer un seul caractère sans bouleverser entièrement cette signature mathématique.
           </p>
         </article>
       `;
@@ -336,18 +332,17 @@ export const step1 = {
         <article class="step-card context-card animate-fade">
           <h3 class="card-title">La molette mécanique du Nonce</h3>
           <p>
-            Sur le flanc du châssis se trouve un cadran rotatif numéroté : le Nonce (Number used once).
+            Le Nonce est une molette d'ajustement. Modifier le chargement invalide le wagon. Pour le rendre à nouveau valide (trouver une empreinte commençant par des zéros), les mineurs doivent tester des milliers de combinaisons avec cette molette sans toucher aux marchandises.
           </p>
           <p>
-            Comme les transactions des utilisateurs sont intangibles, on fait tourner cette molette.
-            Chaque cran modifie entièrement le Hash calculé sans toucher au contenu transporté.
+            Chaque cran de molette recalcule entièrement le Hash sans jamais modifier le contenu transporté.
           </p>
         </article>
 
         <article class="step-card action-card animate-fade">
           <h3 class="card-title">Tourner la molette du Nonce</h3>
           <p class="card-instruction">
-            Actionnez les commandes pour faire pivoter la molette en 3D et constater la recalculation instantanée du Hash :
+            Actionnez les commandes pour faire pivoter la molette en 3D et constater la recalculation instantanée de l'empreinte (Hash) :
           </p>
 
           <div class="nonce-controller">
@@ -373,8 +368,7 @@ export const step1 = {
         <article class="step-card keypoint-card animate-fade">
           <h4 class="card-title keypoint-title">Point clé</h4>
           <p class="keypoint-text">
-            Trouver un Nonce qui donne un Hash respectant une difficulté cible (ex: débuter par plusieurs zéros)
-            constitue le travail des mineurs en Preuve de Travail (PoW).
+            En Preuve de Travail (PoW), les mineurs cherchent le bon Nonce qui produit une empreinte valide respectant la difficulté du réseau.
           </p>
         </article>
       `;
@@ -462,19 +456,14 @@ export const step1 = {
         if (activeBtn) activeBtn.classList.add('active');
       };
 
-      document.getElementById('btn-load-btc')?.addEventListener('click', (e) => {
+      document.getElementById('btn-load-cargo1')?.addEventListener('click', (e) => {
         resetChoiceButtons(e.currentTarget);
-        this.applyTransactionData({ emetteur: 'Alice', destinataire: 'Bob', montant: 10, unite: 'BTC' });
+        this.applyTransactionData('50 caisses de matériel');
       });
 
-      document.getElementById('btn-load-contract')?.addEventListener('click', (e) => {
+      document.getElementById('btn-load-cargo2')?.addEventListener('click', (e) => {
         resetChoiceButtons(e.currentTarget);
-        this.applyTransactionData({ type: 'Contrat', ref: 'Bail-Numérique-402', statut: 'Validé' });
-      });
-
-      document.getElementById('btn-load-mmi')?.addEventListener('click', (e) => {
-        resetChoiceButtons(e.currentTarget);
-        this.applyTransactionData({ emetteur: 'Promo-MMI', destinataire: 'Serveur-3D', montant: 150, unite: 'MMI-Coin' });
+        this.applyTransactionData('Bon de livraison #402 - Quai Central');
       });
 
       document.getElementById('btn-step1-custom-submit')?.addEventListener('click', () => {

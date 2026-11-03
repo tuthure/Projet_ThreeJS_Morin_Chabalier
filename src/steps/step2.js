@@ -52,7 +52,7 @@ export const step2 = {
     // 1. Initialise le convoi avec Wagon 0 (Genesis) et Wagon 1
     if (trainConvoy) {
       trainConvoy.resetConvoy([
-        { emetteur: 'Alice', destinataire: 'Bob', montant: 10, unite: 'BTC' }
+        '50 caisses de matériel'
       ]);
       if (cameraController) {
         cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
@@ -245,9 +245,7 @@ export const step2 = {
 
     // Altère les données du premier wagon
     trainConvoy.corruptBlock(0, {
-      type: 'PIRATAGE',
-      label: 'Modification frauduleuse de 50 000 jetons',
-      transactions: 50000
+      marchandises: '50 caisses piratées (falsification)'
     });
 
     this.renderLeftPanel();
@@ -317,7 +315,7 @@ export const step2 = {
         <article class="step-card context-card animate-fade">
           <h3 class="card-title">L'attelage magnétique</h3>
           <p>
-            Entre le Wagon 0 (Genesis) à gauche et le Wagon 1 à droite, la liaison s'effectue par un faisceau d'énergie magnétique.
+            Le wagon 0, appelé Bloc Genesis (le tout premier wagon fondateur du réseau), est relié au wagon 1 par un faisceau d'énergie magnétique.
           </p>
           <p>
             Le verrouillage ne peut se faire que si l'anneau émetteur du wagon précédent transmet exactement la signature
@@ -363,7 +361,7 @@ export const step2 = {
         <article class="step-card context-card animate-fade">
           <h3 class="card-title">Simulation d'une falsification</h3>
           <p>
-            Si un attaquant modifie une transaction dans le Wagon 0, son empreinte de sortie change aussitôt.
+            Si un attaquant modifie une marchandise dans le wagon 0 (le Bloc Genesis fondateur), son empreinte de sortie change aussitôt.
           </p>
           <p>
             Observez la scène 3D : son anneau arrière passe au <strong>jaune</strong>, alors que le wagon suivant attend toujours du <strong>cyan</strong>.
@@ -382,7 +380,7 @@ export const step2 = {
           ${!this.isBroken
             ? `
               <button id="btn-corrupt-wagon0" class="btn-panel-danger">
-                <span>Altérer une transaction dans le wagon 0</span>
+                <span>Altérer les marchandises du wagon 0</span>
               </button>
             `
             : `
@@ -427,7 +425,7 @@ export const step2 = {
     inner.innerHTML = `
       <header class="step-panel-header">
         <div class="step-panel-header-top">
-          <span class="substep-progress-indicator">Partie 2.${this.subStep + 1} sur 1.2</span>
+          <span class="substep-progress-indicator">Partie 2.${this.subStep + 1} sur 2</span>
         </div>
         <h2 class="step-panel-title">Chaînage Cryptographique</h2>
         <p class="step-panel-subtitle">L'attelage invisible qui lie les blocs pour l'éternité</p>

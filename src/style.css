@@ -1481,18 +1481,21 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .feedback-label {
   color: #94a3b8;
   font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .feedback-val {
   color: #38bdf8;
   font-weight: 700;
   word-break: break-all;
+  text-align: right;
 }
 
 .feedback-val.hash-val {
