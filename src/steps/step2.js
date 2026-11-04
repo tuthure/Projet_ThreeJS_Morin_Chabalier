@@ -437,7 +437,7 @@ export const step2 = {
           ${!hasThirdWagon ? `
             <div class="substep-action-box" style="margin-top: 10px;">
               <button id="btn-step2-add-wagon" class="btn-panel-primary">
-                <span>+ Atteler un wagon supplémentaire (Bloc #3)</span>
+                <span>+ Atteler un wagon supplémentaire</span>
               </button>
             </div>
           ` : `
