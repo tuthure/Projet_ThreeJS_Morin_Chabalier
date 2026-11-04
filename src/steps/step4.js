@@ -65,6 +65,47 @@ export const step4 = {
     [2, 3]  // Gare C - Gare D (diagonale Sud-Ouest -> Nord-Est)
   ],
 
+  /**
+   * Joue un carillon ferroviaire doux à 2 tons via l'API Web Audio native.
+   */
+  playStationChime() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!this.audioCtx) this.audioCtx = new AudioCtx();
+      if (this.audioCtx.state === 'suspended') {
+        this.audioCtx.resume();
+      }
+      const now = this.audioCtx.currentTime;
+
+      // Note 1 (La4 - 440 Hz)
+      const osc1 = this.audioCtx.createOscillator();
+      const gain1 = this.audioCtx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(440, now);
+      gain1.gain.setValueAtTime(0.05, now);
+      gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+      osc1.connect(gain1);
+      gain1.connect(this.audioCtx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.35);
+
+      // Note 2 (Do#5 - 554 Hz)
+      const osc2 = this.audioCtx.createOscillator();
+      const gain2 = this.audioCtx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(554.37, now + 0.14);
+      gain2.gain.setValueAtTime(0.05, now + 0.14);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+      osc2.connect(gain2);
+      gain2.connect(this.audioCtx.destination);
+      osc2.start(now + 0.14);
+      osc2.stop(now + 0.55);
+    } catch (e) {
+      // Ignorer si les permissions audio bloquent
+    }
+  },
+
   init(context) {
     this.ctx = context;
   },
@@ -1155,7 +1196,7 @@ export const step4 = {
     const stationsButtonsHTML = this.stations
       .map(
         (st) => `
-        <button class="station-node-btn ${st.online ? 'online' : 'offline'}" data-station-idx="${st.index}" ${this.isPropagating ? 'disabled' : ''}>
+        <button class="station-node-btn ${st.online ? 'online' : 'offline'}" data-station-idx="${st.index}" ${this.isPropagating ? 'disabled' : ''} title="Cliquer pour simuler une panne">
           <span>${st.name}</span>
           <span class="station-node-dot"></span>
         </button>
@@ -1166,85 +1207,77 @@ export const step4 = {
     inner.innerHTML = `
       <header class="step-panel-header">
         <h2 class="step-panel-title">Réseau et Décentralisation</h2>
-        <p class="step-panel-subtitle">Un archipel de gares reliées en pair-à-pair (P2P)</p>
       </header>
 
       <div class="step-panel-scroll">
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Qu'est-ce qu'un nœud du réseau ?</h3>
+          <h3 class="card-title">Un réseau sans chef de gare central</h3>
           <p>
-            Une gare représente un <strong>nœud</strong> : un ordinateur qui possède une copie complète du registre.
+            Chaque gare représente un <strong>nœud</strong> du réseau : un ordinateur autonome qui détient la copie intégrale du registre.
           </p>
           <p>
-            Lorsqu'une transaction est émise depuis la <strong>Gare A</strong>, elle se propage de proche en proche le long des lignes de communication vers ses voisines immédiates (<strong>Gares B et C</strong>), qui la transmettent ensuite à leur tour à <strong>D, E et F</strong>.
+            Lorsqu'une transaction est émise, elle ne passe pas par un serveur unique : elle se diffuse de proche en proche (protocole <em>Gossip</em>) le long des lignes de communication.
           </p>
+          <div class="panel-hint-row" style="margin-top: 10px;">
+            <strong>Et si une gare tente de tricher ?</strong> Si un nœud émet une transaction invalide, les gares voisines la comparent immédiatement à leur propre registre et refusent de la relayer. L'incohérence est étouffée dès la première étape.
+          </div>
         </article>
 
         <article class="step-card action-card animate-fade">
-          <h3 class="card-title">Tester la résilience du réseau</h3>
+          <h3 class="card-title">Tester la propagation et les pannes</h3>
           <p class="card-instruction">
-            Cliquez sur une gare pour l'éteindre et observez comment la transaction trouve un autre chemin. Aucune gare n'est indispensable.
+            Cliquez sur <strong>Émettre</strong> pour diffuser une transaction. Vous pouvez aussi cliquer sur une gare pour simuler une panne et observer le contournement automatique :
           </p>
 
           <div class="station-nodes-grid" role="group" aria-label="État des 6 gares du réseau">
             ${stationsButtonsHTML}
           </div>
 
-          <div class="action-choices">
-            <button id="btn-step4-tx1" class="btn-choice" ${this.isPropagating ? 'disabled' : ''}>
-              <span>Émettre un convoi de 50 caisses depuis la première gare active</span>
-              <span class="btn-choice-icon">Diffuser P2P</span>
-            </button>
-            <button id="btn-step4-tx2" class="btn-choice" ${this.isPropagating ? 'disabled' : ''}>
-              <span>Ajouter un bon de livraison #408 sur le réseau</span>
-              <span class="btn-choice-icon">Diffuser P2P</span>
+          <div class="substep-action-box" style="margin-top: 10px;">
+            <button id="btn-step4-broadcast" class="btn-panel-primary" ${this.isPropagating ? 'disabled' : ''}>
+              <span>${this.isPropagating ? 'Propagation P2P en cours...' : 'Émettre une transaction sur le réseau'}</span>
+              ${!this.isPropagating ? '<span class="btn-arrow">&rarr;</span>' : ''}
             </button>
           </div>
 
           ${this.statusFeedbackMessage
-            ? `<div class="action-feedback-status visible status-info">${this.statusFeedbackMessage}</div>`
+            ? `<div class="action-feedback-status visible status-info" style="margin-top: 8px;">${this.statusFeedbackMessage}</div>`
             : ''
           }
 
           <div class="action-feedback-box ${!this.isPropagating ? 'success' : ''}" style="margin-top: 10px;">
             <div class="feedback-row">
-              <span class="feedback-label">Topologie réseau :</span>
-              <span class="feedback-val">Maillage pair-à-pair (P2P) sans gare centrale</span>
-            </div>
-            <div class="feedback-row">
-              <span class="feedback-label">Dernier message :</span>
-              <span class="feedback-val">${this.lastTxLabel}</span>
+              <span class="feedback-label">Copies distribuées :</span>
+              <span id="step4-sync-val" class="feedback-val ${!this.isPropagating ? 'success-val' : 'hash-val'}">
+                ${syncedStations.length} / ${onlineStations.length} gares à jour${offlineSuffix}
+              </span>
             </div>
             <div class="feedback-row">
               <span class="feedback-label">Chemin suivi :</span>
               <span class="feedback-val">${this.lastRouteSummary}</span>
             </div>
-            <div class="feedback-row">
-              <span class="feedback-label">Copies distribuées :</span>
-              <span id="step4-sync-val" class="feedback-val ${!this.isPropagating ? 'success-val' : 'hash-val'}">
-                ${syncedStations.length} / ${onlineStations.length} gares actives à jour${offlineSuffix}
-              </span>
-            </div>
-            <div class="feedback-row">
-              <span class="feedback-label">Registre local :</span>
-              <span class="feedback-val">${this.txCount} échanges inscrits dans chaque gare active</span>
-            </div>
           </div>
         </article>
 
-        <article class="step-card keypoint-card animate-fade">
-          <h4 class="card-title keypoint-title">Point clé</h4>
-          <p class="keypoint-text">
-            Même si une ou plusieurs gares tombent en panne, les messages contournent l'obstacle et les gares restantes maintiennent le registre à jour sans interruption de service.
-          </p>
-        </article>
+        ${this.hasBroadcasted ? `
+          <article class="step-card keypoint-card animate-fade">
+            <h4 class="card-title keypoint-title">Point clé : Absence de point unique de défaillance</h4>
+            <p class="keypoint-text">
+              Dans une architecture décentralisée, aucune gare n'est indispensable. Même si un ou plusieurs nœuds tombent en panne, les transactions trouvent d'autres chemins et le réseau continue de fonctionner sans interruption.
+            </p>
+          </article>
+        ` : ''}
 
-        <div class="substep-action-box animate-fade">
+        <nav class="step-nav-bar animate-fade">
+          <button id="btn-step4-action-prev" class="btn-panel-ghost">
+            <span class="btn-arrow">&larr;</span>
+            <span>Étape 3 : Immuabilité</span>
+          </button>
           <button id="btn-step4-action-next" class="btn-panel-primary">
-            <span>Étape 5 : Validation et minage</span>
+            <span>Étape 5 : Minage</span>
             <span class="btn-arrow">&rarr;</span>
           </button>
-        </div>
+        </nav>
       </div>
     `;
 
@@ -1262,12 +1295,14 @@ export const step4 = {
       });
     });
 
-    document.getElementById('btn-step4-tx1')?.addEventListener('click', () => {
-      this.broadcastTransaction('50 caisses de matériel (Fret P2P)');
+    document.getElementById('btn-step4-broadcast')?.addEventListener('click', () => {
+      this.broadcastTransaction('15 MMI-Coin vers Alban');
     });
 
-    document.getElementById('btn-step4-tx2')?.addEventListener('click', () => {
-      this.broadcastTransaction('Bon de livraison #408 - Réseau ferré');
+    document.getElementById('btn-step4-action-prev')?.addEventListener('click', () => {
+      if (typeof this.ctx.onPrevStep === 'function') {
+        this.ctx.onPrevStep();
+      }
     });
 
     document.getElementById('btn-step4-action-next')?.addEventListener('click', () => {
