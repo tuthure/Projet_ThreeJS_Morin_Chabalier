@@ -5,10 +5,10 @@ import { hashToColorHex } from '../three/WagonMesh.js';
  * Etape 3 : Immuabilite et detection de falsification.
  * Experience interactive d'alteration du chargement du Wagon #1 :
  * - Avant falsification : presentation sobre sans divulgacher les consequences visuelles.
- * - Apres falsification : 2 infobulles 3D colorees directement selon les hashs :
- *   1) Infobulle couleur du hash du bloc 1, reliee a l'etiquette et l'attache arriere.
- *   2) Infobulle couleur de l'attache du bloc suivant (previousHash attendu).
- *   La difference de couleur entre les deux met en valeur la rupture de maniere evidente.
+ * - Apres falsification : 2 infobulles 3D reliees avec precision aux elements 3D du train :
+ *   1) L'infobulle du Hash #1 (couleur du hash) reliee a l'etiquette centrale ET a l'anneau arriere.
+ *   2) L'infobulle du PreviousHash #2 (couleur de l'etiquette) pointant vers l'attache decrochee.
+ *   Les traits SVG relient directement les infobulles aux cibles physiques sans flotter dans le vide.
  */
 export const step3 = {
   id: 3,
@@ -19,9 +19,8 @@ export const step3 = {
   isBroken: false,
   restoreWaveUntil: 0,
 
-  // Infobulles 3D projetees sur le convoi
+  // Couche DOM des infobulles 3D
   tooltipLayer: null,
-  tooltipElements: new Map(),
   activeSpotId: null,
 
   /**
@@ -86,7 +85,6 @@ export const step3 = {
       this.tooltipLayer.remove();
       this.tooltipLayer = null;
     }
-    this.tooltipElements.clear();
 
     const panel = document.getElementById('step-panel-left');
     if (panel) {
@@ -109,13 +107,12 @@ export const step3 = {
       hud.appendChild(this.tooltipLayer);
     }
     this.tooltipLayer.innerHTML = '';
-    this.tooltipElements.clear();
   },
 
   /**
-   * Genere les 2 infobulles 3D comparatives une fois la fraude declenchee :
-   * 1) Infobulle du Hash du bloc 1 (de la couleur exacte du hash du wagon 1).
-   * 2) Infobulle de l'attache du train suivant (de la couleur attendue par le wagon 2).
+   * Construit les 2 infobulles 3D comparatives avec traits de rappel SVG :
+   * 1) Infobulle Hash #1 : couleur du hash, reliee a l'etiquette ET a l'anneau arriere du Wagon 1.
+   * 2) Infobulle PreviousHash #2 : couleur attendue, pointant vers l'attache decrochee du Wagon 2.
    */
   createComparativeTooltips() {
     if (!this.tooltipLayer) return;
@@ -128,83 +125,85 @@ export const step3 = {
 
     if (!wagon1 || !wagon2 || !block1 || !block2) return;
 
-    this.tooltipLayer.innerHTML = '';
-    this.tooltipElements.clear();
-
     const colorHash1 = '#' + wagon1.colorHash.getHexString();
     const colorPrev2 = '#' + wagon2.colorPrevHash.getHexString();
     const hash1Short = block1.hash ? block1.hash.substring(0, 10) : 'a4f18c';
     const prev2Short = block2.previousHash ? block2.previousHash.substring(0, 10) : 'e55c70';
 
-    const spots = [
-      {
-        id: 'spot-w1',
-        color: colorHash1,
-        label: `Hash #1 : ${hash1Short}...`,
-        title: 'Hash calculé (Wagon #1)',
-        text: 'Empreinte SHA-256 issue des données modifiées. L\'étiquette centrale et l\'attache arrière portent cette couleur.',
-        getPos: () => new THREE.Vector3(4.8, 1.28, 0.25)
-      },
-      {
-        id: 'spot-w2',
-        color: colorPrev2,
-        label: `PreviousHash : ${prev2Short}...`,
-        title: 'Attache aval (Wagon #2)',
-        text: 'L\'attache et l\'étiquette du Wagon #2 attendent cette couleur d\'origine. Ne correspondant plus, l\'attelage se décroche.',
-        getPos: () => new THREE.Vector3(6.1, 1.18, 0.25)
-      }
-    ];
+    this.tooltipLayer.innerHTML = `
+      <svg id="step3-tooltips-svg" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 10;">
+        <!-- Ligne 1A : Infobulle 1 -> Etiquette centrale (Wagon 1) -->
+        <line id="svg-line-1a" stroke="${colorHash1}" stroke-width="2" stroke-linecap="round" opacity="0.95" />
+        <circle id="svg-dot-label1-outer" r="8" fill="none" stroke="${colorHash1}" stroke-width="1.5" opacity="0.8" />
+        <circle id="svg-dot-label1-inner" r="4" fill="${colorHash1}" />
 
-    spots.forEach((spot) => {
-      const el = document.createElement('div');
-      const isActive = this.activeSpotId === spot.id;
-      el.className = 'scene-tooltip' + (isActive ? ' active' : '');
-      el.dataset.spotId = spot.id;
-      el.style.setProperty('--spot-color', spot.color);
+        <!-- Ligne 1B : Infobulle 1 -> Anneau arriere (Wagon 1) -->
+        <line id="svg-line-1b" stroke="${colorHash1}" stroke-width="2" stroke-linecap="round" opacity="0.95" />
+        <circle id="svg-dot-socket1-outer" r="8" fill="none" stroke="${colorHash1}" stroke-width="1.5" opacity="0.8" />
+        <circle id="svg-dot-socket1-inner" r="4" fill="${colorHash1}" />
 
-      el.innerHTML = `
-        <button type="button" class="scene-tooltip-pill" aria-expanded="${isActive}">
+        <!-- Ligne 2 : Infobulle 2 -> Crochet d'attelage decroche (Wagon 2) -->
+        <line id="svg-line-2" stroke="${colorPrev2}" stroke-width="2" stroke-linecap="round" opacity="0.95" />
+        <circle id="svg-dot-coupler2-outer" r="8" fill="none" stroke="${colorPrev2}" stroke-width="1.5" opacity="0.8" />
+        <circle id="svg-dot-coupler2-inner" r="4" fill="${colorPrev2}" />
+      </svg>
+
+      <div id="tooltip-spot-w1" class="scene-tooltip" style="--spot-color: ${colorHash1}; z-index: 12;">
+        <button type="button" class="scene-tooltip-pill">
           <span class="scene-tooltip-dot"></span>
-          <span class="scene-tooltip-label">${spot.label}</span>
+          <span class="scene-tooltip-label">Hash #1 : <code>${hash1Short}...</code></span>
         </button>
         <div class="scene-tooltip-card">
-          <div class="scene-tooltip-card-title">${spot.title}</div>
-          <p class="scene-tooltip-card-text">${spot.text}</p>
+          <div class="scene-tooltip-card-title">Hash calculé (Wagon #1)</div>
+          <p class="scene-tooltip-card-text">L'étiquette centrale et l'attache arrière arborent cette couleur, recalculée suite à la modification.</p>
         </div>
-        <div class="scene-tooltip-stem"></div>
-      `;
+      </div>
 
-      const pillBtn = el.querySelector('.scene-tooltip-pill');
-      pillBtn?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.toggleTooltipSpot(spot.id);
-      });
+      <div id="tooltip-spot-w2" class="scene-tooltip" style="--spot-color: ${colorPrev2}; z-index: 12;">
+        <button type="button" class="scene-tooltip-pill">
+          <span class="scene-tooltip-dot"></span>
+          <span class="scene-tooltip-label">PreviousHash : <code>${prev2Short}...</code></span>
+        </button>
+        <div class="scene-tooltip-card">
+          <div class="scene-tooltip-card-title">Attache aval (Wagon #2)</div>
+          <p class="scene-tooltip-card-text">L'attache et l'étiquette du Wagon #2 attendent cette couleur d'origine. La discordance empêche l'emboîtement.</p>
+        </div>
+      </div>
+    `;
 
-      this.tooltipLayer.appendChild(el);
-      this.tooltipElements.set(spot.id, { el, spot });
+    const el1 = document.getElementById('tooltip-spot-w1');
+    const el2 = document.getElementById('tooltip-spot-w2');
+
+    el1?.querySelector('.scene-tooltip-pill')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleTooltipSpot('spot-w1');
+    });
+
+    el2?.querySelector('.scene-tooltip-pill')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleTooltipSpot('spot-w2');
     });
   },
 
   /**
-   * Active ou desactive une infobulle precise.
+   * Active ou desactive la carte d'une infobulle.
    * @param {string} spotId
    */
   toggleTooltipSpot(spotId) {
     this.activeSpotId = this.activeSpotId === spotId ? null : spotId;
 
-    this.tooltipElements.forEach(({ el }, id) => {
-      const isActive = id === this.activeSpotId;
-      el.classList.toggle('active', isActive);
-      const btn = el.querySelector('.scene-tooltip-pill');
-      if (btn) btn.setAttribute('aria-expanded', String(isActive));
-    });
+    const el1 = document.getElementById('tooltip-spot-w1');
+    const el2 = document.getElementById('tooltip-spot-w2');
+
+    el1?.classList.toggle('active', this.activeSpotId === 'spot-w1');
+    el2?.classList.toggle('active', this.activeSpotId === 'spot-w2');
   },
 
   /**
    * Boucle d'animation :
    * - Respecte strictement le code couleur cryptographique (anneau arriere = hash, anneau avant = previousHash)
    * - Balise jaune d'avertissement sur le wagon 1 (modifie), balise rouge d'alerte sur le wagon 2 (rompu)
-   * - Projette les coordonnees 3D des infobulles sur l'ecran 2D
+   * - Calcule les coordonnees 3D reelles et met a jour les traits de rappel SVG reliant les infobulles aux cibles
    */
   startAnimationLoop() {
     this.stopAnimationLoop();
@@ -309,29 +308,121 @@ export const step3 = {
         }
       }
 
-      // Projection 3D -> 2D des infobulles sur l'ecran
-      if (this.tooltipLayer && camera && this.tooltipElements.size > 0) {
+      // Projection 3D -> 2D des infobulles et mise a jour des traits de rappel
+      if (this.tooltipLayer && camera && this.isBroken && wagon1 && wagon2) {
         const width = window.innerWidth;
         const height = window.innerHeight;
 
-        this.tooltipElements.forEach(({ el, spot }) => {
-          const worldPos = spot.getPos();
-          const projected = worldPos.clone().project(camera);
+        // Cible 1A : Centre de l'etiquette de hash du Wagon #1
+        const pLabel1 = new THREE.Vector3();
+        wagon1.localToWorld(pLabel1.set(0, 0.62, 0.605));
 
-          if (projected.z > 1) {
-            el.style.opacity = '0';
-            el.style.pointerEvents = 'none';
-            return;
+        // Cible 1B : Centre de l'anneau arriere du Wagon #1
+        const pSocket1 = new THREE.Vector3();
+        wagon1.localToWorld(pSocket1.set(1.48, 0.05, 0.0));
+
+        // Cible 2 : Centre du crochet d'attelage decroche du Wagon #2
+        const pCoupler2 = new THREE.Vector3();
+        if (wagon2.couplerGroup) {
+          wagon2.couplerGroup.getWorldPosition(pCoupler2);
+          pCoupler2.x -= 0.25;
+        } else {
+          wagon2.localToWorld(pCoupler2.set(-2.15, -0.22, 0.0));
+        }
+
+        const projLabel1 = pLabel1.clone().project(camera);
+        const projSocket1 = pSocket1.clone().project(camera);
+        const projCoupler2 = pCoupler2.clone().project(camera);
+
+        if (projLabel1.z > 1 || projSocket1.z > 1 || projCoupler2.z > 1) {
+          this.tooltipLayer.style.opacity = '0';
+          this.tooltipLayer.style.pointerEvents = 'none';
+        } else {
+          const lx1 = (projLabel1.x * 0.5 + 0.5) * width;
+          const ly1 = (-projLabel1.y * 0.5 + 0.5) * height;
+
+          const sx1 = (projSocket1.x * 0.5 + 0.5) * width;
+          const sy1 = (-projSocket1.y * 0.5 + 0.5) * height;
+
+          const cx2 = (projCoupler2.x * 0.5 + 0.5) * width;
+          const cy2 = (-projCoupler2.y * 0.5 + 0.5) * height;
+
+          // Masquage si passe derriere le volet gauche
+          const isCovered = width > 768 && Math.min(lx1, sx1, cx2) < 420;
+          this.tooltipLayer.style.opacity = isCovered ? '0' : '1';
+          this.tooltipLayer.style.pointerEvents = isCovered ? 'none' : 'auto';
+
+          // Calcul des positions des 2 pastilles flottantes
+          const pill1_X = (lx1 + sx1) * 0.5;
+          const pill1_Y = Math.min(ly1, sy1) - 68;
+
+          const pill2_X = Math.max(cx2 + 25, pill1_X + 175);
+          const pill2_Y = pill1_Y;
+
+          // Positionnement des blocs d'infobulle
+          const el1 = document.getElementById('tooltip-spot-w1');
+          const el2 = document.getElementById('tooltip-spot-w2');
+          if (el1) {
+            el1.style.transform = `translate3d(${pill1_X.toFixed(1)}px, ${pill1_Y.toFixed(1)}px, 0) translate(-50%, -50%)`;
+          }
+          if (el2) {
+            el2.style.transform = `translate3d(${pill2_X.toFixed(1)}px, ${pill2_Y.toFixed(1)}px, 0) translate(-50%, -50%)`;
           }
 
-          const x = (projected.x * 0.5 + 0.5) * width;
-          const y = (-projected.y * 0.5 + 0.5) * height;
+          // Mise a jour des traits SVG reliant exactement les infobulles aux objets 3D
+          const line1a = document.getElementById('svg-line-1a');
+          const line1b = document.getElementById('svg-line-1b');
+          const dotL1In = document.getElementById('svg-dot-label1-inner');
+          const dotL1Out = document.getElementById('svg-dot-label1-outer');
+          const dotS1In = document.getElementById('svg-dot-socket1-inner');
+          const dotS1Out = document.getElementById('svg-dot-socket1-outer');
 
-          const isCoveredByLeftPanel = width > 768 && x < 440;
-          el.style.opacity = isCoveredByLeftPanel ? '0' : '1';
-          el.style.pointerEvents = isCoveredByLeftPanel ? 'none' : 'auto';
-          el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
-        });
+          const line2 = document.getElementById('svg-line-2');
+          const dotC2In = document.getElementById('svg-dot-coupler2-inner');
+          const dotC2Out = document.getElementById('svg-dot-coupler2-outer');
+
+          // Ligne 1A : Infobulle 1 -> Etiquette de hash
+          if (line1a) {
+            line1a.setAttribute('x1', (pill1_X - 25).toFixed(1));
+            line1a.setAttribute('y1', (pill1_Y + 14).toFixed(1));
+            line1a.setAttribute('x2', lx1.toFixed(1));
+            line1a.setAttribute('y2', ly1.toFixed(1));
+          }
+          if (dotL1In && dotL1Out) {
+            dotL1In.setAttribute('cx', lx1.toFixed(1));
+            dotL1In.setAttribute('cy', ly1.toFixed(1));
+            dotL1Out.setAttribute('cx', lx1.toFixed(1));
+            dotL1Out.setAttribute('cy', ly1.toFixed(1));
+          }
+
+          // Ligne 1B : Infobulle 1 -> Anneau arriere de sortie
+          if (line1b) {
+            line1b.setAttribute('x1', (pill1_X + 25).toFixed(1));
+            line1b.setAttribute('y1', (pill1_Y + 14).toFixed(1));
+            line1b.setAttribute('x2', sx1.toFixed(1));
+            line1b.setAttribute('y2', sy1.toFixed(1));
+          }
+          if (dotS1In && dotS1Out) {
+            dotS1In.setAttribute('cx', sx1.toFixed(1));
+            dotS1In.setAttribute('cy', sy1.toFixed(1));
+            dotS1Out.setAttribute('cx', sx1.toFixed(1));
+            dotS1Out.setAttribute('cy', sy1.toFixed(1));
+          }
+
+          // Ligne 2 : Infobulle 2 -> Crochet d'attelage decroche
+          if (line2) {
+            line2.setAttribute('x1', pill2_X.toFixed(1));
+            line2.setAttribute('y1', (pill2_Y + 14).toFixed(1));
+            line2.setAttribute('x2', cx2.toFixed(1));
+            line2.setAttribute('y2', cy2.toFixed(1));
+          }
+          if (dotC2In && dotC2Out) {
+            dotC2In.setAttribute('cx', cx2.toFixed(1));
+            dotC2In.setAttribute('cy', cy2.toFixed(1));
+            dotC2Out.setAttribute('cx', cx2.toFixed(1));
+            dotC2Out.setAttribute('cy', cy2.toFixed(1));
+          }
+        }
       }
 
       this.rafId = requestAnimationFrame(loop);
@@ -389,7 +480,7 @@ export const step3 = {
       wagon1.beaconMaterial.emissiveIntensity = 2.0;
     }
 
-    // 3. Affichage des 2 infobulles 3D comparatives
+    // 3. Affichage des 2 infobulles 3D comparatives avec traits de rappel
     this.createComparativeTooltips();
 
     if (cameraController) {
@@ -425,7 +516,6 @@ export const step3 = {
     // Nettoie les infobulles
     if (this.tooltipLayer) {
       this.tooltipLayer.innerHTML = '';
-      this.tooltipElements.clear();
     }
 
     if (cameraController) {
