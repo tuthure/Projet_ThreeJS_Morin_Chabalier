@@ -1989,3 +1989,80 @@ body {
   }
 }
 
+
+/* Infobulle placée sous le wagon (ouverture de la carte vers le bas) */
+.scene-tooltip.tooltip-below .scene-tooltip-card {
+  bottom: auto;
+  top: calc(100% + 12px);
+}
+
+/* Liste d'inspection anatomique pour l'étape 1 */
+.anatomy-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.anatomy-item-btn {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  color: #e2e8f0;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.anatomy-item-btn:hover,
+.anatomy-item-btn.active {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: var(--item-color, #38bdf8);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.anatomy-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--item-color, #38bdf8);
+  box-shadow: 0 0 6px var(--item-color, #38bdf8);
+  flex-shrink: 0;
+}
+
+.anatomy-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.anatomy-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.73rem;
+  font-weight: 700;
+  color: var(--item-color, #94a3b8);
+  white-space: nowrap;
+}
+
+.block-formula-box {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.74rem;
+  color: #cbd5e1;
+  text-align: center;
+  line-height: 1.5;
+}
