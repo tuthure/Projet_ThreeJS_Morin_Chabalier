@@ -2,22 +2,20 @@ import * as THREE from 'three';
 
 /**
  * Étape 2 : Chaînage Cryptographique.
- * Mise en scène du principe fondamental de la blockchain :
- * chaque wagon intègre à l'avant l'empreinte exacte (PreviousHash) du wagon qui le précède.
- *
- * Utilise 2 infobulles 3D projetées avec traits SVG comparatifs (symétrie avec l'Étape 3) :
- * 1) Hash du wagon parent (étiquette centrale + prise d'attelage arrière)
- * 2) PreviousHash du wagon suivant (étiquette avant gauche + crochet d'attelage)
- * Les deux éléments partagent la même signature et la même couleur, scellant l'attelage.
+ * Vue d'ensemble du convoi complet et de ses liaisons successives :
+ * - Chaque wagon transporte deux empreintes distinctes :
+ *   * À l'avant : l'empreinte du wagon précédent (PreviousHash)
+ *   * À l'arrière : sa propre empreinte (Hash)
+ * - Vue simultanée des liaisons (Liaison 0-1, Liaison 1-2) avec infobulles 3D et traits SVG
+ * - Action interactive : Atteler un nouveau wagon (Bloc #3) pour voir la chaîne s'allonger en direct
  */
 export const step2 = {
   id: 2,
   title: 'Chaînage Cryptographique',
-  subtitle: 'Transmission de l’empreinte : l’attelage magnétique entre les wagons',
+  subtitle: 'La règle des dominos : chaque wagon s’arrime à l’empreinte du précédent',
   ctx: null,
 
   rafId: null,
-  focusedCouplerIndex: 2, // 1: Loco #0 <-> Wagon #1, 2: Wagon #1 <-> Wagon #2, 3: Wagon #2 <-> Wagon #3
   tooltipLayer: null,
   activeSpotId: null,
 
@@ -31,14 +29,13 @@ export const step2 = {
 
   /**
    * Active l'étape 2 :
-   * - Réinitialise le convoi avec Locomotive (#0) et Wagons (#1 et #2)
-   * - Configure les infobulles comparatives
-   * - Cadre la caméra sur l'attelage standard Wagon #1 <-> Wagon #2
+   * - Réinitialise le train avec Locomotive (#0) et Wagons (#1 et #2)
+   * - Vue panoramique sur l'ensemble du convoi
+   * - Initialise les infobulles des liaisons
    */
   enter() {
     const { trainConvoy, cameraController, environment } = this.ctx;
 
-    this.focusedCouplerIndex = 2;
     this.activeSpotId = null;
 
     if (cameraController) {
@@ -60,8 +57,10 @@ export const step2 = {
     }
 
     this.setupTooltipsLayer();
-    this.focusOnCoupler(2);
+    this.updateCameraView(false);
+    this.createChainTooltips();
     this.startAnimationLoop();
+    this.renderLeftPanel();
   },
 
   /**
@@ -83,6 +82,29 @@ export const step2 = {
   },
 
   /**
+   * Adapte le cadrage caméra selon le nombre de wagons (vue d'ensemble du convoi).
+   * @param {boolean} hasThreeWagons
+   */
+  updateCameraView(hasThreeWagons = false) {
+    const { cameraController } = this.ctx;
+    if (!cameraController) return;
+
+    if (hasThreeWagons) {
+      cameraController.moveTo(
+        new THREE.Vector3(5.7, 2.5, 11.5),
+        new THREE.Vector3(5.7, 0.55, 0),
+        1.1
+      );
+    } else {
+      cameraController.moveTo(
+        new THREE.Vector3(3.8, 2.2, 9.6),
+        new THREE.Vector3(3.8, 0.55, 0),
+        1.1
+      );
+    }
+  },
+
+  /**
    * Initialise le conteneur DOM pour les infobulles 3D projetées.
    */
   setupTooltipsLayer() {
@@ -99,95 +121,79 @@ export const step2 = {
   },
 
   /**
-   * Construit les 2 infobulles 3D comparatives avec leurs traits de rappel SVG :
-   * 1) Infobulle Hash parent -> étiquette + prise arrière du parent
-   * 2) Infobulle PreviousHash enfant -> étiquette + crochet avant de l'enfant
+   * Construit les infobulles 3D projetées sur les liaisons du train.
    */
-  createComparativeTooltips() {
+  createChainTooltips() {
     if (!this.tooltipLayer) return;
 
     const { trainConvoy } = this.ctx;
-    const childIdx = this.focusedCouplerIndex;
-    const parentIdx = childIdx - 1;
+    if (!trainConvoy) return;
 
-    const parentWagon = trainConvoy?.getWagon(parentIdx);
-    const childWagon = trainConvoy?.getWagon(childIdx);
-    const parentBlock = trainConvoy?.getBlock(parentIdx);
-    const childBlock = trainConvoy?.getBlock(childIdx);
+    const totalBlocks = trainConvoy.blockchain.chain.length; // Ex: 3 (Loco + Wagon 1 + Wagon 2) ou 4 (+ Wagon 3)
+    const linksCount = totalBlocks - 1; // 2 ou 3
 
-    if (!parentWagon || !childWagon || !parentBlock || !childBlock) return;
+    let svgLinesHTML = '';
+    let pillsHTML = '';
 
-    const colorParent = '#' + parentWagon.colorHash.getHexString();
-    const colorChild = '#' + childWagon.colorPrevHash.getHexString();
+    for (let i = 1; i <= linksCount; i++) {
+      const parentIdx = i - 1;
+      const childIdx = i;
 
-    const parentHashShort = parentBlock.hash ? parentBlock.hash.substring(0, 8) : '00a89f41';
-    const childPrevShort = childBlock.previousHash ? childBlock.previousHash.substring(0, 8) : '00a89f41';
+      const parentWagon = trainConvoy.getWagon(parentIdx);
+      const childWagon = trainConvoy.getWagon(childIdx);
+      const parentBlock = trainConvoy.getBlock(parentIdx);
+      const childBlock = trainConvoy.getBlock(childIdx);
 
-    const parentTitle = parentIdx === 0 ? 'Locomotive #0' : `Wagon #${parentIdx}`;
-    const childTitle = `Wagon #${childIdx}`;
+      if (!parentWagon || !childWagon || !parentBlock || !childBlock) continue;
+
+      const color = '#' + parentWagon.colorHash.getHexString();
+      const hashShort = parentBlock.hash ? parentBlock.hash.substring(0, 8) : '00a89f41';
+      const parentName = parentIdx === 0 ? 'Locomotive #0' : `Wagon #${parentIdx}`;
+      const childName = `Wagon #${childIdx}`;
+
+      svgLinesHTML += `
+        <!-- Liaison ${i} : Ligne gauche vers prise parent -->
+        <line id="s2-line-${i}-left" stroke="${color}" stroke-width="2" stroke-linecap="round" opacity="0.9" />
+        <circle id="s2-dot-${i}-left-out" r="7" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.8" />
+        <circle id="s2-dot-${i}-left-in" r="3.5" fill="${color}" />
+
+        <!-- Liaison ${i} : Ligne droite vers crochet enfant -->
+        <line id="s2-line-${i}-right" stroke="${color}" stroke-width="2" stroke-linecap="round" opacity="0.9" />
+        <circle id="s2-dot-${i}-right-out" r="7" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.8" />
+        <circle id="s2-dot-${i}-right-in" r="3.5" fill="${color}" />
+      `;
+
+      pillsHTML += `
+        <div id="tooltip-link-${i}" class="scene-tooltip" style="--spot-color: ${color}; z-index: 12;">
+          <button type="button" class="scene-tooltip-pill">
+            <span class="scene-tooltip-dot"></span>
+            <span class="scene-tooltip-label">Liaison ${parentIdx}-${childIdx} : <code>${hashShort}...</code></span>
+          </button>
+          <div class="scene-tooltip-card">
+            <div class="scene-tooltip-card-title">Attelage ${parentName} &rarr; ${childName}</div>
+            <p class="scene-tooltip-card-text">
+              La prise arrière de ${parentName} et le crochet avant de ${childName} partagent exactement la même empreinte cryptographique.
+            </p>
+          </div>
+        </div>
+      `;
+    }
 
     this.tooltipLayer.innerHTML = `
       <svg id="step2-tooltips-svg" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 10;">
-        <!-- Ligne 1A : Infobulle 1 -> Plaque Hash parent -->
-        <line id="s2-line-1a" stroke="${colorParent}" stroke-width="2" stroke-linecap="round" opacity="0.9" />
-        <circle id="s2-dot-1a-out" r="7" fill="none" stroke="${colorParent}" stroke-width="1.5" opacity="0.8" />
-        <circle id="s2-dot-1a-in" r="3.5" fill="${colorParent}" />
-
-        <!-- Ligne 1B : Infobulle 1 -> Prise arrière parent -->
-        <line id="s2-line-1b" stroke="${colorParent}" stroke-width="2" stroke-linecap="round" opacity="0.9" />
-        <circle id="s2-dot-1b-out" r="7" fill="none" stroke="${colorParent}" stroke-width="1.5" opacity="0.8" />
-        <circle id="s2-dot-1b-in" r="3.5" fill="${colorParent}" />
-
-        <!-- Ligne 2A : Infobulle 2 -> Plaque PreviousHash enfant -->
-        <line id="s2-line-2a" stroke="${colorChild}" stroke-width="2" stroke-linecap="round" opacity="0.9" />
-        <circle id="s2-dot-2a-out" r="7" fill="none" stroke="${colorChild}" stroke-width="1.5" opacity="0.8" />
-        <circle id="s2-dot-2a-in" r="3.5" fill="${colorChild}" />
-
-        <!-- Ligne 2B : Infobulle 2 -> Crochet avant enfant -->
-        <line id="s2-line-2b" stroke="${colorChild}" stroke-width="2" stroke-linecap="round" opacity="0.9" />
-        <circle id="s2-dot-2b-out" r="7" fill="none" stroke="${colorChild}" stroke-width="1.5" opacity="0.8" />
-        <circle id="s2-dot-2b-in" r="3.5" fill="${colorChild}" />
+        ${svgLinesHTML}
       </svg>
-
-      <!-- Infobulle 1 : Hash du bloc parent -->
-      <div id="tooltip-spot-parent" class="scene-tooltip" style="--spot-color: ${colorParent}; z-index: 12;">
-        <button type="button" class="scene-tooltip-pill">
-          <span class="scene-tooltip-dot"></span>
-          <span class="scene-tooltip-label">Hash : <code>${parentHashShort}...</code></span>
-        </button>
-        <div class="scene-tooltip-card">
-          <div class="scene-tooltip-card-title">Empreinte de sortie (${parentTitle})</div>
-          <p class="scene-tooltip-card-text">L'étiquette centrale et la prise arrière portent cette couleur unique, calculée à partir des données de ce bloc.</p>
-        </div>
-      </div>
-
-      <!-- Infobulle 2 : PreviousHash du bloc suivant -->
-      <div id="tooltip-spot-child" class="scene-tooltip" style="--spot-color: ${colorChild}; z-index: 12;">
-        <button type="button" class="scene-tooltip-pill">
-          <span class="scene-tooltip-dot"></span>
-          <span class="scene-tooltip-label">PreviousHash : <code>${childPrevShort}...</code></span>
-        </button>
-        <div class="scene-tooltip-card">
-          <div class="scene-tooltip-card-title">Attache amont (${childTitle})</div>
-          <p class="scene-tooltip-card-text">L'étiquette gauche et le crochet d'attelage recopient exactement l'empreinte du wagon précédent : la concordance parfaite verrouille la liaison.</p>
-        </div>
-      </div>
+      ${pillsHTML}
     `;
 
-    const el1 = document.getElementById('tooltip-spot-parent');
-    const el2 = document.getElementById('tooltip-spot-child');
-
-    el1?.addEventListener('pointerdown', (e) => e.stopPropagation());
-    el1?.querySelector('.scene-tooltip-pill')?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.toggleTooltipSpot('parent');
-    });
-
-    el2?.addEventListener('pointerdown', (e) => e.stopPropagation());
-    el2?.querySelector('.scene-tooltip-pill')?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.toggleTooltipSpot('child');
-    });
+    for (let i = 1; i <= linksCount; i++) {
+      const el = document.getElementById(`tooltip-link-${i}`);
+      el?.addEventListener('pointerdown', (e) => e.stopPropagation());
+      el?.querySelector('.scene-tooltip-pill')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.toggleTooltipSpot(`link-${i}`);
+      });
+    }
   },
 
   /**
@@ -197,64 +203,40 @@ export const step2 = {
   toggleTooltipSpot(spotId) {
     this.activeSpotId = this.activeSpotId === spotId ? null : spotId;
 
-    const el1 = document.getElementById('tooltip-spot-parent');
-    const el2 = document.getElementById('tooltip-spot-child');
+    const { trainConvoy } = this.ctx;
+    const linksCount = (trainConvoy?.blockchain?.chain?.length || 3) - 1;
 
-    el1?.classList.toggle('active', this.activeSpotId === 'parent');
-    el2?.classList.toggle('active', this.activeSpotId === 'child');
-  },
-
-  /**
-   * Oriente la caméra sur un attelage donné du convoi et met à jour les infobulles.
-   * @param {number} childBlockIndex - Index du wagon enfant (1, 2 ou 3)
-   */
-  focusOnCoupler(childBlockIndex) {
-    const { cameraController, trainConvoy } = this.ctx;
-    const totalBlocks = trainConvoy ? trainConvoy.blockchain.chain.length : 3;
-    this.focusedCouplerIndex = Math.max(1, Math.min(childBlockIndex, totalBlocks - 1));
-
-    this.createComparativeTooltips();
-
-    const couplerX = (this.focusedCouplerIndex - 0.5) * 3.8;
-
-    if (cameraController) {
-      cameraController.moveTo(
-        new THREE.Vector3(couplerX, 1.45, 3.8),
-        new THREE.Vector3(couplerX, 0.45, 0),
-        1.0
-      );
+    for (let i = 1; i <= linksCount; i++) {
+      const el = document.getElementById(`tooltip-link-${i}`);
+      el?.classList.toggle('active', this.activeSpotId === `link-${i}`);
     }
-
-    this.renderLeftPanel();
   },
 
   /**
-   * Ajoute un nouveau wagon à la fin du convoi et déplace la caméra sur son attelage.
+   * Ajoute un nouveau wagon (Bloc #3) au convoi et réactualise la vue.
    */
   attachNewWagon() {
     const { trainConvoy } = this.ctx;
     if (!trainConvoy) return;
 
-    if (trainConvoy.blockchain.chain.length >= 4) {
-      this.focusOnCoupler(3);
-      return;
-    }
+    if (trainConvoy.blockchain.chain.length >= 4) return;
 
     trainConvoy.addBlock({
-      emetteur: 'Charlie',
-      destinataire: 'Diane',
-      montant: 12,
+      emetteur: 'Alban',
+      destinataire: 'Charlie',
+      montant: 8,
       unite: 'MMI-Coin'
     });
 
-    const newIndex = trainConvoy.blockchain.chain.length - 1;
-    this.focusOnCoupler(newIndex);
+    this.updateCameraView(true);
+    this.createChainTooltips();
+    this.renderLeftPanel();
   },
 
   /**
    * Boucle d'animation :
-   * - Met à jour les anneaux et faisceaux lumineux selon les hashs
-   * - Calcule les positions 2D des infobulles et traits SVG
+   * - Maintient les couleurs des anneaux et faisceaux lumineux
+   * - Projette les infobulles sur chaque liaison du train en temps réel
    */
   startAnimationLoop() {
     this.stopAnimationLoop();
@@ -313,86 +295,80 @@ export const step2 = {
         }
       });
 
-      // Projection 3D -> 2D des infobulles comparatives
-      const childIdx = this.focusedCouplerIndex;
-      const parentIdx = childIdx - 1;
-      const parentWagon = trainConvoy?.getWagon(parentIdx);
-      const childWagon = trainConvoy?.getWagon(childIdx);
-
-      if (this.tooltipLayer && camera && parentWagon && childWagon) {
+      // Projection 3D -> 2D pour chaque liaison
+      if (this.tooltipLayer && camera && trainConvoy) {
         const width = window.innerWidth;
         const height = window.innerHeight;
+        const linksCount = trainConvoy.blockchain.chain.length - 1;
 
-        // Cibles parent (Plaque centrale et Prise arrière)
-        const pParentPlate = new THREE.Vector3();
-        if (parentIdx === 0) {
-          parentWagon.localToWorld(pParentPlate.set(-0.35, 0.65, 0.64));
-        } else {
-          parentWagon.localToWorld(pParentPlate.set(0.15, 0.62, 0.605));
-        }
+        let anyBehindCamera = false;
+        let anyCoveredByPanel = false;
 
-        const pParentSocket = new THREE.Vector3();
-        parentWagon.localToWorld(pParentSocket.set(1.48, 0.05, 0.0));
+        const toX = (v) => (v.x * 0.5 + 0.5) * width;
+        const toY = (v) => (-v.y * 0.5 + 0.5) * height;
 
-        // Cibles enfant (Plaque PreviousHash et Crochet avant)
-        const pChildPlate = new THREE.Vector3();
-        childWagon.localToWorld(pChildPlate.set(-1.185, 0.62, 0.15));
+        for (let i = 1; i <= linksCount; i++) {
+          const parentWagon = trainConvoy.getWagon(i - 1);
+          const childWagon = trainConvoy.getWagon(i);
+          if (!parentWagon || !childWagon) continue;
 
-        const pChildCoupler = new THREE.Vector3();
-        childWagon.localToWorld(pChildCoupler.set(-1.42, 0.0, 0.0));
+          // Prise arrière du parent
+          const pSocket = new THREE.Vector3();
+          parentWagon.localToWorld(pSocket.set(1.48, 0.05, 0.0));
 
-        const prPPlate = pParentPlate.project(camera);
-        const prPSocket = pParentSocket.project(camera);
-        const prCPlate = pChildPlate.project(camera);
-        const prCCoupler = pChildCoupler.project(camera);
+          // Crochet avant de l'enfant
+          const pHook = new THREE.Vector3();
+          childWagon.localToWorld(pHook.set(-1.42, 0.0, 0.0));
 
-        if (prPPlate.z > 1 || prPSocket.z > 1 || prCPlate.z > 1 || prCCoupler.z > 1) {
-          this.tooltipLayer.style.opacity = '0';
-          this.tooltipLayer.style.visibility = 'hidden';
-        } else {
-          const toX = (v) => (v.x * 0.5 + 0.5) * width;
-          const toY = (v) => (-v.y * 0.5 + 0.5) * height;
+          const prSocket = pSocket.project(camera);
+          const prHook = pHook.project(camera);
 
-          const px1 = toX(prPPlate);
-          const py1 = toY(prPPlate);
-          const sx1 = toX(prPSocket);
-          const sy1 = toY(prPSocket);
-
-          const cx2 = toX(prCPlate);
-          const cy2 = toY(prCPlate);
-          const kx2 = toX(prCCoupler);
-          const ky2 = toY(prCCoupler);
-
-          // Masquage si passe derrière le volet gauche
-          const minX = Math.min(px1, sx1, cx2, kx2);
-          const isCovered = width > 768 && minX < 410;
-          this.tooltipLayer.style.opacity = isCovered ? '0' : '1';
-          this.tooltipLayer.style.visibility = isCovered ? 'hidden' : 'visible';
-
-          // Calcul des positions des 2 pastilles flottantes
-          const pill1_X = (px1 + sx1) * 0.5;
-          const pill1_Y = Math.min(py1, sy1) - 66;
-
-          const pill2_X = Math.max((cx2 + kx2) * 0.5, pill1_X + 175);
-          const pill2_Y = pill1_Y;
-
-          const el1 = document.getElementById('tooltip-spot-parent');
-          const el2 = document.getElementById('tooltip-spot-child');
-          if (el1) {
-            el1.style.transform = `translate3d(${pill1_X.toFixed(1)}px, ${pill1_Y.toFixed(1)}px, 0) translate(-50%, -50%)`;
-          }
-          if (el2) {
-            el2.style.transform = `translate3d(${pill2_X.toFixed(1)}px, ${pill2_Y.toFixed(1)}px, 0) translate(-50%, -50%)`;
+          if (prSocket.z > 1 || prHook.z > 1) {
+            anyBehindCamera = true;
+            break;
           }
 
-          // Lignes SVG parent
-          setLineAndDot('s2-line-1a', 's2-dot-1a-in', 's2-dot-1a-out', pill1_X - 22, pill1_Y + 14, px1, py1);
-          setLineAndDot('s2-line-1b', 's2-dot-1b-in', 's2-dot-1b-out', pill1_X + 22, pill1_Y + 14, sx1, sy1);
+          const sx = toX(prSocket);
+          const sy = toY(prSocket);
+          const hx = toX(prHook);
+          const hy = toY(prHook);
 
-          // Lignes SVG enfant
-          setLineAndDot('s2-line-2a', 's2-dot-2a-in', 's2-dot-2a-out', pill2_X - 22, pill2_Y + 14, cx2, cy2);
-          setLineAndDot('s2-line-2b', 's2-dot-2b-in', 's2-dot-2b-out', pill2_X + 22, pill2_Y + 14, kx2, ky2);
+          if (width > 768 && Math.min(sx, hx) < 410) {
+            anyCoveredByPanel = true;
+          }
+
+          const pillX = (sx + hx) * 0.5;
+          const pillY = Math.min(sy, hy) - 58;
+
+          const pillEl = document.getElementById(`tooltip-link-${i}`);
+          if (pillEl) {
+            pillEl.style.transform = `translate3d(${pillX.toFixed(1)}px, ${pillY.toFixed(1)}px, 0) translate(-50%, -50%)`;
+          }
+
+          setLineAndDot(
+            `s2-line-${i}-left`,
+            `s2-dot-${i}-left-in`,
+            `s2-dot-${i}-left-out`,
+            pillX - 16,
+            pillY + 12,
+            sx,
+            sy
+          );
+
+          setLineAndDot(
+            `s2-line-${i}-right`,
+            `s2-dot-${i}-right-in`,
+            `s2-dot-${i}-right-out`,
+            pillX + 16,
+            pillY + 12,
+            hx,
+            hy
+          );
         }
+
+        const isHidden = anyBehindCamera || anyCoveredByPanel;
+        this.tooltipLayer.style.opacity = isHidden ? '0' : '1';
+        this.tooltipLayer.style.visibility = isHidden ? 'hidden' : 'visible';
       }
 
       this.rafId = requestAnimationFrame(loop);
@@ -427,25 +403,26 @@ export const step2 = {
     inner.className = 'step-panel-inner';
 
     const { trainConvoy } = this.ctx;
-    const childIdx = this.focusedCouplerIndex;
-    const parentIdx = childIdx - 1;
-
-    const parentBlock = trainConvoy?.getBlock(parentIdx);
-    const childBlock = trainConvoy?.getBlock(childIdx);
-    const parentWagon = trainConvoy?.getWagon(parentIdx);
-    const childWagon = trainConvoy?.getWagon(childIdx);
-
-    const parentHash = parentBlock ? parentBlock.hash : '0000a89f41b2c3d4';
-    const childPrev = childBlock ? childBlock.previousHash : '0000a89f41b2c3d4';
-    const colorParent = parentWagon ? '#' + parentWagon.colorHash.getHexString() : '#38bdf8';
-    const colorChild = childWagon ? '#' + childWagon.colorPrevHash.getHexString() : '#38bdf8';
-
-    const parentHashShort = parentHash.substring(0, 10);
-    const childPrevShort = childPrev.substring(0, 10);
-
-    const parentLabel = parentIdx === 0 ? 'Locomotive #0' : `Wagon #${parentIdx}`;
-    const childLabel = `Wagon #${childIdx}`;
     const totalBlocks = trainConvoy?.blockchain?.chain?.length || 3;
+    const hasThirdWagon = totalBlocks >= 4;
+
+    const block0 = trainConvoy?.getBlock(0);
+    const block1 = trainConvoy?.getBlock(1);
+    const block2 = trainConvoy?.getBlock(2);
+    const block3 = hasThirdWagon ? trainConvoy?.getBlock(3) : null;
+
+    const wagon0 = trainConvoy?.getWagon(0);
+    const wagon1 = trainConvoy?.getWagon(1);
+    const wagon2 = trainConvoy?.getWagon(2);
+    const wagon3 = hasThirdWagon ? trainConvoy?.getWagon(3) : null;
+
+    const colorLink1 = wagon0 ? '#' + wagon0.colorHash.getHexString() : '#fbbf24';
+    const colorLink2 = wagon1 ? '#' + wagon1.colorHash.getHexString() : '#38bdf8';
+    const colorLink3 = wagon2 ? '#' + wagon2.colorHash.getHexString() : '#a855f7';
+
+    const hash0Short = block0?.hash ? block0.hash.substring(0, 10) : '00a89f41b2';
+    const hash1Short = block1?.hash ? block1.hash.substring(0, 10) : 'e55c70ac14';
+    const hash2Short = block2?.hash ? block2.hash.substring(0, 10) : '7b2049e1f8';
 
     inner.innerHTML = `
       <header class="step-panel-header">
@@ -454,64 +431,73 @@ export const step2 = {
 
       <div class="step-panel-scroll">
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Le principe de l'attelage</h3>
+          <h3 class="card-title">La règle des dominos</h3>
           <p>
-            Chaque nouveau wagon intègre à l'avant la copie exacte de l'empreinte du wagon qui le précède (le champ <strong>PreviousHash</strong>).
+            Dans une blockchain, chaque wagon transporte deux empreintes distinctes :
           </p>
+          <ul class="clean-bullet-list">
+            <li><strong>À l'avant :</strong> l'empreinte du wagon précédent (<em>PreviousHash</em>).</li>
+            <li><strong>À l'arrière :</strong> sa propre empreinte (<em>Hash</em>).</li>
+          </ul>
           <p>
-            Observez les infobulles 3D : la prise arrière et le crochet avant portent <strong>exactement la même empreinte et la même couleur</strong>, garantissant le verrouillage mécanique.
+            Observez les points d'attelage : chaque articulation a sa propre couleur, et l'anneau arrière du wagon parent s'emboîte parfaitement dans le crochet avant du wagon suivant.
           </p>
 
-          <div class="hash-contrast-box">
-            <div class="contrast-row">
-              <span class="contrast-swatch" style="background: ${colorParent}; box-shadow: 0 0 8px ${colorParent};"></span>
-              <span class="contrast-label">Hash ${parentLabel} :</span>
-              <code class="contrast-code" style="color: ${colorParent};">${parentHashShort}...</code>
+          <!-- Récapitulatif simultané des liaisons du convoi -->
+          <div class="chain-links-summary">
+            <div class="chain-link-item">
+              <span class="contrast-swatch" style="background: ${colorLink1}; box-shadow: 0 0 8px ${colorLink1};"></span>
+              <div class="chain-link-desc">
+                <span class="chain-link-name">Liaison 0 &rarr; 1 (Locomotive &rarr; Wagon 1)</span>
+                <code class="chain-link-code" style="color: ${colorLink1};">${hash0Short}... &middot; Verrouillé</code>
+              </div>
             </div>
-            <div class="contrast-row">
-              <span class="contrast-swatch" style="background: ${colorChild}; box-shadow: 0 0 8px ${colorChild};"></span>
-              <span class="contrast-label">PreviousHash ${childLabel} :</span>
-              <code class="contrast-code" style="color: ${colorChild};">${childPrevShort}...</code>
+
+            <div class="chain-link-item">
+              <span class="contrast-swatch" style="background: ${colorLink2}; box-shadow: 0 0 8px ${colorLink2};"></span>
+              <div class="chain-link-desc">
+                <span class="chain-link-name">Liaison 1 &rarr; 2 (Wagon 1 &rarr; Wagon 2)</span>
+                <code class="chain-link-code" style="color: ${colorLink2};">${hash1Short}... &middot; Verrouillé</code>
+              </div>
             </div>
-            <div class="contrast-status match">
-              Concordance parfaite &rarr; Attelage verrouillé et chaîne intègre
-            </div>
+
+            ${hasThirdWagon ? `
+              <div class="chain-link-item animate-fade">
+                <span class="contrast-swatch" style="background: ${colorLink3}; box-shadow: 0 0 8px ${colorLink3};"></span>
+                <div class="chain-link-desc">
+                  <span class="chain-link-name">Liaison 2 &rarr; 3 (Wagon 2 &rarr; Wagon 3)</span>
+                  <code class="chain-link-code" style="color: ${colorLink3};">${hash2Short}... &middot; Verrouillé</code>
+                </div>
+              </div>
+            ` : ''}
           </div>
         </article>
 
         <article class="step-card action-card animate-fade">
-          <h3 class="card-title">Changer de liaison à observer</h3>
+          <h3 class="card-title">Agrandir la chaîne</h3>
           <p class="card-instruction">
-            Sélectionnez un point d'attelage ou attachez un nouveau wagon pour vérifier la transmission continue de l'empreinte :
+            ${!hasThirdWagon
+              ? "Ajoutez un wagon pour observer l'enclenchement instantané d'une nouvelle liaison conforme :"
+              : "Le convoi compte 4 blocs. Chaque ajout étend la chaîne sans jamais altérer les liaisons antérieures."}
           </p>
 
-          <div class="action-choices">
-            <button id="btn-step2-coupler-2" class="btn-choice ${childIdx === 2 ? 'active' : ''}">
-              <span>Liaison Wagon #1 &rarr; Wagon #2</span>
-              <span class="btn-choice-icon">Attelage 2</span>
-            </button>
-            <button id="btn-step2-coupler-1" class="btn-choice ${childIdx === 1 ? 'active' : ''}">
-              <span>Liaison Locomotive #0 &rarr; Wagon #1</span>
-              <span class="btn-choice-icon">Attelage 1</span>
-            </button>
-            ${totalBlocks >= 4 ? `
-              <button id="btn-step2-coupler-3" class="btn-choice ${childIdx === 3 ? 'active' : ''}">
-                <span>Liaison Wagon #2 &rarr; Wagon #3</span>
-                <span class="btn-choice-icon">Attelage 3</span>
+          ${!hasThirdWagon ? `
+            <div class="substep-action-box" style="margin-top: 10px;">
+              <button id="btn-step2-add-wagon" class="btn-panel-primary">
+                <span>+ Atteler un wagon supplémentaire (Bloc #3)</span>
               </button>
-            ` : `
-              <button id="btn-step2-add-wagon" class="btn-choice">
-                <span>+ Atteler un wagon (Bloc #3)</span>
-                <span class="btn-choice-icon">Ajouter</span>
-              </button>
-            `}
-          </div>
+            </div>
+          ` : `
+            <div class="action-feedback-status visible status-success" style="margin-top: 8px;">
+              Chaîne de 4 blocs intègre : la 3e liaison s'est verrouillée sur le Hash du Wagon #2.
+            </div>
+          `}
         </article>
 
         <article class="step-card keypoint-card animate-fade">
-          <h4 class="card-title keypoint-title">Point clé : Une dépendance continue</h4>
+          <h4 class="card-title keypoint-title">Point clé : L'effet domino inverse</h4>
           <p class="keypoint-text">
-            Chaque bloc dépend mathématiquement du précédent. Si quelqu'un voulait modifier un wagon du passé, il briserait tous les attelages suivants jusqu'à la fin du train.
+            Chaque bloc dépend mathématiquement de son ancêtre. Pour falsifier un ancien bloc, un attaquant devrait obligatoirement recalculer et ré-atteler <strong>tous les wagons qui le suivent</strong> jusqu'au bout du convoi.
           </p>
         </article>
 
@@ -536,18 +522,6 @@ export const step2 = {
    * Attache les écouteurs d'interaction sur le volet gauche.
    */
   setupEvents() {
-    document.getElementById('btn-step2-coupler-1')?.addEventListener('click', () => {
-      this.focusOnCoupler(1);
-    });
-
-    document.getElementById('btn-step2-coupler-2')?.addEventListener('click', () => {
-      this.focusOnCoupler(2);
-    });
-
-    document.getElementById('btn-step2-coupler-3')?.addEventListener('click', () => {
-      this.focusOnCoupler(3);
-    });
-
     document.getElementById('btn-step2-add-wagon')?.addEventListener('click', () => {
       this.attachNewWagon();
     });

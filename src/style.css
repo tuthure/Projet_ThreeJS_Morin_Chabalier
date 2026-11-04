@@ -2096,3 +2096,59 @@ body {
   color: #cbd5e1;
   margin: 8px 0 0 0;
 }
+
+/* Liste propre et compacte à puces */
+.clean-bullet-list {
+  margin: 8px 0 10px 18px;
+  padding: 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: #cbd5e1;
+}
+
+.clean-bullet-list li {
+  margin-bottom: 4px;
+}
+
+/* Récapitulatif visuel des liaisons pour l'Étape 2 */
+.chain-links-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0 6px 0;
+}
+
+.chain-link-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 8px;
+  padding: 9px 12px;
+  transition: all 0.2s ease;
+}
+
+.chain-link-desc {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.chain-link-name {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chain-link-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.71rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
