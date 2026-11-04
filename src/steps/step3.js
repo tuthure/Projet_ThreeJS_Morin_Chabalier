@@ -5,8 +5,10 @@ import { hashToColorHex } from '../three/WagonMesh.js';
  * Etape 3 : Immuabilite et detection de falsification.
  * Experience interactive d'alteration du chargement du Wagon #1 :
  * - Avant falsification : presentation sobre sans divulgacher les consequences visuelles.
- * - Apres falsification : comparaison par infobulles 3D sur le convoi (voyant jaune et Hash
- *   recalcule sur le Wagon #1, rupture de l'attelage et voyant rouge sur le Wagon #2).
+ * - Apres falsification : 2 infobulles 3D colorees directement selon les hashs :
+ *   1) Infobulle couleur du hash du bloc 1, reliee a l'etiquette et l'attache arriere.
+ *   2) Infobulle couleur de l'attache du bloc suivant (previousHash attendu).
+ *   La difference de couleur entre les deux met en valeur la rupture de maniere evidente.
  */
 export const step3 = {
   id: 3,
@@ -20,7 +22,7 @@ export const step3 = {
   // Infobulles 3D projetees sur le convoi
   tooltipLayer: null,
   tooltipElements: new Map(),
-  activeSpotId: 'spot-w1',
+  activeSpotId: null,
 
   /**
    * Initialise le module avec le contexte global de l'application.
@@ -40,7 +42,7 @@ export const step3 = {
 
     this.isBroken = false;
     this.restoreWaveUntil = 0;
-    this.activeSpotId = 'spot-w1';
+    this.activeSpotId = null;
 
     if (cameraController) {
       cameraController.setViewOffset(210);
@@ -111,44 +113,58 @@ export const step3 = {
   },
 
   /**
-   * Genere les infobulles 3D comparatives une fois la fraude declenchee.
-   * Cible uniquement le wagon modifie (voyant jaune) et l'attelage rompu (voyant rouge).
+   * Genere les 2 infobulles 3D comparatives une fois la fraude declenchee :
+   * 1) Infobulle du Hash du bloc 1 (de la couleur exacte du hash du wagon 1).
+   * 2) Infobulle de l'attache du train suivant (de la couleur attendue par le wagon 2).
    */
   createComparativeTooltips() {
     if (!this.tooltipLayer) return;
 
+    const { trainConvoy } = this.ctx;
+    const wagon1 = trainConvoy?.getWagon(1);
+    const wagon2 = trainConvoy?.getWagon(2);
+    const block1 = trainConvoy?.getBlock(1);
+    const block2 = trainConvoy?.getBlock(2);
+
+    if (!wagon1 || !wagon2 || !block1 || !block2) return;
+
     this.tooltipLayer.innerHTML = '';
     this.tooltipElements.clear();
+
+    const colorHash1 = '#' + wagon1.colorHash.getHexString();
+    const colorPrev2 = '#' + wagon2.colorPrevHash.getHexString();
+    const hash1Short = block1.hash ? block1.hash.substring(0, 10) : 'a4f18c';
+    const prev2Short = block2.previousHash ? block2.previousHash.substring(0, 10) : 'e55c70';
 
     const spots = [
       {
         id: 'spot-w1',
-        pillClass: 'pill-neutral',
-        dotClass: 'dot-mismatch',
-        label: 'Wagon 1 : Signal jaune (Hash recalculé)',
-        title: 'Altération du Wagon #1',
-        text: 'Le voyant de toit passe au jaune : la modification des transactions recalcule le Hash SHA-256. L\'anneau arrière adopte la nouvelle couleur issue de ce hash.',
-        getPos: () => new THREE.Vector3(3.8, 1.45, 0)
+        color: colorHash1,
+        label: `Hash #1 : ${hash1Short}...`,
+        title: 'Hash calculé (Wagon #1)',
+        text: 'Empreinte SHA-256 issue des données modifiées. L\'étiquette centrale et l\'attache arrière portent cette couleur.',
+        getPos: () => new THREE.Vector3(4.8, 1.28, 0.25)
       },
       {
-        id: 'spot-w1-w2',
-        pillClass: 'pill-neutral',
-        dotClass: 'dot-neutral',
-        label: 'Attelage 1 - 2 : Rompu (Signal rouge)',
-        title: 'Discordance avec le Wagon #2',
-        text: 'Le Wagon #2 conserve l\'ancien hash dans son PreviousHash. La discordance de couleur provoque le décrochage mécanique et déclenche le voyant rouge.',
-        getPos: () => new THREE.Vector3(5.7, 1.25, 0)
+        id: 'spot-w2',
+        color: colorPrev2,
+        label: `PreviousHash : ${prev2Short}...`,
+        title: 'Attache aval (Wagon #2)',
+        text: 'L\'attache et l\'étiquette du Wagon #2 attendent cette couleur d\'origine. Ne correspondant plus, l\'attelage se décroche.',
+        getPos: () => new THREE.Vector3(6.1, 1.18, 0.25)
       }
     ];
 
     spots.forEach((spot) => {
       const el = document.createElement('div');
       const isActive = this.activeSpotId === spot.id;
-      el.className = `scene-tooltip ${spot.pillClass}` + (isActive ? ' active' : '');
+      el.className = 'scene-tooltip' + (isActive ? ' active' : '');
       el.dataset.spotId = spot.id;
+      el.style.setProperty('--spot-color', spot.color);
+
       el.innerHTML = `
         <button type="button" class="scene-tooltip-pill" aria-expanded="${isActive}">
-          <span class="scene-tooltip-dot ${spot.dotClass}"></span>
+          <span class="scene-tooltip-dot"></span>
           <span class="scene-tooltip-label">${spot.label}</span>
         </button>
         <div class="scene-tooltip-card">
@@ -187,7 +203,7 @@ export const step3 = {
   /**
    * Boucle d'animation :
    * - Respecte strictement le code couleur cryptographique (anneau arriere = hash, anneau avant = previousHash)
-   * - Seules les balises lumineuses de toit s'illuminent en rouge d'alerte lors de la falsification
+   * - Balise jaune d'avertissement sur le wagon 1 (modifie), balise rouge d'alerte sur le wagon 2 (rompu)
    * - Projette les coordonnees 3D des infobulles sur l'ecran 2D
    */
   startAnimationLoop() {
@@ -212,7 +228,7 @@ export const step3 = {
         }
 
         // 2. Wagon #1 (Bloc 1) :
-        // - Anneau avant = previousHash (doit correspondre a la Locomotive #0)
+        // - Anneau avant = previousHash (correspond a la Locomotive #0)
         // - Anneau arriere = hash du wagon 1 (recalcule apres modification)
         if (wagon1.frontRingMaterial) {
           wagon1.frontRingMaterial.color.copy(wagon1.colorPrevHash);
@@ -243,7 +259,7 @@ export const step3 = {
           wagon2.rearRingMaterial.emissiveIntensity = pulse;
         }
 
-        // Gestion de l'attelage entre Wagon 1 et Wagon 2
+        // Gestion du decrochage mecanique de l'attelage
         if (wagon2.couplerGroup && wagon2.defaultCouplerPosition) {
           if (this.isBroken) {
             wagon2.couplerGroup.position.y = wagon2.defaultCouplerPosition.y - 0.22;
@@ -254,7 +270,7 @@ export const step3 = {
           }
         }
 
-        // 4. Balises lumineuses sur le toit : seules les lumieres passent au rouge en cas de falsification
+        // 4. Balises lumineuses sur le toit
         if (!this.isBroken) {
           if (loco0.beaconMaterial) {
             loco0.beaconMaterial.color.setHex(0x10b981);
@@ -278,13 +294,13 @@ export const step3 = {
             loco0.beaconMaterial.emissive.setHex(0x10b981);
             loco0.beaconMaterial.emissiveIntensity = 1.4;
           }
-          // Le voyant au-dessus du Wagon 1 (bloc altéré) passe au JAUNE d'avertissement
+          // Le voyant au-dessus du Wagon 1 (bloc altere) passe au JAUNE d'avertissement
           if (wagon1.beaconMaterial) {
             wagon1.beaconMaterial.color.setHex(0xfacc15);
             wagon1.beaconMaterial.emissive.setHex(0xeab308);
             wagon1.beaconMaterial.emissiveIntensity = alertPulse;
           }
-          // La lumiere au-dessus du Wagon 2 (invalide par la rupture amont) clignote en rouge
+          // La lumiere au-dessus du Wagon 2 (invalide par la rupture amont) passe au ROUGE d'alerte
           if (wagon2.beaconMaterial) {
             wagon2.beaconMaterial.color.setHex(0xef4444);
             wagon2.beaconMaterial.emissive.setHex(0xdc2626);
@@ -373,7 +389,7 @@ export const step3 = {
       wagon1.beaconMaterial.emissiveIntensity = 2.0;
     }
 
-    // 3. Affichage des infobulles 3D comparatives
+    // 3. Affichage des 2 infobulles 3D comparatives
     this.createComparativeTooltips();
 
     if (cameraController) {
@@ -433,6 +449,7 @@ export const step3 = {
 
   /**
    * Genere le volet pedagogique gauche pour l'etape 3.
+   * Interface sobre et epuree, sans infobulles ou cartes redondantes.
    */
   renderLeftPanel() {
     const panel = document.getElementById('step-panel-left');
@@ -442,6 +459,17 @@ export const step3 = {
 
     const oldInner = panel.querySelector('.step-panel-inner');
     if (oldInner) oldInner.remove();
+
+    const { trainConvoy } = this.ctx;
+    const wagon1 = trainConvoy?.getWagon(1);
+    const wagon2 = trainConvoy?.getWagon(2);
+    const block1 = trainConvoy?.getBlock(1);
+    const block2 = trainConvoy?.getBlock(2);
+
+    const colorHash1 = wagon1 ? '#' + wagon1.colorHash.getHexString() : '#38bdf8';
+    const colorPrev2 = wagon2 ? '#' + wagon2.colorPrevHash.getHexString() : '#facc15';
+    const hash1Short = block1?.hash ? block1.hash.substring(0, 10) : 'a4f18c';
+    const prev2Short = block2?.previousHash ? block2.previousHash.substring(0, 10) : 'e55c70';
 
     const inner = document.createElement('div');
     inner.className = 'step-panel-inner';
@@ -471,34 +499,30 @@ export const step3 = {
           </div>
         ` : `
           <article class="step-card context-card animate-fade">
-            <h3 class="card-title">Altération et rupture</h3>
+            <h3 class="card-title">Comparaison des empreintes</h3>
             <p>
-              Consultez les infobulles sur le convoi pour observer les conséquences :
+              La falsification du Wagon #1 a recalculé son Hash :
             </p>
 
-            <div class="comparison-cards-list">
-              <div id="card-spot-w1" class="comparison-card">
-                <div class="comparison-header">
-                  <span class="comparison-dot dot-mismatch"></span>
-                  <span class="comparison-title">Wagon #1 (Bloc modifié)</span>
-                  <span class="comparison-badge">Signal jaune &middot; Hash recalculé</span>
-                </div>
-                <p class="comparison-text">
-                  La transaction a été altérée : le voyant passe au jaune d'avertissement et le Hash SHA-256 est recalculé. L'anneau arrière adopte la nouvelle couleur correspondante.
-                </p>
+            <div class="hash-contrast-box">
+              <div class="contrast-row">
+                <span class="contrast-swatch" style="background: ${colorHash1}; box-shadow: 0 0 8px ${colorHash1};"></span>
+                <span class="contrast-label">Hash Wagon #1 :</span>
+                <code class="contrast-code" style="color: ${colorHash1};">${hash1Short}...</code>
               </div>
-
-              <div id="card-spot-w1-w2" class="comparison-card">
-                <div class="comparison-header">
-                  <span class="comparison-dot dot-neutral"></span>
-                  <span class="comparison-title">Liaison Wagon #1 &rarr; Wagon #2</span>
-                  <span class="comparison-badge">Décrochée &middot; Signal rouge</span>
-                </div>
-                <p class="comparison-text">
-                  Le PreviousHash du Wagon #2 exige toujours l'ancienne empreinte : la discordance de couleur décroche l'attelage mécanique et allume le voyant rouge sur la suite du train.
-                </p>
+              <div class="contrast-row">
+                <span class="contrast-swatch" style="background: ${colorPrev2}; box-shadow: 0 0 8px ${colorPrev2};"></span>
+                <span class="contrast-label">Attendu Wagon #2 :</span>
+                <code class="contrast-code" style="color: ${colorPrev2};">${prev2Short}...</code>
+              </div>
+              <div class="contrast-status">
+                Discordance de couleur &rarr; Décrochage mécanique
               </div>
             </div>
+
+            <p class="contrast-summary">
+              L'attache du Wagon #2 exige l'ancienne couleur. Ne correspondant pas à l'anneau arrière du Wagon #1, la liaison se rompt.
+            </p>
           </article>
 
           <div class="substep-action-box animate-fade">
@@ -543,15 +567,6 @@ export const step3 = {
 
     document.getElementById('btn-restore-step3')?.addEventListener('click', () => {
       this.restoreConvoy();
-    });
-
-    // Clic sur les cartes comparatives pour activer l'infobulle 3D correspondante
-    document.getElementById('card-spot-w1')?.addEventListener('click', () => {
-      this.toggleTooltipSpot('spot-w1');
-    });
-
-    document.getElementById('card-spot-w1-w2')?.addEventListener('click', () => {
-      this.toggleTooltipSpot('spot-w1-w2');
     });
 
     document.getElementById('btn-step3-action-prev')?.addEventListener('click', () => {
