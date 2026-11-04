@@ -13,30 +13,12 @@ import { welcome } from './welcome.js';
  */
 
 // ============================================================================
-// 1. Elements du DOM et Interface Utilisateur (HUD 2D & Sidebar d'Inspection)
+// 1. Elements du DOM et Interface Utilisateur (HUD 2D)
 // ============================================================================
 const canvas = document.querySelector('#webgl');
 
 // Indicateur de performances FPS (HUD superieur)
 const fpsCounterEl = document.getElementById('fps-counter');
-
-// Panneau lateral droit d'inspection (Drawer)
-const sidebarEl = document.getElementById('inspection-sidebar');
-const btnCloseSidebar = document.getElementById('btn-close-sidebar');
-const btnWagonPrev = document.getElementById('btn-wagon-prev');
-const btnWagonNext = document.getElementById('btn-wagon-next');
-const sidebarTitleEl = document.getElementById('sidebar-wagon-title');
-const fieldIndex = document.getElementById('field-index');
-const fieldData = document.getElementById('field-data');
-const fieldPrevHash = document.getElementById('field-prev-hash');
-const fieldHash = document.getElementById('field-hash');
-const fieldNonce = document.getElementById('field-nonce');
-const fieldStatus = document.getElementById('field-status');
-const fieldStatusText = document.getElementById('field-status-text');
-
-// Variables d'etat globales de l'application
-let inspectedBlockIndex = 0;
-let currentViewMode = 'quarter';
 
 // ============================================================================
 // 2. Scene, Canvas et Moteur de Rendu Three.js
@@ -101,12 +83,7 @@ trainConvoy.init([]);
 // ============================================================================
 // 6. Controleur de Camera et Interactions
 // ============================================================================
-const cameraController = new CameraController(camera, renderer.domElement, (blockData) => {
-  if (typeof blockData?.index === 'number') {
-    selectWagon(blockData.index, false);
-  }
-});
-cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
+const cameraController = new CameraController(camera, renderer.domElement);
 
 // ============================================================================
 // 7. Navigation Pedagogique Modulaire des Notions (StepManager) & Accueil (Welcome)
@@ -128,171 +105,18 @@ const stepManager = new StepManager({
   cameraController,
   trainConvoy,
   environment,
-  welcome,
-  selectWagon: (idx) => selectWagon(idx, false)
+  welcome
 });
 
 welcomeContext.stepManager = stepManager;
 
 // ============================================================================
-// 8. Gestion des Angles de Vue et Navigation Inter-Wagons
+// 8. Gestion des evenements de chaine
 // ============================================================================
-
-/**
- * Applique un angle de vue cinematographique specifique autour du wagon cible
- * ou sur l'ensemble du convoi.
- * @param {'quarter'|'profile'|'coupler'|'overview'} viewMode - Type de vue demande.
- * @param {number} [wagonIndex=inspectedBlockIndex] - Index du wagon concerne.
- * @param {number} [duration=1.0] - Duree de la transition camera en secondes.
- */
-function applyViewAngle(viewMode = 'quarter', wagonIndex = inspectedBlockIndex, duration = 1.0) {
-  currentViewMode = viewMode;
-
-  const wagonPos = trainConvoy.getWagonPosition(wagonIndex);
-  let targetPos;
-  let targetLookAt;
-
-  switch (viewMode) {
-    case 'profile':
-      // Vue de profil orthogonale axee sur la marchandise, le chassis et la molette du nonce
-      targetPos = new THREE.Vector3(wagonPos.x, 0.7, 4.2);
-      targetLookAt = new THREE.Vector3(wagonPos.x, 0.45, 0);
-      break;
-
-    case 'coupler':
-      // Vue rapprochee sur l'attelage cryptographique et la plaque transversale previousHash a gauche
-      targetPos = new THREE.Vector3(wagonPos.x - 2.6, 1.3, 2.4);
-      targetLookAt = new THREE.Vector3(wagonPos.x - 1.6, 0.45, 0);
-      break;
-
-    case 'overview': {
-      // Vue d'ensemble sur le convoi complet
-      const center = trainConvoy.getTrainCenter();
-      targetPos = new THREE.Vector3(center.x, 5.0, 12.0);
-      targetLookAt = new THREE.Vector3(center.x, 0.4, 0);
-      break;
-    }
-
-    case 'quarter':
-    default:
-      currentViewMode = 'quarter';
-      // Vue de trois-quarts perspective equilibrant volume, cargaison et lisibilite
-      targetPos = new THREE.Vector3(wagonPos.x + 2.0, 2.0, 4.2);
-      targetLookAt = new THREE.Vector3(wagonPos.x, 0.45, 0);
-      break;
-  }
-
-  cameraController.moveTo(targetPos, targetLookAt, duration);
-}
-
-/**
- * Selectionne un wagon, actualise la sidebar et deplace la camera selon l'angle actif.
- * @param {number} index - Index ordinal du bloc/wagon.
- * @param {boolean} [animateCam=true] - Declencher le mouvement de camera.
- */
-function selectWagon(index, animateCam = true) {
-  const total = trainConvoy.blockchain.chain.length;
-  if (index < 0 || index >= total) return;
-
-  inspectedBlockIndex = index;
-  const block = trainConvoy.getBlock(inspectedBlockIndex);
-  if (block) {
-    openInspectionSidebar(block);
-  }
-
-  if (animateCam) {
-    applyViewAngle(currentViewMode, inspectedBlockIndex);
-  }
-}
-
-function updateWagonNavButtons() {
-  const total = (typeof trainConvoy !== 'undefined' && trainConvoy?.blockchain?.chain)
-    ? trainConvoy.blockchain.chain.length
-    : 0;
-  if (btnWagonPrev) btnWagonPrev.disabled = inspectedBlockIndex <= 0;
-  if (btnWagonNext) btnWagonNext.disabled = total > 0 ? (inspectedBlockIndex >= total - 1) : true;
-}
-
-if (btnWagonPrev) {
-  btnWagonPrev.addEventListener('click', () => {
-    if (inspectedBlockIndex > 0) {
-      selectWagon(inspectedBlockIndex - 1, true);
-    }
-  });
-}
-
-if (btnWagonNext) {
-  btnWagonNext.addEventListener('click', () => {
-    if (inspectedBlockIndex < trainConvoy.blockchain.chain.length - 1) {
-      selectWagon(inspectedBlockIndex + 1, true);
-    }
-  });
-}
-
-// ============================================================================
-// 9. Panneau Lateral d'Inspection (Sidebar / Drawer en lecture seule)
-// ============================================================================
-function openInspectionSidebar(block) {
-  if (!block) return;
-  inspectedBlockIndex = block.index;
-
-  const wagonLabel = block.index === 0 ? 'Locomotive (Bloc #0 Genesis)' : `Wagon #${block.index} (Bloc #${block.index})`;
-  if (sidebarTitleEl) sidebarTitleEl.textContent = wagonLabel;
-
-  if (fieldIndex) fieldIndex.value = block.index;
-  if (fieldData) {
-    fieldData.value = typeof block.data === 'string'
-      ? block.data
-      : JSON.stringify(block.data, null, 2);
-  }
-  if (fieldPrevHash) fieldPrevHash.value = block.previousHash || '0000000000000000';
-  if (fieldHash) fieldHash.value = block.hash;
-  if (fieldNonce) fieldNonce.value = block.nonce;
-
-  const validityList = trainConvoy.blockchain.getBlockValidityList();
-  const isValid = validityList[block.index] ?? false;
-  updateSidebarStatus(isValid);
-  updateWagonNavButtons();
-
-  if (sidebarEl) {
-    sidebarEl.classList.add('open');
-    sidebarEl.setAttribute('aria-hidden', 'false');
-  }
-}
-
-function updateSidebarStatus(isValid) {
-  if (!fieldStatus || !fieldStatusText) return;
-  if (isValid) {
-    fieldStatus.className = 'status-indicator valid';
-    fieldStatusText.textContent = 'Attelage magnétique actif (valide)';
-  } else {
-    fieldStatus.className = 'status-indicator invalid';
-    fieldStatusText.textContent = 'Rupture d\'attelage (hash corrompu)';
-  }
-}
-
-if (btnCloseSidebar) {
-  btnCloseSidebar.addEventListener('click', () => {
-    if (sidebarEl) {
-      sidebarEl.classList.remove('open');
-      sidebarEl.setAttribute('aria-hidden', 'true');
-    }
-  });
-}
-
-// Mise a jour visuelle lors des mutations de chaine
 function handleChainStateChange(summary) {
-  // Si le panneau est ouvert, rafraichit l'indicateur d'etat du bloc courant
-  const validityList = summary?.validityList;
-  if (sidebarEl && sidebarEl.classList.contains('open') && validityList) {
-    const currentIsValid = validityList[inspectedBlockIndex] ?? false;
-    updateSidebarStatus(currentIsValid);
-  }
-
-  updateWagonNavButtons();
+  // Callback lors des mutations de la blockchain
 }
 
-// ============================================================================
 // 10. Indicateur de performances FPS
 // ============================================================================
 let frameCount = 0;
@@ -362,7 +186,7 @@ window.blockchain = {
   corruptBlock: (index = 1, newData = 'TRANSACTION_FALSIFIEE_9999_MMI') => {
     trainConvoy.corruptBlock(index, newData);
     const block = trainConvoy.getBlock(index);
-    if (block) openInspectionSidebar(block);
+    
   },
 
   addBlock: (data) => {
@@ -378,13 +202,13 @@ window.blockchain = {
       trainConvoy.restoreEntireTrain();
     }
     const block = trainConvoy.getBlock(inspectedBlockIndex);
-    if (block) openInspectionSidebar(block);
+    
   },
 
   recalculate: (index = 1) => {
     trainConvoy.recalculateAndMineBlock(index, 1);
     const block = trainConvoy.getBlock(index);
-    if (block) openInspectionSidebar(block);
+    
   },
 
   isValid: () => trainConvoy.blockchain.isChainValid(),

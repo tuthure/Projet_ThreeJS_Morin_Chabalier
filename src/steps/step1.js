@@ -58,11 +58,7 @@ export const step1 = {
     }
 
     // 2. Ferme le tiroir d'inspection droit s'il était ouvert
-    const inspectionSidebar = document.getElementById('inspection-sidebar');
-    if (inspectionSidebar) {
-      inspectionSidebar.classList.remove('open');
-      inspectionSidebar.setAttribute('aria-hidden', 'true');
-    }
+    
 
     // 3. Démarre la boucle d'animation dédiée
     this.startAnimationLoop();
@@ -391,12 +387,12 @@ export const step1 = {
           </div>
         ` : `
           <div class="substep-action-box animate-fade">
-            <button id="btn-step1-action-trans" class="btn-panel-ghost">
-              <span>&larr; Revenir au chargement</span>
-            </button>
             <button id="btn-step1-action-next" class="btn-panel-primary">
               <span>Étape 2 : Le Chaînage</span>
               <span class="btn-arrow">&rarr;</span>
+            </button>
+            <button id="btn-step1-action-trans" class="btn-panel-ghost">
+              <span>&larr; Retour</span>
             </button>
           </div>
         `}

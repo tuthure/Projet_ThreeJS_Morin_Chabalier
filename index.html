@@ -65,56 +65,6 @@
           <button class="step-tab-btn" data-step="7" title="Notion 7 : Attaque des 51%">7</button>
         </nav>
       </aside>
-
-      <!-- Panneau latéral droit d'inspection du wagon -->
-      <aside id="inspection-sidebar" class="hud-sidebar" aria-hidden="true">
-        <div class="sidebar-header">
-          <div class="sidebar-title-group">
-            <span class="sidebar-badge">Inspection 3D</span>
-            <h2 id="sidebar-wagon-title">Wagon #0 (Bloc Genesis)</h2>
-          </div>
-          <div class="sidebar-header-actions">
-            <button id="btn-wagon-prev" class="btn-nav-wagon" title="Wagon précédent">&larr;</button>
-            <button id="btn-wagon-next" class="btn-nav-wagon" title="Wagon suivant">&rarr;</button>
-            <button id="btn-close-sidebar" class="btn-close" aria-label="Fermer le panneau">&times;</button>
-          </div>
-        </div>
-
-        <div class="sidebar-body">
-          <div class="field-group">
-            <label for="field-index">Index du bloc</label>
-            <input type="text" id="field-index" readonly value="0">
-          </div>
-
-          <div class="field-group">
-            <label for="field-data">Marchandises transportées (Transactions)</label>
-            <textarea id="field-data" rows="3" readonly></textarea>
-          </div>
-
-          <div class="field-group">
-            <label for="field-prev-hash">Attelage précédent (previousHash)</label>
-            <input type="text" id="field-prev-hash" class="code-font" readonly value="0000000000000000">
-          </div>
-
-          <div class="field-group">
-            <label for="field-hash">Plaque d'empreinte gravée (hash)</label>
-            <input type="text" id="field-hash" class="code-font" readonly value="0000a89f41b2c3d4">
-          </div>
-
-          <div class="field-group">
-            <label for="field-nonce">Molette de verrouillage (Nonce)</label>
-            <input type="text" id="field-nonce" class="code-font" readonly value="2084">
-          </div>
-
-          <div class="field-group">
-            <label>État de l'attelage magnétique</label>
-            <div id="field-status" class="status-indicator valid">
-              <span class="status-bulb"></span>
-              <span id="field-status-text">Attelage magnétique actif</span>
-            </div>
-          </div>
-        </div>
-      </aside>
     </div>
   </div>
 

@@ -66,17 +66,10 @@ export const step2 = {
       scene.add(this.couplerLight);
     }
 
-    // 3. Ferme le tiroir d'inspection s'il était ouvert
-    const inspectionSidebar = document.getElementById('inspection-sidebar');
-    if (inspectionSidebar) {
-      inspectionSidebar.classList.remove('open');
-      inspectionSidebar.setAttribute('aria-hidden', 'true');
-    }
-
-    // 4. Démarre la boucle d'animation dédiée de l'attelage
+    // 3. Démarre la boucle d'animation dédiée de l'attelage
     this.startAnimationLoop();
 
-    // 5. Lance la sous-partie 2.1
+    // 4. Lance la sous-partie 2.1
     this.goToSubStep(0);
   },
 
@@ -212,6 +205,11 @@ export const step2 = {
     const { cameraController } = this.ctx;
 
     if (this.subStep === 0) {
+      if (this.isBroken) {
+        this.restoreConvoy();
+        return;
+      }
+
       // 2.1 — Gros plan sur l'attelage magnétique reliant wagon 0 et wagon 1
       if (cameraController) {
         cameraController.moveTo(
@@ -441,12 +439,12 @@ export const step2 = {
           </div>
         ` : `
           <div class="substep-action-box animate-fade">
-            <button id="btn-step2-action-coupler" class="btn-panel-ghost">
-              <span>&larr; Revoir l'attelage sain</span>
-            </button>
             <button id="btn-step2-action-next" class="btn-panel-primary">
               <span>Étape 3 : Immuabilité</span>
               <span class="btn-arrow">&rarr;</span>
+            </button>
+            <button id="btn-step2-action-coupler" class="btn-panel-ghost">
+              <span>&larr; Retour</span>
             </button>
           </div>
         `}

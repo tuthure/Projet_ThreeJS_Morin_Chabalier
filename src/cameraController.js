@@ -2,17 +2,16 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 /**
- * Controleur de camera cinematographique et interactif
+ * Contrôleur de caméra cinématographique
  * Prise en charge :
  * - Mode libre : OrbitControls avec amortissement fluide
- * - Navigation guidee : Transitions lerp douces vers les positions/cibles des 7 notions
- * - Raycasting : Selection au clic des wagons avec centrage de camera
+ * - Navigation guidée : Transitions lerp douces vers les positions/cibles des étapes
+ * - Décalage optique (viewOffset) pour centrer la vue à droite du volet gauche
  */
 export class CameraController {
-  constructor(camera, domElement, onSelectBlock = null) {
+  constructor(camera, domElement) {
     this.camera = camera;
     this.domElement = domElement;
-    this.onSelectBlock = onSelectBlock;
 
     // Initialisation d'OrbitControls
     this.controls = new OrbitControls(this.camera, this.domElement);
@@ -20,9 +19,9 @@ export class CameraController {
     this.controls.dampingFactor = 0.05;
     this.controls.maxDistance = 65;
     this.controls.minDistance = 2.5;
-    this.controls.maxPolarAngle = Math.PI / 2 - 0.02; // Evite de passer sous le plan des rails
+    this.controls.maxPolarAngle = Math.PI / 2 - 0.02; // Évite de passer sous le plan des rails
 
-    // Etat d'interpolation cinematographique
+    // État d'interpolation cinématographique
     this.isTransitioning = false;
     this.transitionTime = 0;
     this.transitionDuration = 1.2;
@@ -33,16 +32,8 @@ export class CameraController {
     this.startTarget = new THREE.Vector3();
     this.targetTarget = new THREE.Vector3();
 
-    // Raycasting pour la selection au clic
-    this.raycaster = new THREE.Raycaster();
-    this.pointer = new THREE.Vector2();
-    this.interactiveObjects = [];
-    this.pointerDownPos = new THREE.Vector2();
-
     // Décalage visuel horizontal (en pixels) pour centrer la scène dans l'espace utile libre (ex: à droite du volet gauche)
     this.viewOffsetX = 0;
-
-    this._setupPointerEvents();
   }
 
   /**
@@ -73,72 +64,10 @@ export class CameraController {
   }
 
   /**
-   * Definit les objets cliquables dans la scene (wagons)
+   * Méthode de compatibilité (la sélection par clic 3D sur wagon a été retirée).
    */
-  setInteractiveObjects(objects) {
-    this.interactiveObjects = objects;
-  }
-
-  /**
-   * Ecoute des interactions pointeur pour distinguer le clic du glissement de camera
-   */
-  _setupPointerEvents() {
-    this.domElement.addEventListener('pointerdown', (e) => {
-      this.pointerDownPos.set(e.clientX, e.clientY);
-    });
-
-    this.domElement.addEventListener('pointermove', (e) => {
-      if (this.interactiveObjects.length === 0) return;
-
-      const rect = this.domElement.getBoundingClientRect();
-      this.pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      this.pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
-      this.raycaster.setFromCamera(this.pointer, this.camera);
-      const intersects = this.raycaster.intersectObjects(this.interactiveObjects, true);
-
-      if (intersects.length > 0) {
-        this.domElement.style.cursor = 'pointer';
-      } else {
-        this.domElement.style.cursor = 'default';
-      }
-    });
-
-    this.domElement.addEventListener('pointerup', (e) => {
-      // Si la distance parcourue est superieure a 5px, c'est un glissement d'orbite, pas un clic
-      const dist = Math.hypot(e.clientX - this.pointerDownPos.x, e.clientY - this.pointerDownPos.y);
-      if (dist > 6) return;
-
-      const rect = this.domElement.getBoundingClientRect();
-      this.pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      this.pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
-      this.raycaster.setFromCamera(this.pointer, this.camera);
-      const intersects = this.raycaster.intersectObjects(this.interactiveObjects, true);
-
-      if (intersects.length > 0) {
-        // Remonte jusqu'au groupe wagon ou locomotive porteur des donnees
-        let obj = intersects[0].object;
-        while (obj && !obj.userData.blockData && !obj.userData.isLocomotive && obj.parent) {
-          obj = obj.parent;
-        }
-
-        if (obj && obj.userData.blockData) {
-          const blockData = obj.userData.blockData;
-          this.focusOnObject(obj, new THREE.Vector3(3.5, 2.2, 4.0), 1.0);
-
-          if (typeof this.onSelectBlock === 'function') {
-            this.onSelectBlock(blockData, obj);
-          }
-        } else if (obj && obj.userData.isLocomotive) {
-          this.focusOnObject(obj, new THREE.Vector3(3.5, 2.2, 4.0), 1.0);
-
-          if (typeof this.onSelectBlock === 'function') {
-            this.onSelectBlock({ isLocomotive: true }, obj);
-          }
-        }
-      }
-    });
+  setInteractiveObjects(_objects) {
+    // Aucune interaction par clic direct sur les wagons
   }
 
   /**

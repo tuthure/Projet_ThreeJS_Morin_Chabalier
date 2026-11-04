@@ -64,11 +64,7 @@ export const welcome = {
     }
 
     // 3. Ferme le panneau d'inspection droit s'il etait ouvert
-    const inspectionSidebar = document.getElementById('inspection-sidebar');
-    if (inspectionSidebar) {
-      inspectionSidebar.classList.remove('open');
-      inspectionSidebar.setAttribute('aria-hidden', 'true');
-    }
+    
 
     // 4. Initialise le convoi avec une dizaine de cargaisons variees (Genesis + 9 wagons)
     const demoTransactions = [

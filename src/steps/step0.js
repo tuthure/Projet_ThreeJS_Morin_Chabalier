@@ -56,11 +56,7 @@ export const step0 = {
     }
 
     // 3. Ferme le tiroir d'inspection droit s'il était ouvert
-    const inspectionSidebar = document.getElementById('inspection-sidebar');
-    if (inspectionSidebar) {
-      inspectionSidebar.classList.remove('open');
-      inspectionSidebar.setAttribute('aria-hidden', 'true');
-    }
+    
 
     // 4. Lance la première phase de découverte
     this.goToSubStep(0);
@@ -145,7 +141,7 @@ export const step0 = {
 
         <div class="substep-action-box animate-fade">
           <button id="btn-step0-action-loco" class="btn-panel-primary">
-            <span>Approcher de la locomotive</span>
+            <span>S'approcher de la locomotive</span>
             <span class="btn-arrow">&rarr;</span>
           </button>
         </div>
@@ -170,6 +166,9 @@ export const step0 = {
             <span>Regarder les wagons de transactions</span>
             <span class="btn-arrow">&rarr;</span>
           </button>
+          <button id="btn-step0-back-to-0" class="btn-panel-ghost">
+            <span>&larr; Retour</span>
+          </button>
         </div>
       `;
     } else if (this.subStep === 2) {
@@ -192,6 +191,9 @@ export const step0 = {
             <span>Étape 1 : Inspecter un wagon</span>
             <span class="btn-arrow">&rarr;</span>
           </button>
+          <button id="btn-step0-back-to-1" class="btn-panel-ghost">
+            <span>&larr; Retour</span>
+          </button>
         </div>
       `;
     }
@@ -213,8 +215,16 @@ export const step0 = {
       this.goToSubStep(1);
     });
 
+    document.getElementById('btn-step0-back-to-0')?.addEventListener('click', () => {
+      this.goToSubStep(0);
+    });
+
     document.getElementById('btn-step0-action-wagons')?.addEventListener('click', () => {
       this.goToSubStep(2);
+    });
+
+    document.getElementById('btn-step0-back-to-1')?.addEventListener('click', () => {
+      this.goToSubStep(1);
     });
 
     document.getElementById('btn-step0-next-step')?.addEventListener('click', () => {
