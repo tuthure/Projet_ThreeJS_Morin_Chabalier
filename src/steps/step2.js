@@ -406,24 +406,6 @@ export const step2 = {
     const totalBlocks = trainConvoy?.blockchain?.chain?.length || 3;
     const hasThirdWagon = totalBlocks >= 4;
 
-    const block0 = trainConvoy?.getBlock(0);
-    const block1 = trainConvoy?.getBlock(1);
-    const block2 = trainConvoy?.getBlock(2);
-    const block3 = hasThirdWagon ? trainConvoy?.getBlock(3) : null;
-
-    const wagon0 = trainConvoy?.getWagon(0);
-    const wagon1 = trainConvoy?.getWagon(1);
-    const wagon2 = trainConvoy?.getWagon(2);
-    const wagon3 = hasThirdWagon ? trainConvoy?.getWagon(3) : null;
-
-    const colorLink1 = wagon0 ? '#' + wagon0.colorHash.getHexString() : '#fbbf24';
-    const colorLink2 = wagon1 ? '#' + wagon1.colorHash.getHexString() : '#38bdf8';
-    const colorLink3 = wagon2 ? '#' + wagon2.colorHash.getHexString() : '#a855f7';
-
-    const hash0Short = block0?.hash ? block0.hash.substring(0, 10) : '00a89f41b2';
-    const hash1Short = block1?.hash ? block1.hash.substring(0, 10) : 'e55c70ac14';
-    const hash2Short = block2?.hash ? block2.hash.substring(0, 10) : '7b2049e1f8';
-
     inner.innerHTML = `
       <header class="step-panel-header">
         <h2 class="step-panel-title">Chaînage Cryptographique</h2>
@@ -440,37 +422,8 @@ export const step2 = {
             <li><strong>À l'arrière :</strong> sa propre empreinte (<em>Hash</em>).</li>
           </ul>
           <p>
-            Observez les points d'attelage : chaque articulation a sa propre couleur, et l'anneau arrière du wagon parent s'emboîte parfaitement dans le crochet avant du wagon suivant.
+            Observez les points d'attelage dans la scène : chaque articulation possède sa propre couleur. L'anneau arrière du wagon parent et le crochet avant du wagon suivant affichent toujours la même signature.
           </p>
-
-          <!-- Récapitulatif simultané des liaisons du convoi -->
-          <div class="chain-links-summary">
-            <div class="chain-link-item">
-              <span class="contrast-swatch" style="background: ${colorLink1}; box-shadow: 0 0 8px ${colorLink1};"></span>
-              <div class="chain-link-desc">
-                <span class="chain-link-name">Liaison 0 &rarr; 1 (Locomotive &rarr; Wagon 1)</span>
-                <code class="chain-link-code" style="color: ${colorLink1};">${hash0Short}... &middot; Verrouillé</code>
-              </div>
-            </div>
-
-            <div class="chain-link-item">
-              <span class="contrast-swatch" style="background: ${colorLink2}; box-shadow: 0 0 8px ${colorLink2};"></span>
-              <div class="chain-link-desc">
-                <span class="chain-link-name">Liaison 1 &rarr; 2 (Wagon 1 &rarr; Wagon 2)</span>
-                <code class="chain-link-code" style="color: ${colorLink2};">${hash1Short}... &middot; Verrouillé</code>
-              </div>
-            </div>
-
-            ${hasThirdWagon ? `
-              <div class="chain-link-item animate-fade">
-                <span class="contrast-swatch" style="background: ${colorLink3}; box-shadow: 0 0 8px ${colorLink3};"></span>
-                <div class="chain-link-desc">
-                  <span class="chain-link-name">Liaison 2 &rarr; 3 (Wagon 2 &rarr; Wagon 3)</span>
-                  <code class="chain-link-code" style="color: ${colorLink3};">${hash2Short}... &middot; Verrouillé</code>
-                </div>
-              </div>
-            ` : ''}
-          </div>
         </article>
 
         <article class="step-card action-card animate-fade">
@@ -494,12 +447,14 @@ export const step2 = {
           `}
         </article>
 
-        <article class="step-card keypoint-card animate-fade">
-          <h4 class="card-title keypoint-title">Point clé : L'effet domino inverse</h4>
-          <p class="keypoint-text">
-            Chaque bloc dépend mathématiquement de son ancêtre. Pour falsifier un ancien bloc, un attaquant devrait obligatoirement recalculer et ré-atteler <strong>tous les wagons qui le suivent</strong> jusqu'au bout du convoi.
-          </p>
-        </article>
+        ${hasThirdWagon ? `
+          <article class="step-card keypoint-card animate-fade">
+            <h4 class="card-title keypoint-title">Point clé : L'effet domino inverse</h4>
+            <p class="keypoint-text">
+              Chaque bloc dépend mathématiquement de son ancêtre. Pour falsifier un ancien bloc, un attaquant devrait obligatoirement recalculer et ré-atteler <strong>tous les wagons qui le suivent</strong> jusqu'au bout du convoi.
+            </p>
+          </article>
+        ` : ''}
 
         <nav class="step-nav-bar animate-fade">
           <button id="btn-step2-action-prev" class="btn-panel-ghost">
