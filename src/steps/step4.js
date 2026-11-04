@@ -65,47 +65,6 @@ export const step4 = {
     [2, 3]  // Gare C - Gare D (diagonale Sud-Ouest -> Nord-Est)
   ],
 
-  /**
-   * Joue un carillon ferroviaire doux à 2 tons via l'API Web Audio native.
-   */
-  playStationChime() {
-    try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      if (!this.audioCtx) this.audioCtx = new AudioCtx();
-      if (this.audioCtx.state === 'suspended') {
-        this.audioCtx.resume();
-      }
-      const now = this.audioCtx.currentTime;
-
-      // Note 1 (La4 - 440 Hz)
-      const osc1 = this.audioCtx.createOscillator();
-      const gain1 = this.audioCtx.createGain();
-      osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(440, now);
-      gain1.gain.setValueAtTime(0.05, now);
-      gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
-      osc1.connect(gain1);
-      gain1.connect(this.audioCtx.destination);
-      osc1.start(now);
-      osc1.stop(now + 0.35);
-
-      // Note 2 (Do#5 - 554 Hz)
-      const osc2 = this.audioCtx.createOscillator();
-      const gain2 = this.audioCtx.createGain();
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(554.37, now + 0.14);
-      gain2.gain.setValueAtTime(0.05, now + 0.14);
-      gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
-      osc2.connect(gain2);
-      gain2.connect(this.audioCtx.destination);
-      osc2.start(now + 0.14);
-      osc2.stop(now + 0.55);
-    } catch (e) {
-      // Ignorer si les permissions audio bloquent
-    }
-  },
-
   init(context) {
     this.ctx = context;
   },
