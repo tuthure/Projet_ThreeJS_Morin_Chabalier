@@ -94,20 +94,25 @@ export const step2 = {
       const wagons = trainConvoy?.getWagonMeshes() || [];
 
       if (loco0 && loco0.rearRingMaterial) {
-        loco0.rearRingMaterial.color.setHex(0x00f3ff);
-        loco0.rearRingMaterial.emissive.setHex(0x0284c7);
+        loco0.rearRingMaterial.color.copy(loco0.colorHash);
+        loco0.rearRingMaterial.emissive.copy(loco0.colorHash);
         loco0.rearRingMaterial.emissiveIntensity = pulse;
       }
 
       wagons.forEach((wagon) => {
         if (wagon.frontRingMaterial) {
-          wagon.frontRingMaterial.color.setHex(0x00f3ff);
-          wagon.frontRingMaterial.emissive.setHex(0x0284c7);
+          wagon.frontRingMaterial.color.copy(wagon.colorPrevHash);
+          wagon.frontRingMaterial.emissive.copy(wagon.colorPrevHash);
           wagon.frontRingMaterial.emissiveIntensity = pulse;
         }
+        if (wagon.rearRingMaterial) {
+          wagon.rearRingMaterial.color.copy(wagon.colorHash);
+          wagon.rearRingMaterial.emissive.copy(wagon.colorHash);
+          wagon.rearRingMaterial.emissiveIntensity = pulse;
+        }
         if (wagon.couplerBeamMaterial) {
-          wagon.couplerBeamMaterial.color.setHex(0x00f3ff);
-          wagon.couplerBeamMaterial.emissive.setHex(0x10b981);
+          wagon.couplerBeamMaterial.color.copy(wagon.colorPrevHash);
+          wagon.couplerBeamMaterial.emissive.copy(wagon.colorPrevHash);
           wagon.couplerBeamMaterial.emissiveIntensity = pulse;
         }
         if (wagon.couplerGroup && wagon.defaultCouplerPosition) {
@@ -259,11 +264,11 @@ export const step2 = {
           <div class="action-feedback-box success">
             <div class="feedback-row">
               <span class="feedback-label">Prise (${parentLabel}) :</span>
-              <span class="feedback-val">Cyan (${parentHash.substring(0, 10)}...)</span>
+              <span class="feedback-val">${parentHash.substring(0, 14)}...</span>
             </div>
             <div class="feedback-row">
               <span class="feedback-label">Crochet (${childLabel}) :</span>
-              <span class="feedback-val">Cyan (${childPrev.substring(0, 10)}...)</span>
+              <span class="feedback-val">${childPrev.substring(0, 14)}...</span>
             </div>
             <div class="feedback-row">
               <span class="feedback-label">État du verrou :</span>

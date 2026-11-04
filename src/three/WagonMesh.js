@@ -638,20 +638,20 @@ export class WagonMesh extends THREE.Group {
     if (this.badges.center.canvas) {
       const c = this.badges.center.canvas;
       const ctx = c.getContext('2d');
-      ctx.fillStyle = this.isValid ? '#071524' : '#2b0707';
+      ctx.fillStyle = '#071524';
       ctx.fillRect(0, 0, c.width, c.height);
 
       // Bordure externe selon la couleur cryptographique du hash
-      ctx.strokeStyle = this.isValid ? hashHex : '#ef4444';
+      ctx.strokeStyle = hashHex;
       ctx.lineWidth = 10;
       ctx.strokeRect(5, 5, c.width - 10, c.height - 10);
 
       // Bandeau d'en-tete
-      ctx.fillStyle = this.isValid ? 'rgba(56, 189, 248, 0.12)' : 'rgba(239, 68, 68, 0.15)';
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.12)';
       ctx.fillRect(10, 10, c.width - 20, 60);
 
       // Titre principal
-      ctx.fillStyle = this.isValid ? (isGenesis ? '#fbbf24' : '#38bdf8') : '#f87171';
+      ctx.fillStyle = isGenesis ? '#fbbf24' : '#38bdf8';
       ctx.font = 'bold 32px monospace';
       const label = isGenesis
         ? 'BLOC #0 [GENESIS]'
@@ -680,13 +680,13 @@ export class WagonMesh extends THREE.Group {
       ctx.fillText('EMPREINTE HASH (SHA-256) :', 24, 150);
 
       // Valeur du HASH (en grand et coloree avec l empreinte cryptographique)
-      ctx.fillStyle = this.isValid ? hashHex : '#fca5a5';
+      ctx.fillStyle = hashHex;
       ctx.font = 'bold 28px monospace';
       const hashShort = this.block.hash.substring(0, 18);
       ctx.fillText(`${hashShort}...`, 24, 196);
 
       // Pastille cryptographique temoin de concordance visuelle
-      ctx.fillStyle = this.isValid ? hashHex : '#ef4444';
+      ctx.fillStyle = hashHex;
       ctx.beginPath();
       ctx.arc(c.width - 48, 188, 16, 0, Math.PI * 2);
       ctx.fill();
@@ -701,10 +701,10 @@ export class WagonMesh extends THREE.Group {
     if (this.badges.prev.canvas) {
       const c = this.badges.prev.canvas;
       const ctx = c.getContext('2d');
-      ctx.fillStyle = this.isValid ? '#071524' : '#2b0707';
+      ctx.fillStyle = '#071524';
       ctx.fillRect(0, 0, c.width, c.height);
 
-      ctx.strokeStyle = this.isValid ? prevHex : '#ef4444';
+      ctx.strokeStyle = prevHex;
       ctx.lineWidth = 8;
       ctx.strokeRect(4, 4, c.width - 8, c.height - 8);
 
@@ -714,7 +714,7 @@ export class WagonMesh extends THREE.Group {
       ctx.fillText('PREVIOUS HASH :', 20, 48);
 
       // Valeur du previousHash
-      ctx.fillStyle = this.isValid ? prevHex : '#f87171';
+      ctx.fillStyle = prevHex;
       ctx.font = 'bold 26px monospace';
       if (isGenesis) {
         ctx.fillText('0000000000000000', 20, 94);
@@ -804,6 +804,14 @@ export class WagonMesh extends THREE.Group {
   updateStatus(isValid) {
     this.isValid = isValid;
 
+    // Recalcule toujours les teintes deterministes derivees des hashs
+    if (this.block) {
+      const hexHash = hashToColorHex(this.block.hash);
+      const hexPrev = hashToColorHex(this.block.previousHash || '0000000000000000');
+      this.colorHash.set(hexHash);
+      this.colorPrevHash.set(hexPrev);
+    }
+
     if (isValid) {
       // 1. Conteneurs aux couleurs d'origine
       this.containerMaterials.forEach((mat) => {
@@ -851,48 +859,50 @@ export class WagonMesh extends THREE.Group {
         this.couplerBeamMaterial.emissiveIntensity = 1.6;
       }
     } else {
-      // 1. Conteneurs en alerte rouge
+      // 1. Conteneurs : conserver l'apparence normale sans les teinter en rouge
       this.containerMaterials.forEach((mat) => {
-        mat.emissive.setHex(0xef4444);
-        mat.emissiveIntensity = 0.65;
+        mat.emissive.setHex(0x000000);
+        mat.emissiveIntensity = 0;
       });
 
-      // 2. Verriere en alerte rouge
+      // 2. Verriere : conserver l'aspect protecteur cyan normal
       this.glassMaterials.forEach((mat) => {
-        mat.color.setHex(0xef4444);
-        mat.opacity = 0.55;
+        mat.color.setHex(0x38bdf8);
+        mat.opacity = 0.28;
       });
       this.edgeMaterials.forEach((mat) => {
-        mat.color.setHex(0xf87171);
+        mat.color.setHex(0x38bdf8);
       });
 
-      // 3. Balise de toit rouge
+      // 3. Seule la balise / lumiere au-dessus passe au rouge d'alerte
       if (this.beaconMaterial) {
         this.beaconMaterial.color.setHex(0xef4444);
         this.beaconMaterial.emissive.setHex(0xdc2626);
-        this.beaconMaterial.emissiveIntensity = 2.0;
+        this.beaconMaterial.emissiveIntensity = 2.4;
       }
 
-      // 4. Anneau arriere vire au rouge d'alerte
+      // 4. Anneau arriere : conserve la couleur de son hash propre
       if (this.rearRingMaterial) {
-        this.rearRingMaterial.color.setHex(0xef4444);
-        this.rearRingMaterial.emissive.setHex(0xdc2626);
-        this.rearRingMaterial.emissiveIntensity = 1.8;
+        this.rearRingMaterial.color.copy(this.colorHash);
+        this.rearRingMaterial.emissive.copy(this.colorHash);
+        this.rearRingMaterial.emissiveIntensity = 1.4;
       }
 
-      // 5. Rupture physique de l'attelage
+      // 5. Anneau avant et attelage : conservent la couleur de leur previousHash attendu
       if (this.frontRingMaterial) {
-        this.frontRingMaterial.color.setHex(0x7f1d1d);
-        this.frontRingMaterial.emissive.setHex(0x7f1d1d);
+        this.frontRingMaterial.color.copy(this.colorPrevHash);
+        this.frontRingMaterial.emissive.copy(this.colorPrevHash);
+        this.frontRingMaterial.emissiveIntensity = 1.4;
       }
 
+      // Décrochage physique de l'attelage en cas d'invalidation
       if (this.couplerGroup && this.couplerBeamMaterial) {
         this.couplerGroup.position.y = this.defaultCouplerPosition.y - 0.22;
         this.couplerGroup.rotation.z = 0.18;
 
-        this.couplerBeamMaterial.color.setHex(0x7f1d1d);
-        this.couplerBeamMaterial.emissive.setHex(0x7f1d1d);
-        this.couplerBeamMaterial.emissiveIntensity = 0.2;
+        this.couplerBeamMaterial.color.copy(this.colorPrevHash);
+        this.couplerBeamMaterial.emissive.copy(this.colorPrevHash);
+        this.couplerBeamMaterial.emissiveIntensity = 0.8;
       }
     }
 

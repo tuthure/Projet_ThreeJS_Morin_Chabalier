@@ -116,8 +116,9 @@ export class Blockchain {
   }
 
   /**
-   * Altere deliberement les donnees d'un bloc sans recalculer son hash.
-   * Simule une falsification malveillante des transactions d'un wagon.
+   * Altere deliberement les donnees d'un bloc et recalcule son hash.
+   * La modification du chargement produit une nouvelle empreinte (effet avalanche),
+   * rendant automatiquement le previousHash du bloc suivant faux et obsolete.
    * @param {number} index - Index du bloc a falsifier.
    * @param {any} newData - Nouvelles donnees falsifiees.
    * @returns {Block|null}
@@ -130,6 +131,7 @@ export class Blockchain {
 
     const targetBlock = this.chain[index];
     targetBlock.data = newData;
+    targetBlock.hash = targetBlock.calculateHash();
     return targetBlock;
   }
 }

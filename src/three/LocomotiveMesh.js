@@ -457,17 +457,17 @@ export class LocomotiveMesh extends THREE.Group {
     const ctx = c.getContext('2d');
     const hashHex = `#${this.colorHash.getHexString()}`;
 
-    ctx.fillStyle = this.isValid ? '#071524' : '#2b0707';
+    ctx.fillStyle = '#071524';
     ctx.fillRect(0, 0, c.width, c.height);
 
-    ctx.strokeStyle = this.isValid ? hashHex : '#ef4444';
+    ctx.strokeStyle = hashHex;
     ctx.lineWidth = 10;
     ctx.strokeRect(5, 5, c.width - 10, c.height - 10);
 
-    ctx.fillStyle = this.isValid ? 'rgba(56, 189, 248, 0.16)' : 'rgba(239, 68, 68, 0.18)';
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.16)';
     ctx.fillRect(10, 10, c.width - 20, 60);
 
-    ctx.fillStyle = this.isValid ? '#fbbf24' : '#f87171';
+    ctx.fillStyle = '#fbbf24';
     ctx.font = 'bold 30px monospace';
     ctx.fillText('LOCOMOTIVE // BLOC #0', 24, 50);
 
@@ -487,7 +487,7 @@ export class LocomotiveMesh extends THREE.Group {
     ctx.fillText('SCEAU HASH (ORIGINE) :', 24, 150);
 
     const hashStr = this.block ? this.block.hash : '0000a89f41b2c3d4';
-    ctx.fillStyle = this.isValid ? hashHex : '#ef4444';
+    ctx.fillStyle = hashHex;
     ctx.font = 'bold 24px monospace';
     ctx.fillText(`${hashStr.substring(0, 22)}...`, 24, 188);
 
@@ -559,25 +559,25 @@ export class LocomotiveMesh extends THREE.Group {
       }
     } else {
       this.bodyMaterials.forEach((mat) => {
-        mat.emissive.setHex(0x450a0a);
-        mat.emissiveIntensity = 0.35;
+        mat.emissive.setHex(0x000000);
+        mat.emissiveIntensity = 0;
       });
 
       if (this.beaconMaterial) {
         this.beaconMaterial.color.setHex(0xef4444);
         this.beaconMaterial.emissive.setHex(0xdc2626);
-        this.beaconMaterial.emissiveIntensity = 2.2;
+        this.beaconMaterial.emissiveIntensity = 2.4;
       }
 
       if (this.rearRingMaterial) {
-        this.rearRingMaterial.color.setHex(0xfacc15);
-        this.rearRingMaterial.emissive.setHex(0xeab308);
-        this.rearRingMaterial.emissiveIntensity = 2.4;
+        this.rearRingMaterial.color.copy(this.colorHash);
+        this.rearRingMaterial.emissive.copy(this.colorHash);
+        this.rearRingMaterial.emissiveIntensity = 1.5;
       }
 
       if (this.headlightSpot) {
-        this.headlightSpot.intensity = 1.2;
-        this.headlightSpot.color.setHex(0xf87171);
+        this.headlightSpot.intensity = 4.0;
+        this.headlightSpot.color.setHex(0xfffbeb);
       }
     }
 
