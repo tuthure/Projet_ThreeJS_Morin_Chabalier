@@ -2,18 +2,19 @@ import * as THREE from 'three';
 
 /**
  * Étape 6 : Comparaison des consensus (PoW vs PoS).
- * Métaphore : Comparer la surchauffe mécanique de la locomotive (Preuve de Travail / PoW)
- * avec un portique d'aiguillage par tirage au sort pondéré selon les billets déposés en caution
- * par les gares (Preuve d'Enjeu / PoS).
+ * Métaphore : Chaque gare du réseau veut proposer et atteler le prochain wagon.
+ * - Preuve de Travail (PoW) : Course de puissance thermique pour trouver le Nonce.
+ * - Preuve d'Enjeu (PoS) : Aiguillage tirant au sort une gare selon ses billets mis en caution (Stake).
  */
 export const step6 = {
   id: 6,
-  title: 'Comparaison des consensus (PoW vs PoS)',
+  title: 'Qui a le droit d\'atteler le prochain wagon ?',
   ctx: null,
 
   rafId: null,
   mode: 'pow', // 'pow' ou 'pos'
-  selectedValidatorIndex: 0,
+  selectedValidatorIndex: 2, // Par défaut : Gare de Montpellier (14%)
+  powExampleText: 'La gare de Béziers a trouvé après 35 000 essais',
 
   consensusGroup: null,
   powGroup: null,
@@ -25,9 +26,9 @@ export const step6 = {
   selectionBeam: null,
 
   validatorData: [
-    { name: 'Gare Alpha', stake: 50, prob: '50%', x: -0.5, z: -3.2 },
-    { name: 'Gare Bêta', stake: 35, prob: '35%', x: 2.5, z: -3.2 },
-    { name: 'Gare Gamma', stake: 15, prob: '15%', x: 5.5, z: -3.2 }
+    { name: 'Gare de Béziers', shortName: 'gare de Béziers', stake: 50, prob: '50%', x: -0.5, z: -3.2 },
+    { name: 'Gare de Nîmes', shortName: 'gare de Nîmes', stake: 36, prob: '36%', x: 2.5, z: -3.2 },
+    { name: 'Gare de Montpellier', shortName: 'gare de Montpellier', stake: 14, prob: '14%', x: 5.5, z: -3.2 }
   ],
 
   init(context) {
@@ -38,7 +39,8 @@ export const step6 = {
     const { trainConvoy, cameraController, environment } = this.ctx;
 
     this.mode = 'pow';
-    this.selectedValidatorIndex = 0;
+    this.selectedValidatorIndex = 2; // Gare de Montpellier (14% des billets misés)
+    this.powExampleText = 'La gare de Béziers a trouvé après 35 000 essais';
 
     if (cameraController) {
       cameraController.setViewOffset(210);
@@ -50,8 +52,8 @@ export const step6 = {
 
     if (trainConvoy) {
       trainConvoy.resetConvoy([
-        { emetteur: 'Arthur', destinataire: 'Alban', montant: 15, unite: 'MMI-Coin' },
-        { emetteur: 'Alban', destinataire: 'Equipe-R507', montant: 30, unite: 'MMI-Coin' }
+        '50 caisses de matériel',
+        'Bon de livraison #402 - Quai Central'
       ]);
       if (cameraController) {
         cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
@@ -95,9 +97,42 @@ export const step6 = {
   },
 
   /**
+   * Crée une étiquette 3D (Sprite) au-dessus d'une gare validatrice en mode PoS.
+   * @param {string} title
+   * @param {string} subtitle
+   */
+  createValidatorLabelSprite(title, subtitle) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 320;
+    canvas.height = 96;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(4, 4, 312, 88);
+    ctx.fillRect(4, 4, 312, 88);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 22px "Segoe UI", Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(title, 160, 38);
+
+    ctx.fillStyle = '#facc15';
+    ctx.font = 'bold 18px Consolas, monospace';
+    ctx.fillText(subtitle, 160, 70);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(2.4, 0.72, 1);
+    return sprite;
+  },
+
+  /**
    * Construit les deux dispositifs 3D :
    * - powGroup : effets de surchauffe thermique sur la locomotive
-   * - posGroup : portique d'aiguillage et 3 gares validatrices avec piles de billets/jetons (Stake)
+   * - posGroup : portique d'aiguillage et 3 gares validatrices avec piles de billets en caution (Stake)
    */
   buildConsensusScene() {
     const { scene } = this.ctx;
@@ -157,7 +192,7 @@ export const step6 = {
       this.powSmoke.push(puff);
     }
 
-    // --- 2. DISPOSITIF PoS (Aiguillage écologique & Caution de jetons) ---
+    // --- 2. DISPOSITIF PoS (Aiguillage & Billets déposés en caution) ---
     const gantryMat = new THREE.MeshStandardMaterial({
       color: 0x1e293b,
       metalness: 0.8,
@@ -189,7 +224,7 @@ export const step6 = {
     this.posGroup.add(hubMesh);
     this.posHub = hubMesh;
 
-    // 3 Gares validatrices avec piles de jetons (Stake)
+    // 3 Gares validatrices avec piles de billets en caution (Stake)
     const platformGeo = new THREE.CylinderGeometry(0.85, 0.95, 0.18, 20);
     const platformMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 });
     const coinGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.12, 16);
@@ -201,9 +236,10 @@ export const step6 = {
       const platform = new THREE.Mesh(platformGeo, platformMat);
       vGroup.add(platform);
 
+      const isSelected = idx === this.selectedValidatorIndex;
       const ringGeo = new THREE.RingGeometry(0.88, 1.04, 24);
       const ringMat = new THREE.MeshBasicMaterial({
-        color: idx === 0 ? 0x10b981 : 0x38bdf8,
+        color: isSelected ? 0x10b981 : 0x38bdf8,
         side: THREE.DoubleSide
       });
       const ring = new THREE.Mesh(ringGeo, ringMat);
@@ -211,8 +247,8 @@ export const step6 = {
       ring.position.y = 0.1;
       vGroup.add(ring);
 
-      // Empilement de jetons proportionnel à la mise (Stake)
-      const coinCount = Math.round(v.stake / 5);
+      // Empilement proportionnel aux billets déposés en caution (Stake)
+      const coinCount = Math.max(2, Math.round(v.stake / 5));
       const coinMat = new THREE.MeshStandardMaterial({
         color: 0xfacc15,
         emissive: 0xb45309,
@@ -230,14 +266,18 @@ export const step6 = {
       // Balise sommitale
       const beaconGeo = new THREE.SphereGeometry(0.18, 12, 12);
       const beaconMat = new THREE.MeshStandardMaterial({
-        color: idx === 0 ? 0x10b981 : 0x38bdf8,
-        emissive: idx === 0 ? 0x059669 : 0x0284c7,
-        emissiveIntensity: idx === 0 ? 2.4 : 0.8
+        color: isSelected ? 0x10b981 : 0x38bdf8,
+        emissive: isSelected ? 0x059669 : 0x0284c7,
+        emissiveIntensity: isSelected ? 2.4 : 0.8
       });
       const topY = 0.25 + coinCount * 0.15 + 0.25;
       const beacon = new THREE.Mesh(beaconGeo, beaconMat);
       beacon.position.y = topY;
       vGroup.add(beacon);
+
+      const labelSprite = this.createValidatorLabelSprite(v.name, `Caution : ${v.prob} des billets`);
+      labelSprite.position.y = topY + 0.65;
+      vGroup.add(labelSprite);
 
       this.posGroup.add(vGroup);
       this.validators.push({
@@ -249,9 +289,10 @@ export const step6 = {
     });
 
     // Faisceau d'aiguillage reliant le portique à la gare tirée au sort
+    const initialTarget = this.validators[this.selectedValidatorIndex].topWorldPos.clone();
     const beamPoints = [
       new THREE.Vector3(1.9, 3.1, 0),
-      this.validators[0].topWorldPos.clone()
+      initialTarget
     ];
     const beamGeo = new THREE.BufferGeometry().setFromPoints(beamPoints);
     const beamMat = new THREE.LineBasicMaterial({ color: 0x10b981, linewidth: 2 });
@@ -264,21 +305,23 @@ export const step6 = {
   },
 
   /**
-   * Bascule entre l'affichage Preuve de Travail (PoW) et Preuve d'Enjeu (PoS).
+   * Sélectionne l'onglet PoW ou PoS.
+   * @param {'pow'|'pos'} targetMode
    */
-  toggleMode() {
-    this.mode = this.mode === 'pow' ? 'pos' : 'pow';
+  setMode(targetMode) {
+    if (this.mode === targetMode) return;
+    this.mode = targetMode;
     this.applyModeVisuals();
     this.renderLeftPanel();
   },
 
   /**
-   * Tire au sort une gare validatrice en mode PoS selon sa mise en caution (Stake).
+   * Tire au sort une gare validatrice en mode PoS selon ses billets en caution (Stake).
    */
   drawRandomValidator() {
     const r = Math.random() * 100;
     if (r < 50) this.selectedValidatorIndex = 0;
-    else if (r < 85) this.selectedValidatorIndex = 1;
+    else if (r < 86) this.selectedValidatorIndex = 1;
     else this.selectedValidatorIndex = 2;
 
     this.updateValidatorHighlight();
@@ -425,68 +468,73 @@ export const step6 = {
     const isPoW = this.mode === 'pow';
     const currentValidator = this.validatorData[this.selectedValidatorIndex];
 
+    const tabDetailHTML = isPoW
+      ? `
+        <div class="action-feedback-box error" style="margin-top: 8px;">
+          <div class="feedback-row">
+            <span class="feedback-label">Ce qui compte :</span>
+            <span class="feedback-val">La puissance de calcul. Les gares font chauffer leurs machines thermiques pour trouver le Nonce.</span>
+          </div>
+          <div class="feedback-row">
+            <span class="feedback-label">Gagnante :</span>
+            <span class="feedback-val hash-val">Celle qui a la plus grosse machine va plus vite et a plus de chances. (Ex: "${this.powExampleText}").</span>
+          </div>
+          <div class="feedback-row">
+            <span class="feedback-label">Si elle triche :</span>
+            <span class="feedback-val error-val">Les autres gares refusent son wagon, tout son charbon/électricité a été brûlé pour rien.</span>
+          </div>
+        </div>
+      `
+      : `
+        <button id="btn-step6-draw" class="btn-panel-primary" style="margin-top: 4px; margin-bottom: 6px;">
+          <span>Tirer au sort une gare (Aiguillage PoS)</span>
+        </button>
+
+        <div class="action-feedback-box success">
+          <div class="feedback-row">
+            <span class="feedback-label">Ce qui compte :</span>
+            <span class="feedback-val">La mise sous séquestre (Stake). Les gares déposent des billets en caution. Chaque billet est un ticket de loterie.</span>
+          </div>
+          <div class="feedback-row">
+            <span class="feedback-label">Gagnante :</span>
+            <span class="feedback-val success-val">Un aiguillage tire au sort. (Ex: "La ${currentValidator.shortName}, avec ${currentValidator.prob} des billets misés, est tirée au sort"). Un seul tirage, presque aucun calcul.</span>
+          </div>
+          <div class="feedback-row">
+            <span class="feedback-label">Si elle triche :</span>
+            <span class="feedback-val error-val">Les autres gares refusent le wagon et la tricheuse perd tous les billets mis en caution.</span>
+          </div>
+        </div>
+      `;
+
     inner.innerHTML = `
       <header class="step-panel-header">
-        <h2 class="step-panel-title">Consensus : PoW vs PoS</h2>
+        <h2 class="step-panel-title">Qui a le droit d'atteler le prochain wagon ?</h2>
+        <p class="step-panel-subtitle">Chaque gare du réseau veut proposer le prochain wagon. Comment choisir sans chef de gare ?</p>
       </header>
 
       <div class="step-panel-scroll">
-        <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Force de calcul ou mise sous séquestre ?</h3>
-          <p>
-            Le <strong>consensus</strong> est la règle permettant au réseau de désigner qui a le droit d'atteler le prochain wagon :
-          </p>
-          <p>
-            En <strong>Preuve de Travail (PoW)</strong>, les locomotives rivalisent de puissance thermique. En <strong>Preuve d'Enjeu (PoS)</strong>, un aiguillage tire au sort une gare en fonction des billets déposés en caution (<strong>Stake</strong>).
-          </p>
-        </article>
-
         <article class="step-card action-card animate-fade">
-          <h3 class="card-title">Comparateur interactif de consensus</h3>
+          <h3 class="card-title">Comparateur interactif : PoW vs PoS</h3>
           <p class="card-instruction">
-            Basculez entre les deux mécanismes pour comparer leur fonctionnement en 3D :
+            Sélectionnez un mécanisme de consensus pour observer comment le réseau désigne la gare gagnante :
           </p>
 
-          <button id="btn-step6-toggle" class="btn-panel-primary">
-            <span>Basculer l'affichage (${isPoW ? 'Passer en PoS' : 'Passer en PoW'})</span>
-          </button>
-
-          ${!isPoW ? `
-            <button id="btn-step6-draw" class="btn-panel-ghost" style="width: 100%;">
-              <span>Tirer au sort une gare validatrice (Aiguillage PoS)</span>
+          <div class="difficulty-selector-row" role="tablist" aria-label="Choix du mécanisme de consensus">
+            <button id="btn-tab-pow" class="btn-diff-option ${isPoW ? 'active' : ''}" role="tab" aria-selected="${isPoW}">
+              <span>PoW (Preuve de Travail)</span>
             </button>
-          ` : ''}
-
-          <div class="action-feedback-box ${isPoW ? 'error' : 'success'}">
-            <div class="feedback-row">
-              <span class="feedback-label">Mécanisme actif :</span>
-              <span class="feedback-val">${isPoW ? 'Proof of Work (PoW)' : 'Proof of Stake (PoS)'}</span>
-            </div>
-            <div class="feedback-row">
-              <span class="feedback-label">Ressource engagée :</span>
-              <span class="feedback-val">${isPoW ? 'Énergie et calcul matériel' : 'Caution de jetons (Stake)'}</span>
-            </div>
-            <div class="feedback-row">
-              <span class="feedback-label">Coût énergétique :</span>
-              <span class="feedback-val ${isPoW ? 'error-val' : 'success-val'}">
-                ${isPoW ? 'Très élevé (Surchauffe)' : 'Très faible (-99.9% d\'énergie)'}
-              </span>
-            </div>
-            <div class="feedback-row">
-              <span class="feedback-label">${isPoW ? 'Sélection :' : 'Gare tirée au sort :'}</span>
-              <span class="feedback-val">
-                ${isPoW ? '1er à trouver le Nonce' : `${currentValidator.name} (${currentValidator.stake} jetons)`}
-              </span>
-            </div>
+            <button id="btn-tab-pos" class="btn-diff-option ${!isPoW ? 'active' : ''}" role="tab" aria-selected="${!isPoW}">
+              <span>PoS (Preuve d'Enjeu)</span>
+            </button>
           </div>
+
+          ${tabDetailHTML}
         </article>
 
         <article class="step-card keypoint-card animate-fade">
-          <h4 class="card-title keypoint-title">Point clé</h4>
+          <h4 class="card-title keypoint-title">Bilan final</h4>
           <p class="keypoint-text">
-            ${isPoW
-              ? "La Preuve de Travail (ex: Bitcoin) offre une sécurité éprouvée par la dépense électrique réelle, mais au prix d'une consommation énergétique considérable."
-              : "La Preuve d'Enjeu (ex: Ethereum) remplace la dépense électrique par une caution financière : si la gare tirée au sort valide une fraude, sa caution est confisquée (Slashing)."}
+            La Preuve de Travail est ultra-sécurisée mais très gourmande en énergie (ex: Bitcoin). La Preuve d'Enjeu est sobre, mais favorise les gares les plus riches (ex: Ethereum).
           </p>
         </article>
 
@@ -504,8 +552,12 @@ export const step6 = {
   },
 
   setupEvents() {
-    document.getElementById('btn-step6-toggle')?.addEventListener('click', () => {
-      this.toggleMode();
+    document.getElementById('btn-tab-pow')?.addEventListener('click', () => {
+      this.setMode('pow');
+    });
+
+    document.getElementById('btn-tab-pos')?.addEventListener('click', () => {
+      this.setMode('pos');
     });
 
     document.getElementById('btn-step6-draw')?.addEventListener('click', () => {

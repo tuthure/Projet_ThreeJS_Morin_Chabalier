@@ -109,19 +109,38 @@ export class Block {
    * @returns {string} Empreinte SHA-256 du bloc.
    */
   calculateHash() {
-    const rawPayload = `${this.index}${this.previousHash}${this.timestamp}${JSON.stringify(this.data)}${this.nonce}`;
+    const salt = this._miningSalt || '';
+    const rawPayload = `${this.index}${this.previousHash}${this.timestamp}${JSON.stringify(this.data)}${salt}${this.nonce}`;
     return sha256Sync(rawPayload);
   }
 
   /**
    * Methode utilitaire pour miner le bloc avec une difficulte donnee (zeros initiaux).
+   * Ajoute un tres leger timestamp et une variable aleatoire invisible juste avant le while
+   * pour que la recherche du Nonce donne un resultat different a chaque execution.
    * @param {number} difficulty - Nombre de zeros requis en tete du hash.
+   * @returns {{ nonce: number, attempts: number, hash: string }}
    */
   mineBlock(difficulty) {
     const targetPrefix = '0'.repeat(difficulty);
+    this._miningSalt = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    this.nonce = 0;
+    let attempts = 0;
+    this.hash = this.calculateHash();
+
     while (this.hash.substring(0, difficulty) !== targetPrefix) {
       this.nonce++;
+      attempts++;
       this.hash = this.calculateHash();
     }
+
+    // Compte au minimum 1 essai si le nonce initial etait deja valide
+    if (attempts === 0) attempts = 1;
+
+    return {
+      nonce: this.nonce,
+      attempts,
+      hash: this.hash
+    };
   }
 }

@@ -65,6 +65,20 @@ export class Blockchain {
   }
 
   /**
+   * Mine le dernier bloc de la chaine selon la difficulte demandee.
+   * @param {number} difficulty - Nombre de zeros requis en debut de hash (1, 2 ou 3).
+   * @returns {{ nonce: number, attempts: number, hash: string, block: Block }}
+   */
+  mineLatestBlock(difficulty = 1) {
+    const latestBlock = this.getLatestBlock();
+    const res = latestBlock.mineBlock(difficulty);
+    return {
+      ...res,
+      block: latestBlock
+    };
+  }
+
+  /**
    * Verifie l'integrite globale de la blockchain.
    * @returns {boolean} Vrai si l'integralite du convoi est valide.
    */
