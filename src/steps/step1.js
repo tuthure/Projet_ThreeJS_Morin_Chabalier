@@ -556,13 +556,21 @@ export const step1 = {
         </article>
 
         <article class="step-card keypoint-card animate-fade">
-          <h4 class="card-title keypoint-title">Point clé : La recette de l'empreinte</h4>
+          <h4 class="card-title keypoint-title">Point clé : Une empreinte 100 % déterministe</h4>
           <p class="keypoint-text">
-            L'empreinte unique du wagon (son <strong>Hash</strong>, qui colore son étiquette centrale et sa prise arrière) est calculée mathématiquement en combinant les trois premiers éléments :
+            Le Hash n'est pas un tirage au sort aléatoire. C'est le résultat d'un calcul mathématique (la fonction de hachage SHA-256) qui prend les 3 ingrédients en entrée :
           </p>
           <div class="block-formula-box">
-            <span>PreviousHash</span> + <span>Transactions</span> + <span>Nonce</span> &rarr; <strong style="color: ${colorHash};">Hash du Bloc</strong>
+            <div class="formula-func">
+              <strong>Hash</strong> = SHA-256( <span style="color: ${colorPrev}">PreviousHash</span> + <span style="color: ${colorCargo}">Transactions</span> + <span style="color: ${colorNonce}">Nonce</span> )
+            </div>
+            <div class="formula-example">
+              SHA-256( "<code>${prevShort}</code>" + "<code>15 MMI-Coin</code>" + "<code>${nonceVal}</code>" ) = <strong style="color: ${colorHash}"><code>${hashShort}...</code></strong>
+            </div>
           </div>
+          <p class="keypoint-subtext">
+            N'importe quel ordinateur ou gare du réseau qui effectue ce calcul obtiendra <strong>exactement la même empreinte</strong>. Si une seule lettre change dans la parenthèse, le résultat en sortie change du tout au tout (effet avalanche).
+          </p>
         </article>
 
         <nav class="step-nav-bar animate-fade">

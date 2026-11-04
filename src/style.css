@@ -2055,14 +2055,40 @@ body {
 }
 
 .block-formula-box {
-  margin-top: 10px;
-  padding: 10px 12px;
+  margin: 10px 0;
+  padding: 12px 14px;
   border-radius: 8px;
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.formula-func {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.74rem;
-  color: #cbd5e1;
-  text-align: center;
+  font-size: 0.76rem;
+  color: #f1f5f9;
   line-height: 1.5;
+}
+
+.formula-example {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  padding-top: 6px;
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+  line-height: 1.5;
+}
+
+.formula-example code {
+  color: #e2e8f0;
+}
+
+.keypoint-subtext {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: #cbd5e1;
+  margin: 8px 0 0 0;
 }
