@@ -1922,6 +1922,10 @@ body {
   color: #facc15;
 }
 
+.contrast-status.match {
+  color: #10b981;
+}
+
 .contrast-summary {
   font-size: 0.76rem;
   line-height: 1.45;
