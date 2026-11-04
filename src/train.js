@@ -33,9 +33,9 @@ export class TrainConvoy {
     this.group = new THREE.Group();
     this.scene.add(this.group);
 
-    // Locomotive de tete tractant le convoi (moteur de consensus)
-    this.locomotiveMesh = new LocomotiveMesh({ spacing: this.spacing });
-    this.locomotiveMesh.position.set(-this.spacing, 0, 0);
+    // Locomotive de tete incarnant le Bloc #0 (Genesis)
+    this.locomotiveMesh = new LocomotiveMesh(this.blockchain.chain[0], { spacing: this.spacing });
+    this.locomotiveMesh.position.set(0, 0, 0);
     this.group.add(this.locomotiveMesh);
   }
 
@@ -44,10 +44,15 @@ export class TrainConvoy {
    * @param {Array<any>} initialBlocks - Donnees des wagons a inserer a la suite du Genesis.
    */
   init(initialBlocks = []) {
-    // Sauvegarde des donnees du wagon Genesis (#0)
+    // Sauvegarde des donnees du wagon Genesis (#0 - Locomotive)
     this.originalDataBackup.set(0, JSON.parse(JSON.stringify(this.blockchain.chain[0].data)));
+    if (this.locomotiveMesh) {
+      this.locomotiveMesh.block = this.blockchain.chain[0];
+      this.locomotiveMesh.userData.blockData = this.blockchain.chain[0];
+      this.locomotiveMesh.updateStatus(true);
+    }
 
-    // Ajout et sauvegarde des blocs supplementaires
+    // Ajout et sauvegarde des blocs supplementaires (Wagons #1, #2...)
     initialBlocks.forEach((data) => {
       const block = this.blockchain.addBlock(data);
       this.originalDataBackup.set(block.index, JSON.parse(JSON.stringify(data)));
@@ -83,28 +88,33 @@ export class TrainConvoy {
     const chain = this.blockchain.chain;
     const validityList = this.blockchain.getBlockValidityList();
 
-    // 1. Instanciation des nouveaux wagons manquants
-    for (let i = this.wagonMeshes.length; i < chain.length; i++) {
+    // 1. Instanciation des nouveaux wagons manquants (les blocs d'index >= 1 sont des wagons)
+    // wagonMeshes[0] est vide ou on utilise wagonMeshes indexé sur block.index :
+    // Pour rester intuitif : wagonMeshes contient les wagons d'indice 1..N
+    // Index i du bloc = i * spacing sur l'axe X (Bloc 0 = Locomotive à X=0, Wagon 1 à X=3.8, etc.)
+    for (let i = this.wagonMeshes.length + 1; i < chain.length; i++) {
       const block = chain[i];
       const wagon = new WagonMesh(block, { spacing: this.spacing });
 
-      // Alignement du convoi le long de l'axe X (le train grandit vers les X positifs, de gauche a droite)
+      // Alignement du convoi le long de l'axe X (Wagon 1 est à 1 * spacing = 3.8)
       wagon.position.set(i * this.spacing, 0, 0);
 
       this.group.add(wagon);
       this.wagonMeshes.push(wagon);
     }
 
-    // 2. Propagation des etats de validite a chaque wagon 3D et a la locomotive
-    for (let i = 0; i < this.wagonMeshes.length; i++) {
-      const wagon = this.wagonMeshes[i];
-      const isValid = validityList[i] ?? false;
-      wagon.updateStatus(isValid);
+    // 2. Propagation des etats de validite a la locomotive (Bloc 0) et a chaque wagon (Blocs >= 1)
+    const isGenesisValid = validityList[0] ?? true;
+    if (this.locomotiveMesh) {
+      this.locomotiveMesh.block = chain[0];
+      this.locomotiveMesh.updateStatus(isGenesisValid);
     }
 
-    const isAllValid = validityList.every((val) => val === true);
-    if (this.locomotiveMesh) {
-      this.locomotiveMesh.updateStatus(isAllValid);
+    for (let i = 0; i < this.wagonMeshes.length; i++) {
+      const wagon = this.wagonMeshes[i];
+      const blockIndex = i + 1;
+      const isValid = validityList[blockIndex] ?? false;
+      wagon.updateStatus(isValid);
     }
 
     // 3. Notification d'ecouteur d'evenements
@@ -133,11 +143,13 @@ export class TrainConvoy {
 
   /**
    * Retourne une instance de WagonMesh par son index ordinal.
+   * Index 0 = Locomotive (Bloc 0), Index >= 1 = WagonMesh correspondant.
    * @param {number} index - Index du bloc/wagon recherche.
-   * @returns {WagonMesh|undefined}
+   * @returns {WagonMesh|LocomotiveMesh|undefined}
    */
   getWagon(index) {
-    return this.wagonMeshes[index];
+    if (index === 0) return this.locomotiveMesh;
+    return this.wagonMeshes[index - 1];
   }
 
   /**
@@ -150,12 +162,17 @@ export class TrainConvoy {
   }
 
   /**
-   * Calcule les coordonnees mondiales du centre d'un wagon.
-   * @param {number} index - Index du wagon.
+   * Calcule les coordonnees mondiales du centre d'un wagon ou de la locomotive.
+   * @param {number} index - Index du wagon/bloc (0 = Locomotive).
    * @returns {THREE.Vector3}
    */
   getWagonPosition(index) {
-    const wagon = this.wagonMeshes[index];
+    if (index === 0 && this.locomotiveMesh) {
+      const pos = new THREE.Vector3();
+      this.locomotiveMesh.getWorldPosition(pos);
+      return pos;
+    }
+    const wagon = this.wagonMeshes[index - 1];
     if (wagon) {
       const pos = new THREE.Vector3();
       wagon.getWorldPosition(pos);
@@ -165,13 +182,13 @@ export class TrainConvoy {
   }
 
   /**
-   * Barycentre du train complet (Locomotive + Wagons) pour la vue d'ensemble.
+   * Barycentre du train complet (Locomotive Bloc 0 + Wagons) pour la vue d'ensemble.
    * @returns {THREE.Vector3}
    */
   getTrainCenter() {
-    const count = this.wagonMeshes.length;
-    const minX = -this.spacing;
-    const maxX = count > 0 ? (count - 1) * this.spacing : 0;
+    const totalBlocks = this.blockchain.chain.length;
+    const minX = 0;
+    const maxX = totalBlocks > 1 ? (totalBlocks - 1) * this.spacing : 0;
     const centerX = (minX + maxX) / 2;
     return new THREE.Vector3(centerX, 0.4, 0);
   }

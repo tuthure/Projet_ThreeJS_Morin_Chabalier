@@ -49,7 +49,7 @@ export const step2 = {
       environment.setSpeed(0);
     }
 
-    // 1. Initialise le convoi avec Wagon 0 (Genesis) et Wagon 1
+    // 1. Initialise le convoi avec la Locomotive (Genesis #0) et le Wagon 1
     if (trainConvoy) {
       trainConvoy.resetConvoy([
         '50 caisses de matériel'
@@ -109,20 +109,20 @@ export const step2 = {
     const loop = () => {
       const { trainConvoy } = this.ctx;
       const wagon1 = trainConvoy?.getWagon(1);
-      const wagon0 = trainConvoy?.getWagon(0);
+      const loco0 = trainConvoy?.getWagon(0);
       const time = performance.now() * 0.003;
       const isRestoring = performance.now() < this.restoreWaveUntil;
 
-      if (wagon1 && wagon0) {
+      if (wagon1 && loco0) {
         if (!this.isBroken) {
           // --- ÉTAT VALIDE & INTACT ---
           const pulse = isRestoring ? (3.2 + Math.sin(time * 10) * 0.8) : (1.5 + Math.sin(time * 4) * 0.35);
 
-          // Anneau arrière du Wagon 0 : Cyan (Hash d'origine)
-          if (wagon0.rearRingMaterial) {
-            wagon0.rearRingMaterial.color.setHex(0x00f3ff);
-            wagon0.rearRingMaterial.emissive.setHex(0x0284c7);
-            wagon0.rearRingMaterial.emissiveIntensity = pulse;
+          // Anneau arrière de la Locomotive (Bloc Genesis #0) : Cyan
+          if (loco0.rearRingMaterial) {
+            loco0.rearRingMaterial.color.setHex(0x00f3ff);
+            loco0.rearRingMaterial.emissive.setHex(0x0284c7);
+            loco0.rearRingMaterial.emissiveIntensity = pulse;
           }
 
           // Anneau avant du Wagon 1 : Cyan (PreviousHash concordant)
@@ -152,11 +152,11 @@ export const step2 = {
         } else {
           // --- ÉTAT ALTÉRÉ / RUPTURE (CAUSE VISUELLE EXPLICITE) ---
 
-          // 1. L'anneau arrière du Wagon 0 devient JAUNE CORROMPU (nouveau hash calculé divergent)
-          if (wagon0.rearRingMaterial) {
-            wagon0.rearRingMaterial.color.setHex(0xfacc15);
-            wagon0.rearRingMaterial.emissive.setHex(0xeab308);
-            wagon0.rearRingMaterial.emissiveIntensity = 2.4;
+          // 1. L'anneau arrière de la Locomotive devient JAUNE CORROMPU (nouveau hash calculé divergent)
+          if (loco0.rearRingMaterial) {
+            loco0.rearRingMaterial.color.setHex(0xfacc15);
+            loco0.rearRingMaterial.emissive.setHex(0xeab308);
+            loco0.rearRingMaterial.emissiveIntensity = 2.4;
           }
 
           // 2. L'anneau avant du Wagon 1 reste en CYAN (il exige toujours l'ancienne empreinte)
@@ -243,9 +243,11 @@ export const step2 = {
 
     this.isBroken = true;
 
-    // Altère les données du premier wagon
+    // Altère les données de la locomotive (Bloc #0 Genesis)
     trainConvoy.corruptBlock(0, {
-      marchandises: '50 caisses piratées (falsification)'
+      type: 'GENESIS_CORROMPU',
+      label: 'Tentative de falsification',
+      transactions: 9999
     });
 
     this.renderLeftPanel();
@@ -315,11 +317,11 @@ export const step2 = {
         <article class="step-card context-card animate-fade">
           <h3 class="card-title">L'attelage magnétique</h3>
           <p>
-            Le wagon 0, appelé Bloc Genesis (le tout premier wagon fondateur du réseau), est relié au wagon 1 par un faisceau d'énergie magnétique.
+            La locomotive (Bloc #0 Genesis) est reliée au wagon 1 par un faisceau d'énergie magnétique.
           </p>
           <p>
-            Le verrouillage ne peut se faire que si l'anneau émetteur du wagon précédent transmet exactement la signature
-            attendue par le crochet récepteur du wagon suivant.
+            Le verrouillage ne peut se faire que si l'anneau émetteur de la locomotive transmet exactement la signature
+            attendue par le crochet récepteur du wagon 1.
           </p>
         </article>
 
@@ -331,7 +333,7 @@ export const step2 = {
 
           <div class="action-feedback-box success">
             <div class="feedback-row">
-              <span class="feedback-label">Anneau arrière (Wagon 0) :</span>
+              <span class="feedback-label">Prise arrière (Locomotive #0) :</span>
               <span class="feedback-val" style="color: #38bdf8;">Cyan (${wagon0Hash.substring(0, 14)}...)</span>
             </div>
             <div class="feedback-row">
@@ -361,10 +363,10 @@ export const step2 = {
         <article class="step-card context-card animate-fade">
           <h3 class="card-title">Simulation d'une falsification</h3>
           <p>
-            Si un attaquant modifie une marchandise dans le wagon 0 (le Bloc Genesis fondateur), son empreinte de sortie change aussitôt.
+            Si un attaquant modifie les paramètres dans la locomotive (le Bloc Genesis fondateur), son empreinte de sortie change aussitôt.
           </p>
           <p>
-            Observez la scène 3D : son anneau arrière passe au <strong>jaune</strong>, alors que le wagon suivant attend toujours du <strong>cyan</strong>.
+            Observez la scène 3D : son anneau arrière passe au <strong>jaune</strong>, alors que le wagon 1 attend toujours du <strong>cyan</strong>.
             Cette discordance entraîne le décrochage mécanique de l'attelage et l'alerte rouge de toute la suite du train.
           </p>
         </article>
@@ -374,19 +376,19 @@ export const step2 = {
           <p class="card-instruction">
             ${this.isBroken
               ? 'L\'attelage s\'est décroché : l\'anneau jaune ne s\'adapte pas au crochet cyan !'
-              : 'Cliquez pour falsifier les données du Wagon 0 et observer la rupture :'}
+              : 'Cliquez pour falsifier les données de la locomotive (Bloc #0) et observer la rupture :'}
           </p>
 
           ${!this.isBroken
             ? `
               <button id="btn-corrupt-wagon0" class="btn-panel-danger">
-                <span>Altérer les marchandises du wagon 0</span>
+                <span>Altérer le Bloc Genesis (Locomotive)</span>
               </button>
             `
             : `
               <div class="action-feedback-box error">
                 <div class="feedback-row">
-                  <span class="feedback-label">Anneau de sortie (Wagon 0) :</span>
+                  <span class="feedback-label">Anneau de sortie (Locomotive #0) :</span>
                   <span class="feedback-val" style="color: #facc15; font-weight: 700;">Jaune (Hash modifié)</span>
                 </div>
                 <div class="feedback-row">
@@ -424,39 +426,30 @@ export const step2 = {
 
     inner.innerHTML = `
       <header class="step-panel-header">
-        <div class="step-panel-header-top">
-          <span class="substep-progress-indicator">Partie 2.${this.subStep + 1} sur 2</span>
-        </div>
         <h2 class="step-panel-title">Chaînage Cryptographique</h2>
-        <p class="step-panel-subtitle">L'attelage invisible qui lie les blocs pour l'éternité</p>
-
-        <!-- Stepper horizontal cliquable à 2 sous-parties -->
-        <div class="substep-stepper" role="tablist" aria-label="Sous-parties de l'étape 2">
-          <button class="substep-pill ${this.subStep === 0 ? 'active' : 'completed'}" data-substep="0">
-            <span class="substep-num">2.1</span>
-            <span class="substep-label">Attelage</span>
-          </button>
-          <button class="substep-pill ${this.subStep === 1 ? 'active' : ''}" data-substep="1">
-            <span class="substep-num">2.2</span>
-            <span class="substep-label">Rupture & Avalanche</span>
-          </button>
-        </div>
       </header>
 
       <div class="step-panel-scroll">
         ${subStepContentHTML}
 
-        <!-- Barre de navigation inférieure -->
-        <div class="step-nav-bar panel-footer-nav">
-          <button id="btn-step2-prev-sub" class="btn-panel-ghost">
-            <span>&larr; ${this.subStep === 0 ? 'Étape 1' : 'Précédent'}</span>
-          </button>
-
-          <button id="btn-step2-next-sub" class="btn-panel-primary">
-            <span>${this.subStep === 1 ? 'Étape 3 : Immuabilité' : 'Partie suivante'}</span>
-            <span class="btn-arrow">&rarr;</span>
-          </button>
-        </div>
+        ${this.subStep === 0 ? `
+          <div class="substep-action-box animate-fade">
+            <button id="btn-step2-action-avalanche" class="btn-panel-primary">
+              <span>Tester une falsification</span>
+              <span class="btn-arrow">&rarr;</span>
+            </button>
+          </div>
+        ` : `
+          <div class="substep-action-box animate-fade">
+            <button id="btn-step2-action-coupler" class="btn-panel-ghost">
+              <span>&larr; Revoir l'attelage sain</span>
+            </button>
+            <button id="btn-step2-action-next" class="btn-panel-primary">
+              <span>Étape 3 : Immuabilité</span>
+              <span class="btn-arrow">&rarr;</span>
+            </button>
+          </div>
+        `}
       </div>
     `;
 
@@ -468,30 +461,17 @@ export const step2 = {
    * Attache les écouteurs d'interaction sur le volet gauche.
    */
   setupEvents() {
-    // 1. Clics sur les pilules du stepper horizontal
-    const pills = document.querySelectorAll('.substep-stepper .substep-pill');
-    pills.forEach((pill) => {
-      pill.addEventListener('click', () => {
-        const targetSub = parseInt(pill.dataset.substep);
-        if (!isNaN(targetSub)) {
-          this.goToSubStep(targetSub);
-        }
-      });
+    // Navigation intégrée au tutoriel
+    document.getElementById('btn-step2-action-avalanche')?.addEventListener('click', () => {
+      this.goToSubStep(1);
     });
 
-    // 2. Navigation bas de volet (Précédent / Suivant)
-    document.getElementById('btn-step2-prev-sub')?.addEventListener('click', () => {
-      if (this.subStep > 0) {
-        this.goToSubStep(this.subStep - 1);
-      } else if (typeof this.ctx.onPrevStep === 'function') {
-        this.ctx.onPrevStep();
-      }
+    document.getElementById('btn-step2-action-coupler')?.addEventListener('click', () => {
+      this.goToSubStep(0);
     });
 
-    document.getElementById('btn-step2-next-sub')?.addEventListener('click', () => {
-      if (this.subStep < 1) {
-        this.goToSubStep(this.subStep + 1);
-      } else if (typeof this.ctx.onNextStep === 'function') {
+    document.getElementById('btn-step2-action-next')?.addEventListener('click', () => {
+      if (typeof this.ctx.onNextStep === 'function') {
         this.ctx.onNextStep();
       }
     });

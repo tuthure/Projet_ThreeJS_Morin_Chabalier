@@ -736,7 +736,8 @@ body {
   color: #ffffff;
   letter-spacing: -0.02em;
   line-height: 1.25;
-  margin-bottom: 4px;
+  margin: 0;
+  text-align: center;
 }
 
 .step-panel-subtitle {

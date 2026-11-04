@@ -41,27 +41,16 @@ export const step4 = {
     inner.className = 'step-panel-inner';
     inner.innerHTML = `
         <header class="step-panel-header">
-          <div class="step-panel-header-top">
-            <span class="substep-progress-indicator">Vue générale</span>
-          </div>
           <h2 class="step-panel-title">La Décentralisation</h2>
-          <p class="step-panel-subtitle">Une copie identique dans chaque gare</p>
         </header>
         <div class="step-panel-scroll">
           <article class="step-card context-card">
             <h3 class="card-title">Pas de chef de gare unique</h3>
             <p>Il n'existe aucun serveur central ni autorité centrale. Chaque nœud participant au réseau possède la copie conforme et synchronisée de l'ensemble des wagons du convoi.</p>
           </article>
-          <div class="step-actions-row panel-footer-nav">
-            <button id="btn-step4-prev" class="btn-step-action secondary">&larr; Étape 3</button>
-            <button id="btn-step4-next" class="btn-step-action primary">Étape 5 &rarr;</button>
-          </div>
         </div>
     `;
 
     panel.prepend(inner);
-
-    document.getElementById('btn-step4-prev')?.addEventListener('click', () => this.ctx.onPrevStep?.());
-    document.getElementById('btn-step4-next')?.addEventListener('click', () => this.ctx.onNextStep?.());
   }
 };

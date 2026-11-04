@@ -102,12 +102,7 @@ trainConvoy.init([]);
 // 6. Controleur de Camera et Interactions
 // ============================================================================
 const cameraController = new CameraController(camera, renderer.domElement, (blockData) => {
-  if (blockData?.isLocomotive) {
-    if (sidebarEl) {
-      sidebarEl.classList.remove('open');
-      sidebarEl.setAttribute('aria-hidden', 'true');
-    }
-  } else if (typeof blockData?.index === 'number') {
+  if (typeof blockData?.index === 'number') {
     selectWagon(blockData.index, false);
   }
 });
@@ -196,7 +191,7 @@ function applyViewAngle(viewMode = 'quarter', wagonIndex = inspectedBlockIndex, 
  * @param {boolean} [animateCam=true] - Declencher le mouvement de camera.
  */
 function selectWagon(index, animateCam = true) {
-  const total = trainConvoy.wagonMeshes.length;
+  const total = trainConvoy.blockchain.chain.length;
   if (index < 0 || index >= total) return;
 
   inspectedBlockIndex = index;
@@ -211,8 +206,8 @@ function selectWagon(index, animateCam = true) {
 }
 
 function updateWagonNavButtons() {
-  const total = (typeof trainConvoy !== 'undefined' && trainConvoy?.wagonMeshes)
-    ? trainConvoy.wagonMeshes.length
+  const total = (typeof trainConvoy !== 'undefined' && trainConvoy?.blockchain?.chain)
+    ? trainConvoy.blockchain.chain.length
     : 0;
   if (btnWagonPrev) btnWagonPrev.disabled = inspectedBlockIndex <= 0;
   if (btnWagonNext) btnWagonNext.disabled = total > 0 ? (inspectedBlockIndex >= total - 1) : true;
@@ -228,7 +223,7 @@ if (btnWagonPrev) {
 
 if (btnWagonNext) {
   btnWagonNext.addEventListener('click', () => {
-    if (inspectedBlockIndex < trainConvoy.wagonMeshes.length - 1) {
+    if (inspectedBlockIndex < trainConvoy.blockchain.chain.length - 1) {
       selectWagon(inspectedBlockIndex + 1, true);
     }
   });
@@ -241,7 +236,7 @@ function openInspectionSidebar(block) {
   if (!block) return;
   inspectedBlockIndex = block.index;
 
-  const wagonLabel = block.index === 0 ? 'Wagon #0 (Bloc Genesis)' : `Wagon #${block.index} (Bloc #${block.index})`;
+  const wagonLabel = block.index === 0 ? 'Locomotive (Bloc #0 Genesis)' : `Wagon #${block.index} (Bloc #${block.index})`;
   if (sidebarTitleEl) sidebarTitleEl.textContent = wagonLabel;
 
   if (fieldIndex) fieldIndex.value = block.index;

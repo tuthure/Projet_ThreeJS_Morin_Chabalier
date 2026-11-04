@@ -47,7 +47,7 @@ export const step1 = {
       environment.setSpeed(0);
     }
 
-    // 1. Initialise le convoi avec Wagon 0 (Genesis) et Wagon 1 (Bloc standard)
+    // 1. Initialise le convoi avec la Locomotive (Genesis #0) et le Wagon #1 (Bloc standard)
     if (trainConvoy) {
       trainConvoy.resetConvoy([
         '50 caisses de matériel'
@@ -273,7 +273,7 @@ export const step1 = {
             Son contenu est résumé par une empreinte numérique unique de 64 caractères (le Hash SHA-256), qui agit comme un sceau de cire inviolable : si le contenu change, l'empreinte change du tout au tout.
           </p>
           <p>
-            Sur la face avant, la plaque PreviousHash recopie l'empreinte du wagon précédent, assurant l'ancrage solide dans la chaîne.
+            Sur la face avant, la plaque PreviousHash recopie l'empreinte de la locomotive (Bloc #0), assurant l'ancrage solide dans la chaîne.
           </p>
         </article>
 
@@ -376,39 +376,30 @@ export const step1 = {
 
     inner.innerHTML = `
       <header class="step-panel-header">
-        <div class="step-panel-header-top">
-          <span class="substep-progress-indicator">Partie 1.${this.subStep + 1} sur 1.2</span>
-        </div>
         <h2 class="step-panel-title">Structure du Bloc</h2>
-        <p class="step-panel-subtitle">Anatomie d'un wagon : fret, empreinte et verrouillage</p>
-
-        <!-- Stepper horizontal cliquable à 2 sous-parties -->
-        <div class="substep-stepper" role="tablist" aria-label="Sous-parties de l'étape 1">
-          <button class="substep-pill ${this.subStep === 0 ? 'active' : 'completed'}" data-substep="0">
-            <span class="substep-num">1.1</span>
-            <span class="substep-label">Transactions & Hash</span>
-          </button>
-          <button class="substep-pill ${this.subStep === 1 ? 'active' : ''}" data-substep="1">
-            <span class="substep-num">1.2</span>
-            <span class="substep-label">Molette Nonce</span>
-          </button>
-        </div>
       </header>
 
       <div class="step-panel-scroll">
         ${subStepContentHTML}
 
-        <!-- Barre de navigation inférieure -->
-        <div class="step-nav-bar panel-footer-nav">
-          <button id="btn-step1-prev-sub" class="btn-panel-ghost">
-            <span>&larr; ${this.subStep === 0 ? 'Intro' : 'Précédent'}</span>
-          </button>
-
-          <button id="btn-step1-next-sub" class="btn-panel-primary">
-            <span>${this.subStep === 1 ? 'Étape 2 : Le Chaînage' : 'Partie suivante'}</span>
-            <span class="btn-arrow">&rarr;</span>
-          </button>
-        </div>
+        ${this.subStep === 0 ? `
+          <div class="substep-action-box animate-fade">
+            <button id="btn-step1-action-nonce" class="btn-panel-primary">
+              <span>Observer la molette du Nonce</span>
+              <span class="btn-arrow">&rarr;</span>
+            </button>
+          </div>
+        ` : `
+          <div class="substep-action-box animate-fade">
+            <button id="btn-step1-action-trans" class="btn-panel-ghost">
+              <span>&larr; Revenir au chargement</span>
+            </button>
+            <button id="btn-step1-action-next" class="btn-panel-primary">
+              <span>Étape 2 : Le Chaînage</span>
+              <span class="btn-arrow">&rarr;</span>
+            </button>
+          </div>
+        `}
       </div>
     `;
 
@@ -420,30 +411,17 @@ export const step1 = {
    * Attache les écouteurs d'interaction sur le volet gauche.
    */
   setupEvents() {
-    // 1. Clics sur les pilules du stepper horizontal
-    const pills = document.querySelectorAll('.substep-stepper .substep-pill');
-    pills.forEach((pill) => {
-      pill.addEventListener('click', () => {
-        const targetSub = parseInt(pill.dataset.substep);
-        if (!isNaN(targetSub)) {
-          this.goToSubStep(targetSub);
-        }
-      });
+    // Navigation intégrée au tutoriel
+    document.getElementById('btn-step1-action-nonce')?.addEventListener('click', () => {
+      this.goToSubStep(1);
     });
 
-    // 2. Navigation bas de volet (Précédent / Suivant)
-    document.getElementById('btn-step1-prev-sub')?.addEventListener('click', () => {
-      if (this.subStep > 0) {
-        this.goToSubStep(this.subStep - 1);
-      } else if (typeof this.ctx.onPrevStep === 'function') {
-        this.ctx.onPrevStep();
-      }
+    document.getElementById('btn-step1-action-trans')?.addEventListener('click', () => {
+      this.goToSubStep(0);
     });
 
-    document.getElementById('btn-step1-next-sub')?.addEventListener('click', () => {
-      if (this.subStep < 1) {
-        this.goToSubStep(this.subStep + 1);
-      } else if (typeof this.ctx.onNextStep === 'function') {
+    document.getElementById('btn-step1-action-next')?.addEventListener('click', () => {
+      if (typeof this.ctx.onNextStep === 'function') {
         this.ctx.onNextStep();
       }
     });

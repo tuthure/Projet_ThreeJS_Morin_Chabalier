@@ -474,8 +474,8 @@ export class Environment {
       }
 
       // 6. Panache de vapeur sortant de la cheminée
-      // Position réelle de la cheminée : X = -4.7 (-3.8 locomotive - 0.9 cheminée), Y = 1.38, Z = 0
-      const chimneyX = -4.7;
+      // Position réelle de la cheminée : X = -0.9 (locomotive à X = 0 + cheminée à X = -0.9), Y = 1.38, Z = 0
+      const chimneyX = -0.9;
       const chimneyY = 1.38;
 
       for (let i = 0; i < this.steamParticles.length; i++) {
@@ -508,7 +508,7 @@ export class Environment {
       }
     } else {
       // Train à l'arrêt : légère volute verticale douce
-      const chimneyX = -4.7;
+      const chimneyX = -0.9;
       const chimneyY = 1.38;
       for (let i = 0; i < this.steamParticles.length; i++) {
         const puff = this.steamParticles[i];

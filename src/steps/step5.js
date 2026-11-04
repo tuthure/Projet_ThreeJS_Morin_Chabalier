@@ -42,27 +42,16 @@ export const step5 = {
     inner.className = 'step-panel-inner';
     inner.innerHTML = `
         <header class="step-panel-header">
-          <div class="step-panel-header-top">
-            <span class="substep-progress-indicator">Vue générale</span>
-          </div>
           <h2 class="step-panel-title">Le Minage (PoW)</h2>
-          <p class="step-panel-subtitle">La course mathématique pour sceller le bloc</p>
         </header>
         <div class="step-panel-scroll">
           <article class="step-card context-card">
             <h3 class="card-title">Comment scelle-t-on un nouveau wagon ?</h3>
             <p>Les validateurs (mineurs) testent des millions de combinaisons sur la molette (le Nonce) jusqu'à trouver celle qui produit un sceau respectant la règle de difficulté imposée par le protocole.</p>
           </article>
-          <div class="step-actions-row panel-footer-nav">
-            <button id="btn-step5-prev" class="btn-step-action secondary">&larr; Étape 4</button>
-            <button id="btn-step5-next" class="btn-step-action primary">Étape 6 &rarr;</button>
-          </div>
         </div>
     `;
 
     panel.prepend(inner);
-
-    document.getElementById('btn-step5-prev')?.addEventListener('click', () => this.ctx.onPrevStep?.());
-    document.getElementById('btn-step5-next')?.addEventListener('click', () => this.ctx.onNextStep?.());
   }
 };

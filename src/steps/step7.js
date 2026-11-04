@@ -40,27 +40,16 @@ export const step7 = {
     inner.className = 'step-panel-inner';
     inner.innerHTML = `
         <header class="step-panel-header">
-          <div class="step-panel-header-top">
-            <span class="substep-progress-indicator">Vue générale</span>
-          </div>
           <h2 class="step-panel-title">Cycle de Vie & Attaque</h2>
-          <p class="step-panel-subtitle">De l'émission à l'inviolabilité</p>
         </header>
         <div class="step-panel-scroll">
           <article class="step-card context-card">
             <h3 class="card-title">Du colis sur le quai jusqu'au convoi</h3>
             <p>Une transaction attend d'abord dans une salle d'embarquement (mempool), puis est chargée dans un wagon, scellée par un mineur et validée par le reste du réseau.</p>
           </article>
-          <div class="step-actions-row panel-footer-nav">
-            <button id="btn-step7-prev" class="btn-step-action secondary">&larr; Étape 6</button>
-            <button id="btn-step7-restart" class="btn-step-action primary">Recommencer &rarr;</button>
-          </div>
         </div>
     `;
 
     panel.prepend(inner);
-
-    document.getElementById('btn-step7-prev')?.addEventListener('click', () => this.ctx.onPrevStep?.());
-    document.getElementById('btn-step7-restart')?.addEventListener('click', () => this.ctx.onGoToStep?.(1));
   }
 };

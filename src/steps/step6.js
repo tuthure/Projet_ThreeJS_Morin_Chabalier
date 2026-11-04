@@ -40,27 +40,16 @@ export const step6 = {
     inner.className = 'step-panel-inner';
     inner.innerHTML = `
         <header class="step-panel-header">
-          <div class="step-panel-header-top">
-            <span class="substep-progress-indicator">Vue générale</span>
-          </div>
           <h2 class="step-panel-title">PoW contre PoS</h2>
-          <p class="step-panel-subtitle">Deux philosophies de scellement</p>
         </header>
         <div class="step-panel-scroll">
           <article class="step-card context-card">
             <h3 class="card-title">Calcul ou mise sous séquestre ?</h3>
             <p>La preuve de travail utilise de l'énergie pour faire tourner la molette, tandis que la preuve d'enjeu confie le scellement à des validateurs bloquant des fonds en caution.</p>
           </article>
-          <div class="step-actions-row panel-footer-nav">
-            <button id="btn-step6-prev" class="btn-step-action secondary">&larr; Étape 5</button>
-            <button id="btn-step6-next" class="btn-step-action primary">Étape 7 &rarr;</button>
-          </div>
         </div>
     `;
 
     panel.prepend(inner);
-
-    document.getElementById('btn-step6-prev')?.addEventListener('click', () => this.ctx.onPrevStep?.());
-    document.getElementById('btn-step6-next')?.addEventListener('click', () => this.ctx.onNextStep?.());
   }
 };

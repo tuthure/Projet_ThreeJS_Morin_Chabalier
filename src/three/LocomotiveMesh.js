@@ -1,21 +1,28 @@
 import * as THREE from 'three';
+import { hashToColorHex } from './WagonMesh.js';
 
 /**
- * Represente la locomotive a vapeur et moteur de consensus du convoi ferroviaire.
- * Metaphore : La motrice qui tire le train represente le moteur de la blockchain :
- * - Le protocole reseau P2P
- * - La force motrice du consensus
- * - Le scellement initial qui tracte l'integralite des wagons de transactions.
+ * Represente la locomotive tractant le convoi et incarnant le Bloc 0 (Genesis).
+ * Metaphore : La motrice qui tire le train represente le bloc d'origine de la blockchain :
+ * - Le protocole reseau et le moteur de consensus
+ * - Le Bloc Genesis (#0) portant le premier sceau cryptographique
+ * - L'attelage arriere distribuant l'empreinte initiale au wagon 1.
  */
 export class LocomotiveMesh extends THREE.Group {
   /**
+   * @param {object} [block=null] - Instance du bloc logique Genesis (#0).
    * @param {object} [options={}]
    * @param {number} [options.spacing=3.8] - Intervalle longitudinal d'attelage.
    */
-  constructor(options = {}) {
+  constructor(block = null, options = {}) {
     super();
+    this.block = block;
     this.spacing = options.spacing || 3.8;
     this.isValid = true;
+
+    // Empreinte chromatique du Bloc Genesis
+    const hexHash = this.block ? hashToColorHex(this.block.hash) : '#38bdf8';
+    this.colorHash = new THREE.Color(hexHash);
 
     // References de materiaux pour reactions d'etat (alerte / normal)
     this.bodyMaterials = [];
@@ -25,8 +32,17 @@ export class LocomotiveMesh extends THREE.Group {
     this.headlightLens = null;
     this.rods = [];
 
-    // Metadonnees pour l'interaction
+    // Badges et plaques d'identification du Bloc Genesis
+    this.badges = {
+      center: { canvas: null, texture: null }
+    };
+    this.platesGroup = null;
+
+    // Metadonnees pour l'interaction et la selection
     this.userData.isLocomotive = true;
+    if (this.block) {
+      this.userData.blockData = this.block;
+    }
 
     // Construction procedurale complete de la motrice ferroviaire pure
     this.buildChassis();
@@ -37,7 +53,9 @@ export class LocomotiveMesh extends THREE.Group {
     this.buildHeadlight();
     this.buildRearSocket();
     this.buildStatusBeacon();
+    this.buildPlates();
 
+    this.renderPlates();
     this.updateStatus(true);
   }
 
@@ -390,8 +408,8 @@ export class LocomotiveMesh extends THREE.Group {
     // Anneau de prise d'attelage arriere (Ancrage Genesis)
     const ringGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.08, 24);
     this.rearRingMaterial = new THREE.MeshStandardMaterial({
-      color: 0xf59e0b,
-      emissive: 0xf59e0b,
+      color: this.colorHash,
+      emissive: this.colorHash,
       emissiveIntensity: 1.5,
       metalness: 0.3,
       roughness: 0.2
@@ -400,6 +418,86 @@ export class LocomotiveMesh extends THREE.Group {
     ring.rotation.z = Math.PI / 2;
     ring.position.set(1.48, 0, 0);
     this.add(ring);
+  }
+
+  /**
+   * Construit la plaque d'identification du Bloc 0 (Genesis) sur le flanc de la chaudière.
+   */
+  buildPlates() {
+    this.platesGroup = new THREE.Group();
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 256;
+    this.badges.center.canvas = canvas;
+    const tex = new THREE.CanvasTexture(canvas);
+    this.badges.center.texture = tex;
+
+    const plateGeo = new THREE.PlaneGeometry(1.2, 0.6);
+    const plateMat = new THREE.MeshBasicMaterial({
+      map: tex,
+      transparent: true,
+      side: THREE.DoubleSide
+    });
+    const plate = new THREE.Mesh(plateGeo, plateMat);
+    // Positionnée sur le flanc droit visible (+Z) de la chaudière
+    plate.position.set(-0.35, 0.65, 0.64);
+    this.platesGroup.add(plate);
+
+    this.add(this.platesGroup);
+  }
+
+  /**
+   * Génère le graphisme de la plaque d'identification du Bloc Genesis (#0).
+   */
+  renderPlates() {
+    if (!this.badges.center.canvas) return;
+
+    const c = this.badges.center.canvas;
+    const ctx = c.getContext('2d');
+    const hashHex = `#${this.colorHash.getHexString()}`;
+
+    ctx.fillStyle = this.isValid ? '#071524' : '#2b0707';
+    ctx.fillRect(0, 0, c.width, c.height);
+
+    ctx.strokeStyle = this.isValid ? hashHex : '#ef4444';
+    ctx.lineWidth = 10;
+    ctx.strokeRect(5, 5, c.width - 10, c.height - 10);
+
+    ctx.fillStyle = this.isValid ? 'rgba(56, 189, 248, 0.16)' : 'rgba(239, 68, 68, 0.18)';
+    ctx.fillRect(10, 10, c.width - 20, 60);
+
+    ctx.fillStyle = this.isValid ? '#fbbf24' : '#f87171';
+    ctx.font = 'bold 30px monospace';
+    ctx.fillText('LOCOMOTIVE // BLOC #0', 24, 50);
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '16px monospace';
+    ctx.fillText('BLOC GENESIS DU CONVOI', 24, 98);
+
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.3)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(24, 114);
+    ctx.lineTo(c.width - 24, 114);
+    ctx.stroke();
+
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = 'bold 20px monospace';
+    ctx.fillText('SCEAU HASH (ORIGINE) :', 24, 150);
+
+    const hashStr = this.block ? this.block.hash : '0000a89f41b2c3d4';
+    ctx.fillStyle = this.isValid ? hashHex : '#ef4444';
+    ctx.font = 'bold 24px monospace';
+    ctx.fillText(`${hashStr.substring(0, 22)}...`, 24, 188);
+
+    ctx.fillStyle = '#64748b';
+    ctx.font = '16px monospace';
+    ctx.fillText('PREVIOUS: 0000000000000000', 24, 226);
+
+    if (this.badges.center.texture) {
+      this.badges.center.texture.needsUpdate = true;
+    }
   }
 
   /**
@@ -432,6 +530,11 @@ export class LocomotiveMesh extends THREE.Group {
   updateStatus(isValid) {
     this.isValid = isValid;
 
+    if (this.block) {
+      const hexHash = hashToColorHex(this.block.hash);
+      this.colorHash.set(hexHash);
+    }
+
     if (isValid) {
       this.bodyMaterials.forEach((mat) => {
         mat.emissive.setHex(0x000000);
@@ -445,8 +548,8 @@ export class LocomotiveMesh extends THREE.Group {
       }
 
       if (this.rearRingMaterial) {
-        this.rearRingMaterial.color.setHex(0xf59e0b);
-        this.rearRingMaterial.emissive.setHex(0xf59e0b);
+        this.rearRingMaterial.color.copy(this.colorHash);
+        this.rearRingMaterial.emissive.copy(this.colorHash);
         this.rearRingMaterial.emissiveIntensity = 1.5;
       }
 
@@ -467,9 +570,9 @@ export class LocomotiveMesh extends THREE.Group {
       }
 
       if (this.rearRingMaterial) {
-        this.rearRingMaterial.color.setHex(0x7f1d1d);
-        this.rearRingMaterial.emissive.setHex(0x7f1d1d);
-        this.rearRingMaterial.emissiveIntensity = 0.4;
+        this.rearRingMaterial.color.setHex(0xfacc15);
+        this.rearRingMaterial.emissive.setHex(0xeab308);
+        this.rearRingMaterial.emissiveIntensity = 2.4;
       }
 
       if (this.headlightSpot) {
@@ -477,6 +580,8 @@ export class LocomotiveMesh extends THREE.Group {
         this.headlightSpot.color.setHex(0xf87171);
       }
     }
+
+    this.renderPlates();
   }
 
   /**
