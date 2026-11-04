@@ -5,8 +5,8 @@ import { hashToColorHex } from '../three/WagonMesh.js';
  * Etape 3 : Immuabilite et detection de falsification.
  * Experience interactive d'alteration du chargement du Wagon #1 :
  * - Avant falsification : presentation sobre sans divulgacher les consequences visuelles.
- * - Apres falsification : comparaison par infobulles 3D sur le convoi (PreviousHash Bloc 1 intact,
- *   Hash calcule Bloc 1 modifie avec nouvelle couleur, PreviousHash Bloc 2 obsolete provoquant la rupture).
+ * - Apres falsification : comparaison par infobulles 3D sur le convoi (voyant jaune et Hash
+ *   recalcule sur le Wagon #1, rupture de l'attelage et voyant rouge sur le Wagon #2).
  */
 export const step3 = {
   id: 3,
@@ -20,7 +20,7 @@ export const step3 = {
   // Infobulles 3D projetees sur le convoi
   tooltipLayer: null,
   tooltipElements: new Map(),
-  activeSpotId: 'spot-w1-w2',
+  activeSpotId: 'spot-w1',
 
   /**
    * Initialise le module avec le contexte global de l'application.
@@ -40,7 +40,7 @@ export const step3 = {
 
     this.isBroken = false;
     this.restoreWaveUntil = 0;
-    this.activeSpotId = 'spot-w1-w2';
+    this.activeSpotId = 'spot-w1';
 
     if (cameraController) {
       cameraController.setViewOffset(210);
@@ -112,7 +112,7 @@ export const step3 = {
 
   /**
    * Genere les infobulles 3D comparatives une fois la fraude declenchee.
-   * Les etiquettes conservent une apparence sobre et neutre (non rouge).
+   * Cible uniquement le wagon modifie (voyant jaune) et l'attelage rompu (voyant rouge).
    */
   createComparativeTooltips() {
     if (!this.tooltipLayer) return;
@@ -122,30 +122,21 @@ export const step3 = {
 
     const spots = [
       {
-        id: 'spot-loco-w1',
-        pillClass: 'pill-neutral',
-        dotClass: 'dot-neutral',
-        label: 'Attelage 0 - 1 : Intact',
-        title: 'PreviousHash du Wagon #1 inchange',
-        text: 'Le Wagon #1 pointe toujours vers l\'empreinte de la Locomotive #0. Les deux anneaux partagent la meme couleur : l\'attelage reste solidement verrouille.',
-        getPos: () => new THREE.Vector3(1.9, 1.25, 0)
-      },
-      {
         id: 'spot-w1',
         pillClass: 'pill-neutral',
-        dotClass: 'dot-hash',
-        label: 'Wagon 1 : Hash recalcule',
-        title: 'Nouvelle empreinte du Wagon #1',
-        text: 'La modification de la transaction produit un hash SHA-256 different : l\'anneau arriere prend automatiquement la nouvelle couleur issue de ce hash.',
+        dotClass: 'dot-mismatch',
+        label: 'Wagon 1 : Signal jaune (Hash recalculé)',
+        title: 'Altération du Wagon #1',
+        text: 'Le voyant de toit passe au jaune : la modification des transactions recalcule le Hash SHA-256. L\'anneau arrière adopte la nouvelle couleur issue de ce hash.',
         getPos: () => new THREE.Vector3(3.8, 1.45, 0)
       },
       {
         id: 'spot-w1-w2',
         pillClass: 'pill-neutral',
-        dotClass: 'dot-mismatch',
-        label: 'Attelage 1 - 2 : Rompu',
+        dotClass: 'dot-neutral',
+        label: 'Attelage 1 - 2 : Rompu (Signal rouge)',
         title: 'Discordance avec le Wagon #2',
-        text: 'Le Wagon #2 conserve en memoire l\'ancienne empreinte. La discordance de couleur entre les anneaux illustre l\'incompatibilite et provoque le decrochage.',
+        text: 'Le Wagon #2 conserve l\'ancien hash dans son PreviousHash. La discordance de couleur provoque le décrochage mécanique et déclenche le voyant rouge.',
         getPos: () => new THREE.Vector3(5.7, 1.25, 0)
       }
     ];
@@ -287,10 +278,10 @@ export const step3 = {
             loco0.beaconMaterial.emissive.setHex(0x10b981);
             loco0.beaconMaterial.emissiveIntensity = 1.4;
           }
-          // Seule la lumiere au-dessus du Wagon 1 (falsifie) clignote en rouge
+          // Le voyant au-dessus du Wagon 1 (bloc altéré) passe au JAUNE d'avertissement
           if (wagon1.beaconMaterial) {
-            wagon1.beaconMaterial.color.setHex(0xef4444);
-            wagon1.beaconMaterial.emissive.setHex(0xdc2626);
+            wagon1.beaconMaterial.color.setHex(0xfacc15);
+            wagon1.beaconMaterial.emissive.setHex(0xeab308);
             wagon1.beaconMaterial.emissiveIntensity = alertPulse;
           }
           // La lumiere au-dessus du Wagon 2 (invalide par la rupture amont) clignote en rouge
@@ -375,6 +366,13 @@ export const step3 = {
     // 2. Synchronisation du convoi (le Wagon #2 constate la rupture de concordance)
     trainConvoy.sync();
 
+    // Le Wagon #1 prend son voyant jaune d'avertissement
+    if (wagon1?.beaconMaterial) {
+      wagon1.beaconMaterial.color.setHex(0xfacc15);
+      wagon1.beaconMaterial.emissive.setHex(0xeab308);
+      wagon1.beaconMaterial.emissiveIntensity = 2.0;
+    }
+
     // 3. Affichage des infobulles 3D comparatives
     this.createComparativeTooltips();
 
@@ -458,13 +456,10 @@ export const step3 = {
           <article class="step-card context-card animate-fade">
             <h3 class="card-title">L'intégrité d'un bloc scellé</h3>
             <p>
-              Dans le convoi, chaque wagon est relié à son prédécesseur grâce à son <em>PreviousHash</em>.
+              Dans le convoi, chaque wagon transporte des transactions scellées par son empreinte cryptographique (Hash).
             </p>
             <p>
-              Le <strong>Wagon #1</strong> est solidement attelé à la <strong>Locomotive #0</strong> car son <em>PreviousHash</em> correspond exactement au sceau de tête.
-            </p>
-            <p>
-              Que se passe-t-il si un fraudeur tente de modifier discrètement les marchandises à l'intérieur du <strong>Wagon #1</strong> ?
+              Que se passe-t-il si un fraudeur tente d'altérer les données enregistrées à l'intérieur du <strong>Wagon #1</strong> ?
             </p>
           </article>
 
@@ -476,42 +471,31 @@ export const step3 = {
           </div>
         ` : `
           <article class="step-card context-card animate-fade">
-            <h3 class="card-title">Comparaison des empreintes et rupture</h3>
+            <h3 class="card-title">Altération et rupture</h3>
             <p>
-              Consultez les infobulles sur le convoi pour comparer ce qui a changé :
+              Consultez les infobulles sur le convoi pour observer les conséquences :
             </p>
 
             <div class="comparison-cards-list">
-              <div id="card-spot-loco-w1" class="comparison-card">
-                <div class="comparison-header">
-                  <span class="comparison-dot dot-neutral"></span>
-                  <span class="comparison-title">Liaison Locomotive #0 &rarr; Wagon #1</span>
-                  <span class="comparison-badge">Intacte</span>
-                </div>
-                <p class="comparison-text">
-                  Le PreviousHash du Wagon #1 pointe toujours vers la locomotive. Ce premier lien reste parfaitement valide.
-                </p>
-              </div>
-
               <div id="card-spot-w1" class="comparison-card">
                 <div class="comparison-header">
-                  <span class="comparison-dot dot-hash"></span>
-                  <span class="comparison-title">Sortie du Wagon #1</span>
-                  <span class="comparison-badge">Hash recalculé</span>
+                  <span class="comparison-dot dot-mismatch"></span>
+                  <span class="comparison-title">Wagon #1 (Bloc modifié)</span>
+                  <span class="comparison-badge">Signal jaune &middot; Hash recalculé</span>
                 </div>
                 <p class="comparison-text">
-                  La modification de la transaction a recalculé le Hash SHA-256 du wagon : son anneau arrière prend une nouvelle couleur.
+                  La transaction a été altérée : le voyant passe au jaune d'avertissement et le Hash SHA-256 est recalculé. L'anneau arrière adopte la nouvelle couleur correspondante.
                 </p>
               </div>
 
               <div id="card-spot-w1-w2" class="comparison-card">
                 <div class="comparison-header">
-                  <span class="comparison-dot dot-mismatch"></span>
+                  <span class="comparison-dot dot-neutral"></span>
                   <span class="comparison-title">Liaison Wagon #1 &rarr; Wagon #2</span>
-                  <span class="comparison-badge">Rompue</span>
+                  <span class="comparison-badge">Décrochée &middot; Signal rouge</span>
                 </div>
                 <p class="comparison-text">
-                  Le PreviousHash du Wagon #2 est obsolète : il attend toujours l'ancienne empreinte. La discordance de couleur entraîne le décrochage mécanique de l'attelage.
+                  Le PreviousHash du Wagon #2 exige toujours l'ancienne empreinte : la discordance de couleur décroche l'attelage mécanique et allume le voyant rouge sur la suite du train.
                 </p>
               </div>
             </div>
@@ -562,10 +546,6 @@ export const step3 = {
     });
 
     // Clic sur les cartes comparatives pour activer l'infobulle 3D correspondante
-    document.getElementById('card-spot-loco-w1')?.addEventListener('click', () => {
-      this.toggleTooltipSpot('spot-loco-w1');
-    });
-
     document.getElementById('card-spot-w1')?.addEventListener('click', () => {
       this.toggleTooltipSpot('spot-w1');
     });
