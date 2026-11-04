@@ -5,8 +5,11 @@ import * as THREE from 'three';
  * Comprend :
  * - Ciel crepusculaire profond avec etoiles scintillantes et lune stylisee
  * - Reliefs d'arriere-plan en parallaxe (montagnes lointaines et collines moyennes)
+ * - Petites villes et hameaux low-poly illumines en second plan
+ * - Gares de passage avec quais, marquises et panneaux le long de la voie
+ * - Portails de tunnels ferroviaires en pierre et roche enjambant les rails
  * - Foret de sapins low-poly bordant la voie ferree
- * - Poteaux telegraphiques avec lanternes chaleureuses et lueurs au sol
+ * - Poteaux electriques / catenaires avec isolateurs et lanternes
  * - Rails, ballast de gravier et traverses en bois contrastes
  * - Panache de vapeur volumetrique soufflant vers l'arriere du convoi (+X)
  */
@@ -22,21 +25,27 @@ export class Environment {
     this.currentSpeed = 0.0;
     this.targetSpeed = 0.0;
 
-    // Elements animes en boucle
+    // Elements animes en boucle avec parallaxe
     this.sleepers = [];
     this.trees = [];
     this.poles = [];
+    this.passingStations = [];
+    this.tunnels = [];
+    this.towns = [];
     this.midHills = [];
     this.farMountains = [];
     this.steamParticles = [];
 
-    this.railLength = 180;
+    this.railLength = 200;
     this.railDistance = 1.32;
 
     this.setupSkyAndLights();
     this.setupGroundAndTracks();
     this.setupFarMountains();
     this.setupMidHills();
+    this.setupTowns();
+    this.setupPassingStations();
+    this.setupTunnels();
     this.setupTrees();
     this.setupPoles();
     this.setupSteam();
@@ -46,7 +55,6 @@ export class Environment {
    * Ciel nocturne, etoiles scintillantes et lune veilleuse.
    */
   setupSkyAndLights() {
-    // 1. Champ d'etoiles lointaines
     const starsCount = 450;
     const starGeo = new THREE.BufferGeometry();
     const starPositions = new Float32Array(starsCount * 3);
@@ -67,7 +75,6 @@ export class Environment {
     const stars = new THREE.Points(starGeo, starMat);
     this.group.add(stars);
 
-    // 2. Lune stylisee et son halo
     const moonGroup = new THREE.Group();
     moonGroup.position.set(-4, 16, -45);
 
@@ -76,7 +83,6 @@ export class Environment {
     const moonMesh = new THREE.Mesh(moonGeo, moonMat);
     moonGroup.add(moonMesh);
 
-    // Halo lunaire
     const haloGeo = new THREE.RingGeometry(2.6, 4.8, 32);
     const haloMat = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
@@ -91,11 +97,10 @@ export class Environment {
   }
 
   /**
-   * Sol, ballast de gravier surélevé et rails métalliques brillants.
+   * Sol, ballast de gravier sureleve et rails metalliques brillants.
    */
   setupGroundAndTracks() {
-    // 1. Grand plan de sol paysager (vert sombre ardoise / toundra nocturne)
-    const groundGeo = new THREE.PlaneGeometry(280, 160);
+    const groundGeo = new THREE.PlaneGeometry(300, 180);
     const groundMat = new THREE.MeshStandardMaterial({
       color: 0x13221c,
       roughness: 0.95,
@@ -107,7 +112,6 @@ export class Environment {
     ground.receiveShadow = true;
     this.group.add(ground);
 
-    // 2. Talus de ballast en gravier granitique sombre
     const ballastGeo = new THREE.BoxGeometry(this.railLength, 0.18, 3.2);
     const ballastMat = new THREE.MeshStandardMaterial({
       color: 0x273549,
@@ -118,7 +122,6 @@ export class Environment {
     ballast.position.set(0, -0.45, 0);
     this.group.add(ballast);
 
-    // 3. Rails d'acier vifs le long de l'axe X
     const railGeo = new THREE.BoxGeometry(this.railLength, 0.12, 0.08);
     const railMat = new THREE.MeshStandardMaterial({
       color: 0xcbd5e1,
@@ -134,15 +137,14 @@ export class Environment {
     railRight.position.set(0, -0.32, this.railDistance / 2);
     this.group.add(railRight);
 
-    // 4. Traverses de bois contrastées (mobiles)
     this.setupDynamicSleepers();
   }
 
   /**
-   * Traverses en bois mobiles recyclées en continu.
+   * Traverses en bois mobiles recyclees en continu.
    */
   setupDynamicSleepers() {
-    this.sleeperCount = 140;
+    this.sleeperCount = 150;
     this.sleeperSpacing = 1.1;
     this.totalSleepersWidth = this.sleeperCount * this.sleeperSpacing;
     this.sleeperMinX = -this.totalSleepersWidth / 2;
@@ -164,7 +166,7 @@ export class Environment {
   }
 
   /**
-   * Montagnes lointaines avec sommets polygonaux (défilement lent).
+   * Montagnes lointaines avec sommets polygonaux (defilement lent).
    */
   setupFarMountains() {
     this.mountainCount = 10;
@@ -202,7 +204,6 @@ export class Environment {
       cone.position.y = height / 2 - 2;
       mtnGroup.add(cone);
 
-      // Sommet rocheux sombre et discret, sans emission ni contraste criard
       const peakRadius = radius * 0.255;
       const peakHeight = height * 0.25;
       const peakGeo = new THREE.ConeGeometry(peakRadius, peakHeight, 7);
@@ -220,7 +221,7 @@ export class Environment {
   }
 
   /**
-   * Collines intermédiaires plus proches (défilement moyen).
+   * Collines intermediaires plus proches (defilement moyen).
    */
   setupMidHills() {
     this.hillCount = 14;
@@ -253,7 +254,218 @@ export class Environment {
   }
 
   /**
-   * Forêt de sapins low-poly bordant la voie ferree (premier et second plan).
+   * Petites villes low-poly en second plan (maisons eclairees, immeubles et clochers).
+   */
+  setupTowns() {
+    this.townCount = 6;
+    this.townSpacing = 36;
+    this.totalTownsWidth = this.townCount * this.townSpacing;
+    this.townMinX = -this.totalTownsWidth / 2;
+    this.townMaxX = this.totalTownsWidth / 2;
+
+    const wallMat1 = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.85, flatShading: true });
+    const wallMat2 = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8, flatShading: true });
+    const roofMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.7, flatShading: true });
+    const warmWindowMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+    const cyanWindowMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+
+    const winGeo = new THREE.PlaneGeometry(0.24, 0.24);
+
+    for (let i = 0; i < this.townCount; i++) {
+      const townGroup = new THREE.Group();
+
+      // 4 batiments par hameau avec hauteurs et largeurs variees
+      const buildingConfigs = [
+        { ox: -2.2, oz: -0.6, w: 1.5, h: 1.8, d: 1.3, tower: false },
+        { ox: -0.3, oz: -1.4, w: 1.2, h: 3.1, d: 1.2, tower: true },
+        { ox: 1.4, oz: -0.4, w: 1.7, h: 1.5, d: 1.3, tower: false },
+        { ox: 3.1, oz: -1.1, w: 1.4, h: 2.3, d: 1.2, tower: false }
+      ];
+
+      buildingConfigs.forEach((cfg, bIdx) => {
+        const bGroup = new THREE.Group();
+        bGroup.position.set(cfg.ox, 0, cfg.oz);
+
+        const bodyGeo = new THREE.BoxGeometry(cfg.w, cfg.h, cfg.d);
+        const body = new THREE.Mesh(bodyGeo, (i + bIdx) % 2 === 0 ? wallMat1 : wallMat2);
+        body.position.y = cfg.h / 2;
+        bGroup.add(body);
+
+        // Toit pyramidal low-poly
+        const roofGeo = new THREE.ConeGeometry(cfg.w * 0.78, cfg.tower ? 1.1 : 0.65, 4);
+        const roof = new THREE.Mesh(roofGeo, roofMat);
+        roof.position.y = cfg.h + (cfg.tower ? 0.55 : 0.32);
+        roof.rotation.y = Math.PI / 4;
+        bGroup.add(roof);
+
+        // Fenetres illuminees en facade (+Z)
+        const rows = cfg.tower ? 3 : 2;
+        for (let r = 0; r < rows; r++) {
+          [-0.28, 0.28].forEach((wx, wCol) => {
+            const win = new THREE.Mesh(winGeo, (r + wCol + i) % 3 === 0 ? cyanWindowMat : warmWindowMat);
+            win.position.set(wx * (cfg.w * 0.7), 0.55 + r * 0.75, cfg.d / 2 + 0.02);
+            bGroup.add(win);
+          });
+        }
+
+        townGroup.add(bGroup);
+      });
+
+      const x = this.townMinX + i * this.townSpacing;
+      const z = -11.5 - (i % 2) * 2.5;
+      townGroup.position.set(x, -0.5, z);
+
+      this.group.add(townGroup);
+      this.towns.push(townGroup);
+    }
+  }
+
+  /**
+   * Gares de passage ferroviaires bordant directement la voie ferree.
+   */
+  setupPassingStations() {
+    this.stationCount = 3;
+    this.stationSpacing = 66;
+    this.totalStationsWidth = this.stationCount * this.stationSpacing;
+    this.stationMinX = -this.totalStationsWidth / 2;
+    this.stationMaxX = this.totalStationsWidth / 2;
+
+    const platformGeo = new THREE.BoxGeometry(5.6, 0.28, 1.6);
+    const platformMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.85 });
+
+    const safetyLineGeo = new THREE.BoxGeometry(5.5, 0.02, 0.08);
+    const safetyLineMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+
+    const buildingGeo = new THREE.BoxGeometry(2.6, 1.25, 1.0);
+    const buildingMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.7 });
+
+    const canopyGeo = new THREE.BoxGeometry(4.6, 0.1, 1.45);
+    const canopyMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.7, roughness: 0.35 });
+
+    const pillarGeo = new THREE.CylinderGeometry(0.05, 0.05, 1.4, 8);
+    const pillarMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.8 });
+
+    const signGeo = new THREE.BoxGeometry(1.4, 0.28, 0.08);
+    const signMat = new THREE.MeshBasicMaterial({ color: 0x0284c7 });
+
+    const glassGeo = new THREE.PlaneGeometry(1.8, 0.48);
+    const glassMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+
+    for (let i = 0; i < this.stationCount; i++) {
+      const stGroup = new THREE.Group();
+
+      // Quai de gare
+      const platform = new THREE.Mesh(platformGeo, platformMat);
+      platform.position.set(0, 0.14, 0);
+      stGroup.add(platform);
+
+      // Ligne jaune de securite en bord de quai
+      const safetyLine = new THREE.Mesh(safetyLineGeo, safetyLineMat);
+      safetyLine.position.set(0, 0.29, 0.7);
+      stGroup.add(safetyLine);
+
+      // Batiment voyageurs
+      const building = new THREE.Mesh(buildingGeo, buildingMat);
+      building.position.set(0, 0.9, -0.22);
+      stGroup.add(building);
+
+      // Baie vitree eclairee
+      const glass = new THREE.Mesh(glassGeo, glassMat);
+      glass.position.set(0, 0.82, 0.29);
+      stGroup.add(glass);
+
+      // Marquise / auvent de quai
+      const canopy = new THREE.Mesh(canopyGeo, canopyMat);
+      canopy.position.set(0, 1.65, 0.05);
+      stGroup.add(canopy);
+
+      [-1.8, 1.8].forEach((px) => {
+        const pillar = new THREE.Mesh(pillarGeo, pillarMat);
+        pillar.position.set(px, 0.95, 0.45);
+        stGroup.add(pillar);
+      });
+
+      // Panneau indicateur de gare
+      const sign = new THREE.Mesh(signGeo, signMat);
+      sign.position.set(0, 1.88, 0.75);
+      stGroup.add(sign);
+
+      const x = this.stationMinX + i * this.stationSpacing + 22;
+      stGroup.position.set(x, -0.5, -2.55);
+
+      this.group.add(stGroup);
+      this.passingStations.push(stGroup);
+    }
+  }
+
+  /**
+   * Portails et arches de tunnels ferroviaires enjambant la voie ferree.
+   */
+  setupTunnels() {
+    this.tunnelCount = 2;
+    this.tunnelSpacing = 98;
+    this.totalTunnelsWidth = this.tunnelCount * this.tunnelSpacing;
+    this.tunnelMinX = -this.totalTunnelsWidth / 2;
+    this.tunnelMaxX = this.totalTunnelsWidth / 2;
+
+    const stoneMat = new THREE.MeshStandardMaterial({
+      color: 0x334155,
+      roughness: 0.85,
+      metalness: 0.15,
+      flatShading: true
+    });
+
+    const darkRockMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      roughness: 0.92,
+      flatShading: true
+    });
+
+    const signalMat = new THREE.MeshBasicMaterial({ color: 0x10b981 });
+
+    const sideWallGeo = new THREE.BoxGeometry(3.8, 3.6, 0.9);
+    const topArchGeo = new THREE.BoxGeometry(3.8, 1.1, 5.4);
+    const rockMassGeo = new THREE.ConeGeometry(4.2, 5.5, 6);
+
+    for (let i = 0; i < this.tunnelCount; i++) {
+      const tunnelGroup = new THREE.Group();
+
+      // Piliers lateraux (degagement large z = -2.25 et +2.25 pour laisser passer le train au centre)
+      const leftWall = new THREE.Mesh(sideWallGeo, stoneMat);
+      leftWall.position.set(0, 1.8, -2.25);
+      tunnelGroup.add(leftWall);
+
+      const rightWall = new THREE.Mesh(sideWallGeo, stoneMat);
+      rightWall.position.set(0, 1.8, 2.25);
+      tunnelGroup.add(rightWall);
+
+      // Linteau superieur enjambant la voie a y = 3.85
+      const topArch = new THREE.Mesh(topArchGeo, stoneMat);
+      topArch.position.set(0, 3.85, 0);
+      tunnelGroup.add(topArch);
+
+      // Massif rocheux adosse a l'arriere du tunnel
+      const rock = new THREE.Mesh(rockMassGeo, darkRockMat);
+      rock.position.set(0, 2.6, -4.2);
+      tunnelGroup.add(rock);
+
+      // Feux de signalisation ferroviaire verts sur les montants du portail
+      [-1.85, 1.85].forEach((fx) => {
+        const sig = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 8), signalMat);
+        sig.position.set(fx, 3.55, 1.7);
+        tunnelGroup.add(sig);
+      });
+
+      const x = this.tunnelMinX + i * this.tunnelSpacing + 45;
+      tunnelGroup.position.set(x, -0.5, 0);
+
+      this.group.add(tunnelGroup);
+      this.tunnels.push(tunnelGroup);
+    }
+  }
+
+  /**
+   * Foret de sapins low-poly bordant la voie ferree (premier et second plan).
    */
   setupTrees() {
     this.treeCount = 38;
@@ -279,12 +491,10 @@ export class Environment {
     for (let i = 0; i < this.treeCount; i++) {
       const tree = new THREE.Group();
 
-      // Troncs
       const trunk = new THREE.Mesh(trunkGeo, trunkMat);
       trunk.position.y = 0.45;
       tree.add(trunk);
 
-      // 3 étages de cônes pour le feuillage
       const mat = i % 2 === 0 ? foliageMat1 : foliageMat2;
       const scales = [1.0, 0.75, 0.52];
       const heights = [1.2, 1.8, 2.3];
@@ -296,9 +506,8 @@ export class Environment {
         tree.add(cone);
       }
 
-      // Disposition : majoritairement en arrière-plan (z = -3.8 à -10), quelques-uns au premier plan
       const isForeground = i % 7 === 0;
-      const z = isForeground ? 4.2 + (i % 3) * 0.8 : -3.8 - (i % 4) * 1.8;
+      const z = isForeground ? 4.4 + (i % 3) * 0.8 : -4.2 - (i % 4) * 1.8;
       const scaleRand = 0.85 + (i % 5) * 0.15;
       tree.scale.setScalar(scaleRand);
 
@@ -311,7 +520,7 @@ export class Environment {
   }
 
   /**
-   * Poteaux telegraphiques avec isolateurs et lanternes eclairantes.
+   * Poteaux electriques / catenaires avec isolateurs cyan et lanternes eclairantes.
    */
   setupPoles() {
     this.poleCount = 18;
@@ -323,7 +532,7 @@ export class Environment {
     const poleMat = new THREE.MeshStandardMaterial({
       color: 0x475569,
       roughness: 0.7,
-      metalness: 0.3
+      metalness: 0.4
     });
     const lampMat = new THREE.MeshStandardMaterial({
       color: 0xfef08a,
@@ -331,38 +540,44 @@ export class Environment {
       emissiveIntensity: 1.4,
       roughness: 0.2
     });
+    const insulatorMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+
+    const mastGeo = new THREE.CylinderGeometry(0.06, 0.08, 4.5, 8);
+    const armGeo = new THREE.BoxGeometry(0.08, 0.08, 1.8);
+    const insulatorGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.18, 8);
+    const lampGeo = new THREE.SphereGeometry(0.1, 8, 8);
 
     for (let i = 0; i < this.poleCount; i++) {
       const poleGroup = new THREE.Group();
 
-      // Mât vertical
-      const mastGeo = new THREE.CylinderGeometry(0.06, 0.08, 4.4, 8);
       const mast = new THREE.Mesh(mastGeo, poleMat);
-      mast.position.y = 1.7;
+      mast.position.y = 1.75;
       poleGroup.add(mast);
 
-      // Traverse horizontale
-      const armGeo = new THREE.BoxGeometry(0.08, 0.08, 1.4);
       const arm = new THREE.Mesh(armGeo, poleMat);
-      arm.position.set(0, 3.6, 0);
+      arm.position.set(0, 3.65, 0.2);
       poleGroup.add(arm);
 
-      // Deux lanternes lumineuses ambrées
+      // Isolateurs haute tension cyan
+      [-0.5, 0.0, 0.85].forEach((oz) => {
+        const ins = new THREE.Mesh(insulatorGeo, insulatorMat);
+        ins.position.set(0, 3.78, oz);
+        poleGroup.add(ins);
+      });
+
+      // Deux lanternes lumineuses ambrees
       [-0.55, 0.55].forEach((offsetZ) => {
-        const lampGeo = new THREE.SphereGeometry(0.1, 8, 8);
         const lamp = new THREE.Mesh(lampGeo, lampMat);
         lamp.position.set(0, 3.5, offsetZ);
         poleGroup.add(lamp);
       });
 
-      // Petite source de lumiere ponctuelle sur certains poteaux
       if (i % 3 === 0) {
         const light = new THREE.PointLight(0xfbbf24, 1.2, 7.0, 1.8);
         light.position.set(0, 3.3, 0);
         poleGroup.add(light);
       }
 
-      // Placement à droite des rails (arrière-plan immédiat z = -3.2)
       poleGroup.position.set(this.poleMinX + i * this.poleSpacing, -0.5, -3.2);
 
       this.group.add(poleGroup);
@@ -371,8 +586,8 @@ export class Environment {
   }
 
   /**
-   * Panache de vapeur volumétrique émergeant précisément de la cheminée.
-   * La locomotive avançant vers -X, la fumée est soufflée vers l'arrière (+X).
+   * Panache de vapeur volumetrique emergeant precisement de la cheminee.
+   * La locomotive avancant vers -X, la fumee est soufflee vers l'arriere (+X).
    */
   setupSteam() {
     this.steamCount = 28;
@@ -400,9 +615,9 @@ export class Environment {
   }
 
   /**
-   * Définit la vitesse cible du convoi (0 = à l'arrêt, > 0 = en mouvement).
-   * @param {number} target - Vitesse en unités/seconde.
-   * @param {boolean} [instant=false] - Application immédiate sans transition.
+   * Definit la vitesse cible du convoi (0 = a l'arret, > 0 = en mouvement).
+   * @param {number} target - Vitesse en unites/seconde.
+   * @param {boolean} [instant=false] - Application immediate sans transition.
    */
   setSpeed(target, instant = false) {
     this.targetSpeed = Math.max(0, target);
@@ -412,21 +627,17 @@ export class Environment {
   }
 
   /**
-   * Met à jour le défilement continu avec effets de parallaxe.
-   * Le train faisant face à -X (gauche) et avançant vers -X,
-   * tout le décor recule vers la DROITE (+X) !
-   * @param {number} delta - Temps écoulé depuis la dernière frame.
+   * Met a jour le defilement continu avec effets de parallaxe.
+   * @param {number} delta - Temps ecoule depuis la derniere frame.
    * @param {number} elapsedTime - Temps total en secondes.
    */
   update(delta, elapsedTime) {
-    // Transition fluide vers la vitesse cible
     this.currentSpeed = THREE.MathUtils.lerp(this.currentSpeed, this.targetSpeed, delta * 2.8);
 
     if (this.currentSpeed > 0.01) {
-      // Déplacement vers +X (car le train avance vers -X)
       const shift = this.currentSpeed * delta;
 
-      // 1. Défilement des traverses (pleine vitesse)
+      // 1. Defilement des traverses (pleine vitesse)
       for (let i = 0; i < this.sleepers.length; i++) {
         const sleeper = this.sleepers[i];
         sleeper.position.x += shift;
@@ -435,7 +646,7 @@ export class Environment {
         }
       }
 
-      // 2. Défilement des arbres (pleine vitesse)
+      // 2. Defilement des arbres (pleine vitesse)
       for (let i = 0; i < this.trees.length; i++) {
         const tree = this.trees[i];
         tree.position.x += shift;
@@ -444,7 +655,7 @@ export class Environment {
         }
       }
 
-      // 3. Défilement des poteaux télégraphiques (pleine vitesse)
+      // 3. Defilement des poteaux electriques (pleine vitesse)
       for (let i = 0; i < this.poles.length; i++) {
         const pole = this.poles[i];
         pole.position.x += shift;
@@ -453,7 +664,35 @@ export class Environment {
         }
       }
 
-      // 4. Parallaxe des collines intermédiaires (vitesse 0.35x)
+      // 4. Defilement des gares de passage (pleine vitesse)
+      for (let i = 0; i < this.passingStations.length; i++) {
+        const st = this.passingStations[i];
+        st.position.x += shift;
+        if (st.position.x > this.stationMaxX) {
+          st.position.x -= this.totalStationsWidth;
+        }
+      }
+
+      // 5. Defilement des tunnels ferroviaires (pleine vitesse)
+      for (let i = 0; i < this.tunnels.length; i++) {
+        const tun = this.tunnels[i];
+        tun.position.x += shift;
+        if (tun.position.x > this.tunnelMaxX) {
+          tun.position.x -= this.totalTunnelsWidth;
+        }
+      }
+
+      // 6. Parallaxe des petites villes low-poly (vitesse 0.65x)
+      const townShift = shift * 0.65;
+      for (let i = 0; i < this.towns.length; i++) {
+        const town = this.towns[i];
+        town.position.x += townShift;
+        if (town.position.x > this.townMaxX) {
+          town.position.x -= this.totalTownsWidth;
+        }
+      }
+
+      // 7. Parallaxe des collines intermediaires (vitesse 0.35x)
       const hillShift = shift * 0.35;
       for (let i = 0; i < this.midHills.length; i++) {
         const hill = this.midHills[i];
@@ -463,7 +702,7 @@ export class Environment {
         }
       }
 
-      // 5. Parallaxe des montagnes lointaines (vitesse 0.12x)
+      // 8. Parallaxe des montagnes lointaines (vitesse 0.12x)
       const mtnShift = shift * 0.12;
       for (let i = 0; i < this.farMountains.length; i++) {
         const mtn = this.farMountains[i];
@@ -473,8 +712,7 @@ export class Environment {
         }
       }
 
-      // 6. Panache de vapeur sortant de la cheminée
-      // Position réelle de la cheminée : X = -0.9 (locomotive à X = 0 + cheminée à X = -0.9), Y = 1.38, Z = 0
+      // 9. Panache de vapeur sortant de la cheminee (X = -0.9, Y = 1.38)
       const chimneyX = -0.9;
       const chimneyY = 1.38;
 
@@ -483,7 +721,6 @@ export class Environment {
         puff.userData.age += delta;
 
         if (puff.userData.age >= puff.userData.lifetime) {
-          // Réinitialisation à la sortie de la cheminée
           puff.userData.age = 0;
           puff.position.set(
             chimneyX + (Math.random() - 0.5) * 0.08,
@@ -494,20 +731,17 @@ export class Environment {
           puff.material.opacity = 0.5;
           puff.visible = true;
         } else {
-          // La fumée est soufflée vers l'arrière du train (+X) et monte (+Y)
           const progress = puff.userData.age / puff.userData.lifetime;
           puff.position.x += shift * 1.05 + delta * 0.4;
           puff.position.y += delta * puff.userData.driftY;
           puff.position.z += delta * puff.userData.driftZ;
 
-          // Dilatation et dissipation progressive
           const scale = 0.35 + progress * 2.4;
           puff.scale.setScalar(scale);
           puff.material.opacity = (1 - progress) * 0.45;
         }
       }
     } else {
-      // Train à l'arrêt : légère volute verticale douce
       const chimneyX = -0.9;
       const chimneyY = 1.38;
       for (let i = 0; i < this.steamParticles.length; i++) {

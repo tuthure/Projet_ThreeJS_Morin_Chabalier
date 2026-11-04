@@ -189,7 +189,7 @@ export const step1 = {
     // Met à jour le récapitulatif dans l'interface
     const displayEl = document.getElementById('step1-hash-preview');
     if (displayEl) {
-      displayEl.textContent = `${wagon1.block.hash.substring(0, 20)}...`;
+      displayEl.textContent = `${wagon1.block.hash.substring(0, 14)}...`;
     }
     const dataDescEl = document.getElementById('step1-data-preview');
     if (dataDescEl) {
@@ -226,7 +226,7 @@ export const step1 = {
     }
     const hashPreview = document.getElementById('step1-nonce-hash-preview');
     if (hashPreview) {
-      hashPreview.textContent = `${wagon1.block.hash.substring(0, 24)}...`;
+      hashPreview.textContent = `${wagon1.block.hash.substring(0, 16)}...`;
     }
     const slider = document.getElementById('step1-nonce-slider');
     if (slider) {
@@ -302,12 +302,12 @@ export const step1 = {
               <span id="step1-data-preview" class="feedback-val">50 caisses de matériel</span>
             </div>
             <div class="feedback-row">
-              <span class="feedback-label">Empreinte propre (Hash) :</span>
-              <span id="step1-hash-preview" class="feedback-val hash-val">${currentHash.substring(0, 20)}...</span>
+              <span class="feedback-label">Hash du bloc :</span>
+              <span id="step1-hash-preview" class="feedback-val hash-val">${currentHash.substring(0, 14)}...</span>
             </div>
             <div class="feedback-row">
-              <span class="feedback-label">Lien parent (PreviousHash) :</span>
-              <span class="feedback-val">${currentPrev.substring(0, 20)}...</span>
+              <span class="feedback-label">PreviousHash :</span>
+              <span class="feedback-val">${currentPrev.substring(0, 14)}...</span>
             </div>
           </div>
         </article>
@@ -355,8 +355,8 @@ export const step1 = {
 
           <div class="action-feedback-box">
             <div class="feedback-row">
-              <span class="feedback-label">Empreinte SHA-256 en direct :</span>
-              <span id="step1-nonce-hash-preview" class="feedback-val hash-val">${currentHash.substring(0, 22)}...</span>
+              <span class="feedback-label">Hash SHA-256 :</span>
+              <span id="step1-nonce-hash-preview" class="feedback-val hash-val">${currentHash.substring(0, 16)}...</span>
             </div>
           </div>
         </article>

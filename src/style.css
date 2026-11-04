@@ -1238,7 +1238,9 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
 }
 
 .feedback-label {
@@ -1246,13 +1248,19 @@ body {
   font-weight: 500;
   white-space: nowrap;
   flex-shrink: 0;
+  font-size: 0.74rem;
 }
 
 .feedback-val {
   color: #38bdf8;
   font-weight: 700;
-  word-break: break-all;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   text-align: right;
+  min-width: 0;
+  flex: 1;
+  font-size: 0.75rem;
 }
 
 .feedback-val.hash-val {
@@ -1265,6 +1273,47 @@ body {
 
 .feedback-val.success-val {
   color: #34d399;
+}
+
+/* Sélecteur de difficulté (Étape 5 - Minage) */
+.difficulty-selector-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.btn-diff-option {
+  flex: 1;
+  appearance: none;
+  background: rgba(15, 23, 42, 0.75);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 8px;
+  padding: 8px 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.btn-diff-option:hover:not(:disabled) {
+  border-color: rgba(56, 189, 248, 0.5);
+  color: #e2e8f0;
+}
+
+.btn-diff-option.active {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: #38bdf8;
+  color: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+}
+
+.btn-diff-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Titre spécifique pour la synthèse point clé */
