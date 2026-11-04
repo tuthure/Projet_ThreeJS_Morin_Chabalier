@@ -2,10 +2,12 @@ import * as THREE from 'three';
 
 /**
  * Étape 4 : Réseau et décentralisation.
- * Métaphore : Les nœuds du réseau sont des Gares réparties sur le territoire,
- * reliées en maillage pair-à-pair (P2P) sans gare centrale.
- * Interaction : Émettre une transaction propage un signal lumineux à toutes les gares
- * qui synchronisent leur copie locale du registre.
+ * Métaphore : L'archipel ferroviaire décentralisé. Chaque gare représente un nœud
+ * (un ordinateur qui possède une copie complète du registre).
+ * Interactions :
+ * 1. Propager une transaction de proche en proche (protocole Gossip séquentiel : A -> B, C -> D, E -> F).
+ * 2. Cliquer sur une gare (en 3D ou via le panneau) pour l'éteindre (panne de nœud) et observer
+ *    comment la transaction contourne automatiquement la gare éteinte par un autre chemin.
  */
 export const step4 = {
   id: 4,
@@ -19,24 +21,48 @@ export const step4 = {
   packets: [],
 
   isPropagating: false,
-  syncedCount: 6,
   txCount: 3,
-  lastTxLabel: 'Arthur -> Alban (15 MMI)',
+  lastTxLabel: '50 caisses de matériel (Gare A)',
+  lastRouteSummary: 'Gare A -> Gares B, C -> Gares D, E -> Gare F',
+  statusFeedbackMessage: '',
 
+  // Raycaster pour le clic direct sur les gares 3D
+  raycaster: new THREE.Raycaster(),
+  pointerDownPos: { x: 0, y: 0 },
+  hoveredStationIdx: -1,
+  _onPointerDown: null,
+  _onPointerUp: null,
+  _onPointerMove: null,
+
+  // Sauvegarde de visibilité du décor linéaire pour isoler la carte du territoire
+  _savedEnvVisibility: null,
+
+  // Coordonnées des 6 gares sur le territoire dégagé (Archipel du Réseau)
   stationCoords: [
-    { name: 'Gare Nord-Ouest', pos: new THREE.Vector3(-4.5, -0.45, -6.8) },
-    { name: 'Gare Nord-Centre', pos: new THREE.Vector3(3.8, -0.45, -8.2) },
-    { name: 'Gare Nord-Est', pos: new THREE.Vector3(12.0, -0.45, -6.4) },
-    { name: 'Gare Sud-Ouest', pos: new THREE.Vector3(-3.0, -0.45, 5.2) },
-    { name: 'Gare Sud-Centre', pos: new THREE.Vector3(4.2, -0.45, 6.0) },
-    { name: 'Gare Sud-Est', pos: new THREE.Vector3(11.2, -0.45, 4.8) }
+    { code: 'A', name: 'Gare A', region: 'Ouest', pos: new THREE.Vector3(-8.2, 0, 0.0) },
+    { code: 'B', name: 'Gare B', region: 'Nord-Ouest', pos: new THREE.Vector3(-2.6, 0, -4.8) },
+    { code: 'C', name: 'Gare C', region: 'Sud-Ouest', pos: new THREE.Vector3(-2.6, 0, 4.8) },
+    { code: 'D', name: 'Gare D', region: 'Nord-Est', pos: new THREE.Vector3(3.6, 0, -4.8) },
+    { code: 'E', name: 'Gare E', region: 'Sud-Est', pos: new THREE.Vector3(3.6, 0, 4.8) },
+    { code: 'F', name: 'Gare F', region: 'Est', pos: new THREE.Vector3(9.2, 0, 0.0) }
   ],
 
-  // Paires d'indices formant le maillage décentralisé entre les 6 gares
-  meshEdges: [
-    [0, 1], [1, 2], [3, 4], [4, 5],
-    [0, 3], [1, 4], [2, 5],
-    [0, 4], [1, 5], [1, 3], [2, 4]
+  // Liaisons primaires (flux direct de gauche à droite sans croisement)
+  primaryEdges: [
+    [0, 1], // Gare A - Gare B
+    [0, 2], // Gare A - Gare C
+    [1, 3], // Gare B - Gare D
+    [2, 4], // Gare C - Gare E
+    [3, 5], // Gare D - Gare F
+    [4, 5]  // Gare E - Gare F
+  ],
+
+  // Liaisons secondaires de secours (utilisées automatiquement pour contourner une gare éteinte)
+  backupEdges: [
+    [1, 2], // Gare B - Gare C
+    [3, 4], // Gare D - Gare E
+    [1, 4], // Gare B - Gare E (diagonale Nord-Ouest -> Sud-Est)
+    [2, 3]  // Gare C - Gare D (diagonale Sud-Ouest -> Nord-Est)
   ],
 
   init(context) {
@@ -47,36 +73,34 @@ export const step4 = {
     const { trainConvoy, cameraController, environment } = this.ctx;
 
     this.isPropagating = false;
-    this.syncedCount = 6;
     this.txCount = 3;
-    this.lastTxLabel = 'Arthur -> Alban (15 MMI)';
+    this.lastTxLabel = '50 caisses de matériel (Gare A)';
+    this.lastRouteSummary = 'Gare A -> Gares B, C -> Gares D, E -> Gare F';
+    this.statusFeedbackMessage = '';
+    this.hoveredStationIdx = -1;
 
     if (cameraController) {
       cameraController.setViewOffset(210);
     }
 
+    // Arrête le défilement et isole la zone "Territoire / Archipel Réseau" du train
     if (environment) {
-      environment.setSpeed(2.0);
+      environment.setSpeed(0, true);
+      this.isolateTerritoryEnvironment(true);
     }
 
-    if (trainConvoy) {
-      trainConvoy.resetConvoy([
-        { emetteur: 'Arthur', destinataire: 'Alban', montant: 15, unite: 'MMI-Coin' },
-        { emetteur: 'Alban', destinataire: 'Equipe-R507', montant: 30, unite: 'MMI-Coin' },
-        { emetteur: 'Quai-Nord', destinataire: 'Gare-Est', montant: 8, unite: 'MMI-Coin' }
-      ]);
-      if (cameraController) {
-        cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
-      }
+    if (trainConvoy && trainConvoy.group) {
+      trainConvoy.group.visible = false;
     }
 
     this.buildNetworkMesh();
+    this.setupCanvasInteractions();
 
-    // Dézoom de la caméra pour embrasser le convoi au milieu du maillage de gares
+    // Vue aérienne dégagée sur l'archipel des 6 gares ferroviaires
     if (cameraController) {
       cameraController.moveTo(
-        new THREE.Vector3(3.8, 10.5, 17.5),
-        new THREE.Vector3(3.8, 0.2, -0.8),
+        new THREE.Vector3(0.5, 13.5, 17.5),
+        new THREE.Vector3(0.5, 0.5, 0.2),
         1.3
       );
     }
@@ -87,11 +111,19 @@ export const step4 = {
 
   exit() {
     this.stopAnimationLoop();
+    this.removeCanvasInteractions();
 
     if (this.networkGroup && this.ctx?.scene) {
       this.ctx.scene.remove(this.networkGroup);
       this.networkGroup = null;
     }
+
+    // Restaure la visibilité du train et du décor ferroviaire linéaire
+    if (this.ctx?.trainConvoy?.group) {
+      this.ctx.trainConvoy.group.visible = true;
+    }
+    this.isolateTerritoryEnvironment(false);
+
     this.stations = [];
     this.links = [];
     this.packets = [];
@@ -104,7 +136,213 @@ export const step4 = {
   },
 
   /**
-   * Construit les 6 Gares (Nœuds) et le maillage de connexions P2P en 3D.
+   * Masque temporairement les éléments du couloir ferroviaire (arbres, caténaires, tunnels, rails principaux)
+   * pour dégager l'espace autour de la carte du réseau décentralisé.
+   * @param {boolean} isolate
+   */
+  isolateTerritoryEnvironment(isolate) {
+    const env = this.ctx?.environment;
+    if (!env) return;
+
+    const arrayKeys = ['trees', 'poles', 'passingStations', 'tunnels', 'sleepers', 'towns', 'steamParticles'];
+    if (isolate) {
+      this._savedEnvVisibility = [];
+      arrayKeys.forEach((key) => {
+        if (Array.isArray(env[key])) {
+          env[key].forEach((obj) => {
+            obj.visible = false;
+          });
+        }
+      });
+      // Masque le ballast et les deux rails du convoi principal (situés entre y = -0.46 et y = -0.30)
+      if (env.group && Array.isArray(env.group.children)) {
+        env.group.children.forEach((child) => {
+          if (child.isMesh && child.position.y > -0.48 && child.position.y < -0.28) {
+            this._savedEnvVisibility.push({ child, visible: child.visible });
+            child.visible = false;
+          }
+        });
+      }
+    } else if (this._savedEnvVisibility) {
+      arrayKeys.forEach((key) => {
+        if (Array.isArray(env[key])) {
+          env[key].forEach((obj) => {
+            obj.visible = true;
+          });
+        }
+      });
+      this._savedEnvVisibility.forEach(({ child, visible }) => {
+        child.visible = visible;
+      });
+      this._savedEnvVisibility = null;
+    }
+  },
+
+  /**
+   * Crée une texture Canvas pour le cadran d'horloge de la tour de gare.
+   */
+  createClockTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+
+    // Fond ivoire
+    ctx.fillStyle = '#fef9c3';
+    ctx.beginPath();
+    ctx.arc(64, 64, 58, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cerclage cuivré
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = '#b45309';
+    ctx.stroke();
+
+    // Index des heures
+    ctx.strokeStyle = '#1e293b';
+    for (let i = 0; i < 12; i++) {
+      const angle = (i * Math.PI) / 6;
+      const r1 = i % 3 === 0 ? 40 : 45;
+      const r2 = 52;
+      ctx.lineWidth = i % 3 === 0 ? 4 : 2;
+      ctx.beginPath();
+      ctx.moveTo(64 + Math.cos(angle) * r1, 64 + Math.sin(angle) * r1);
+      ctx.lineTo(64 + Math.cos(angle) * r2, 64 + Math.sin(angle) * r2);
+      ctx.stroke();
+    }
+
+    // Aiguilles (10h10)
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(64, 64);
+    ctx.lineTo(42, 46);
+    ctx.stroke();
+
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(64, 64);
+    ctx.lineTo(88, 42);
+    ctx.stroke();
+
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath();
+    ctx.arc(64, 64, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.needsUpdate = true;
+    return tex;
+  },
+
+  /**
+   * Crée le panneau frontal de nom de gare (style plaque émaillée bleu marine).
+   * @param {string} title
+   */
+  createStationSignTexture(title) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, 256, 64);
+
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(4, 4, 248, 56);
+
+    ctx.fillStyle = '#f8fafc';
+    ctx.font = 'bold 28px "Segoe UI", Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(title.toUpperCase(), 128, 33);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.needsUpdate = true;
+    return tex;
+  },
+
+  /**
+   * Met à jour l'étiquette flottante (Sprite) au-dessus d'une gare selon son état.
+   * @param {object} st
+   */
+  updateStationLabelSprite(st) {
+    if (!st.labelCanvas || !st.labelTexture) return;
+    const canvas = st.labelCanvas;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    let borderColor = '#10b981';
+    let dotColor = '#10b981';
+    let statusText = `EN LIGNE - ${this.txCount} tx`;
+
+    if (!st.online) {
+      borderColor = '#ef4444';
+      dotColor = '#ef4444';
+      statusText = 'EN PANNE (Cliquer)';
+    } else if (st.state === 'emitting') {
+      borderColor = '#facc15';
+      dotColor = '#facc15';
+      statusText = 'EMISSION P2P...';
+    } else if (st.state === 'waiting') {
+      borderColor = '#38bdf8';
+      dotColor = '#38bdf8';
+      statusText = 'EN ATTENTE...';
+    } else if (st.state === 'synced') {
+      borderColor = '#10b981';
+      dotColor = '#10b981';
+      statusText = `A JOUR (${this.txCount} tx)`;
+    }
+
+    // Fond de carte arrondi
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 4;
+
+    const x = 6;
+    const y = 6;
+    const w = canvas.width - 12;
+    const h = canvas.height - 12;
+    const r = 16;
+
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Titre de la gare
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 26px "Segoe UI", Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${st.name} (Noeud ${st.code})`, canvas.width / 2, 40);
+
+    // Pastille et statut
+    ctx.fillStyle = dotColor;
+    ctx.beginPath();
+    ctx.arc(44, 76, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = st.online ? '#cbd5e1' : '#fca5a5';
+    ctx.font = 'bold 20px Consolas, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(statusText, 62, 83);
+
+    st.labelTexture.needsUpdate = true;
+  },
+
+  /**
+   * Construit le plateau territorial et les 6 gares ferroviaires détaillées en 3D.
    */
   buildNetworkMesh() {
     const { scene } = this.ctx;
@@ -119,183 +357,597 @@ export const step4 = {
     this.links = [];
     this.packets = [];
 
-    const baseGeo = new THREE.BoxGeometry(2.0, 0.2, 1.3);
-    const bodyGeo = new THREE.BoxGeometry(1.5, 0.85, 0.95);
-    const roofGeo = new THREE.ConeGeometry(1.15, 0.55, 4);
-    const mastGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.9, 8);
-    const beaconGeo = new THREE.SphereGeometry(0.18, 14, 14);
-    const ringGeo = new THREE.RingGeometry(1.15, 1.35, 28);
-    const ledgerGeo = new THREE.BoxGeometry(0.45, 0.58, 0.08);
+    // 1. Grand socle "Carte du Territoire / Archipel Réseau"
+    const territoryBoardGeo = new THREE.CylinderGeometry(14.5, 15.2, 0.3, 8);
+    const territoryBoardMat = new THREE.MeshStandardMaterial({
+      color: 0x0f172a,
+      roughness: 0.9,
+      metalness: 0.1
+    });
+    const territoryBoard = new THREE.Mesh(territoryBoardGeo, territoryBoardMat);
+    territoryBoard.position.set(0.5, -0.35, 0.0);
+    territoryBoard.rotation.y = Math.PI / 8;
+    this.networkGroup.add(territoryBoard);
 
-    const baseMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 });
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6, metalness: 0.2 });
-    const roofMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.5, flatShading: true });
-    const mastMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.2 });
+    const territoryBorderGeo = new THREE.RingGeometry(14.1, 14.45, 8);
+    const territoryBorderMat = new THREE.MeshBasicMaterial({
+      color: 0x1e3a5f,
+      side: THREE.DoubleSide
+    });
+    const territoryBorder = new THREE.Mesh(territoryBorderGeo, territoryBorderMat);
+    territoryBorder.rotation.x = -Math.PI / 2;
+    territoryBorder.rotation.z = Math.PI / 8;
+    territoryBorder.position.set(0.5, -0.18, 0.0);
+    this.networkGroup.add(territoryBorder);
 
+    // Géométries et matériaux partagés pour les gares ferroviaires
+    const islandGeo = new THREE.CylinderGeometry(2.25, 2.45, 0.28, 6);
+    const islandTopGeo = new THREE.CylinderGeometry(2.05, 2.2, 0.1, 6);
+    const ringGeo = new THREE.RingGeometry(2.15, 2.38, 6);
+
+    const ballastGeo = new THREE.BoxGeometry(3.1, 0.07, 0.68);
+    const railGeo = new THREE.BoxGeometry(3.1, 0.05, 0.045);
+    const sleeperGeo = new THREE.BoxGeometry(0.14, 0.04, 0.58);
+
+    const platformGeo = new THREE.BoxGeometry(3.0, 0.22, 1.08);
+    const safetyLineGeo = new THREE.BoxGeometry(2.94, 0.02, 0.06);
+
+    const plinthGeo = new THREE.BoxGeometry(1.92, 0.2, 0.94);
+    const mainHallGeo = new THREE.BoxGeometry(1.82, 0.98, 0.86);
+    const corniceGeo = new THREE.BoxGeometry(1.94, 0.08, 0.96);
+    const roofPrismGeo = new THREE.ConeGeometry(1.38, 0.58, 4);
+
+    const towerBodyGeo = new THREE.BoxGeometry(0.58, 1.72, 0.58);
+    const towerRoofGeo = new THREE.ConeGeometry(0.48, 0.62, 4);
+    const clockFaceGeo = new THREE.CircleGeometry(0.2, 24);
+
+    const canopyGeo = new THREE.BoxGeometry(2.35, 0.07, 0.56);
+    const pillarGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.72, 8);
+    const signBoardGeo = new THREE.PlaneGeometry(1.15, 0.28);
+
+    const signalMastGeo = new THREE.CylinderGeometry(0.035, 0.04, 1.35, 8);
+    const signalBoxGeo = new THREE.BoxGeometry(0.18, 0.36, 0.14);
+    const beaconGeo = new THREE.SphereGeometry(0.13, 14, 14);
+    const ledgerGeo = new THREE.BoxGeometry(0.38, 0.48, 0.08);
+
+    const islandMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.85 });
+    const islandTopMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 });
+    const ballastMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.9 });
+    const railMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.2 });
+    const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x452311, roughness: 0.85 });
+    const platformMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.75 });
+    const safetyMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+
+    const brickMat = new THREE.MeshStandardMaterial({ color: 0x9a3412, roughness: 0.7 });
+    const stoneTrimMat = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.6 });
+    const slateRoofMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.55, flatShading: true });
+    const darkMetalMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.75, roughness: 0.3 });
+
+    const clockTexture = this.createClockTexture();
+    const clockMat = new THREE.MeshBasicMaterial({ map: clockTexture });
+
+    // 2. Construction des 6 Gares Ferroviaires
     this.stationCoords.forEach((info, idx) => {
       const stationGroup = new THREE.Group();
       stationGroup.position.copy(info.pos);
+      stationGroup.userData = { stationIndex: idx };
 
-      const base = new THREE.Mesh(baseGeo, baseMat);
-      base.position.y = 0.1;
-      stationGroup.add(base);
+      // Socle hexagonal de l'îlot
+      const island = new THREE.Mesh(islandGeo, islandMat);
+      island.position.y = -0.05;
+      stationGroup.add(island);
 
-      const body = new THREE.Mesh(bodyGeo, bodyMat);
-      body.position.y = 0.62;
-      stationGroup.add(body);
+      const islandTop = new THREE.Mesh(islandTopGeo, islandTopMat);
+      islandTop.position.y = 0.12;
+      stationGroup.add(islandTop);
 
-      // Fenêtres éclairées sur la façade
-      const winGeo = new THREE.PlaneGeometry(1.1, 0.28);
-      const winMat = new THREE.MeshBasicMaterial({ color: 0xfef08a, side: THREE.DoubleSide });
-      const winFront = new THREE.Mesh(winGeo, winMat);
-      winFront.position.set(0, 0.65, 0.485);
-      stationGroup.add(winFront);
-      const winBack = new THREE.Mesh(winGeo, winMat);
-      winBack.position.set(0, 0.65, -0.485);
-      stationGroup.add(winBack);
-
-      const roof = new THREE.Mesh(roofGeo, roofMat);
-      roof.position.y = 1.32;
-      roof.rotation.y = Math.PI / 4;
-      stationGroup.add(roof);
-
-      const mast = new THREE.Mesh(mastGeo, mastMat);
-      mast.position.y = 1.85;
-      stationGroup.add(mast);
-
-      const beaconMat = new THREE.MeshStandardMaterial({
-        color: 0x38bdf8,
-        emissive: 0x0284c7,
-        emissiveIntensity: 1.8,
-        roughness: 0.2
-      });
-      const beacon = new THREE.Mesh(beaconGeo, beaconMat);
-      beacon.position.y = 2.35;
-      stationGroup.add(beacon);
-
-      // Anneau halo de synchronisation au sol
+      // Halo lumineux d'état autour de l'îlot
       const ringMat = new THREE.MeshBasicMaterial({
-        color: 0x38bdf8,
+        color: 0x10b981,
         transparent: true,
-        opacity: 0.45,
+        opacity: 0.65,
         side: THREE.DoubleSide
       });
       const ring = new THREE.Mesh(ringGeo, ringMat);
       ring.rotation.x = -Math.PI / 2;
-      ring.position.y = 0.04;
+      ring.position.y = 0.02;
       stationGroup.add(ring);
 
-      // Petit registre flottant (copie locale de la blockchain)
+      // Voie ferrée passant devant le quai (+Z)
+      const ballast = new THREE.Mesh(ballastGeo, ballastMat);
+      ballast.position.set(0, 0.2, 0.72);
+      stationGroup.add(ballast);
+
+      const rail1 = new THREE.Mesh(railGeo, railMat);
+      rail1.position.set(0, 0.25, 0.56);
+      stationGroup.add(rail1);
+
+      const rail2 = new THREE.Mesh(railGeo, railMat);
+      rail2.position.set(0, 0.25, 0.88);
+      stationGroup.add(rail2);
+
+      for (let s = -3; s <= 3; s++) {
+        const sleeper = new THREE.Mesh(sleeperGeo, sleeperMat);
+        sleeper.position.set(s * 0.42, 0.23, 0.72);
+        stationGroup.add(sleeper);
+      }
+
+      // Quai de gare et ligne de sécurité jaune
+      const platform = new THREE.Mesh(platformGeo, platformMat);
+      platform.position.set(0, 0.28, -0.15);
+      stationGroup.add(platform);
+
+      const safetyLine = new THREE.Mesh(safetyLineGeo, safetyMat);
+      safetyLine.position.set(0, 0.4, 0.34);
+      stationGroup.add(safetyLine);
+
+      // Bâtiment voyageurs (soubassement pierre + murs de briques + corniche + toit d'ardoise)
+      const plinth = new THREE.Mesh(plinthGeo, stoneTrimMat);
+      plinth.position.set(-0.22, 0.48, -0.22);
+      stationGroup.add(plinth);
+
+      const mainHall = new THREE.Mesh(mainHallGeo, brickMat);
+      mainHall.position.set(-0.22, 1.05, -0.22);
+      stationGroup.add(mainHall);
+
+      const cornice = new THREE.Mesh(corniceGeo, stoneTrimMat);
+      cornice.position.set(-0.22, 1.56, -0.22);
+      stationGroup.add(cornice);
+
+      const mainRoof = new THREE.Mesh(roofPrismGeo, slateRoofMat);
+      mainRoof.position.set(-0.22, 1.88, -0.22);
+      mainRoof.rotation.y = Math.PI / 4;
+      mainRoof.scale.set(1.25, 1.0, 0.68);
+      stationGroup.add(mainRoof);
+
+      // Baies vitrées cintrées et porte vitrée (matériau dynamique qui s'éteint en cas de panne)
+      const windowMat = new THREE.MeshStandardMaterial({
+        color: 0xfef08a,
+        emissive: 0xf59e0b,
+        emissiveIntensity: 1.1,
+        roughness: 0.2
+      });
+
+      const winArchGeo = new THREE.BoxGeometry(0.32, 0.48, 0.04);
+      [-0.72, -0.22, 0.28].forEach((wx) => {
+        const winFront = new THREE.Mesh(winArchGeo, windowMat);
+        winFront.position.set(wx, 0.98, 0.21);
+        stationGroup.add(winFront);
+
+        const winBack = new THREE.Mesh(winArchGeo, windowMat);
+        winBack.position.set(wx, 0.98, -0.65);
+        stationGroup.add(winBack);
+      });
+
+      // Marquise / auvent métallique de quai et ses piliers
+      const canopy = new THREE.Mesh(canopyGeo, darkMetalMat);
+      canopy.position.set(-0.05, 1.12, 0.14);
+      stationGroup.add(canopy);
+
+      [-1.0, -0.05, 0.9].forEach((px) => {
+        const pillar = new THREE.Mesh(pillarGeo, darkMetalMat);
+        pillar.position.set(px, 0.75, 0.3);
+        stationGroup.add(pillar);
+      });
+
+      // Panneau nominatif sur le fronton de la marquise
+      const signTex = this.createStationSignTexture(info.name);
+      const signMat = new THREE.MeshBasicMaterial({ map: signTex });
+      const signMesh = new THREE.Mesh(signBoardGeo, signMat);
+      signMesh.position.set(-0.05, 1.28, 0.43);
+      stationGroup.add(signMesh);
+
+      // Tour de l'Horloge (Beffroi de gare) à droite du bâtiment
+      const tower = new THREE.Mesh(towerBodyGeo, brickMat);
+      tower.position.set(0.88, 1.24, -0.22);
+      stationGroup.add(tower);
+
+      const towerRoof = new THREE.Mesh(towerRoofGeo, slateRoofMat);
+      towerRoof.position.set(0.88, 2.4, -0.22);
+      towerRoof.rotation.y = Math.PI / 4;
+      stationGroup.add(towerRoof);
+
+      const clockFront = new THREE.Mesh(clockFaceGeo, clockMat);
+      clockFront.position.set(0.88, 1.75, 0.08);
+      stationGroup.add(clockFront);
+
+      const clockBack = new THREE.Mesh(clockFaceGeo, clockMat);
+      clockBack.position.set(0.88, 1.75, -0.52);
+      clockBack.rotation.y = Math.PI;
+      stationGroup.add(clockBack);
+
+      // Signalisation ferroviaire (Sémaphore lumineux à gauche du quai)
+      const signalMast = new THREE.Mesh(signalMastGeo, darkMetalMat);
+      signalMast.position.set(-1.35, 1.05, 0.15);
+      stationGroup.add(signalMast);
+
+      const signalBox = new THREE.Mesh(signalBoxGeo, darkMetalMat);
+      signalBox.position.set(-1.35, 1.65, 0.15);
+      stationGroup.add(signalBox);
+
+      const beaconMat = new THREE.MeshStandardMaterial({
+        color: 0x10b981,
+        emissive: 0x059669,
+        emissiveIntensity: 2.0,
+        roughness: 0.2
+      });
+      const beacon = new THREE.Mesh(beaconGeo, beaconMat);
+      beacon.position.set(-1.35, 1.65, 0.24);
+      stationGroup.add(beacon);
+
+      // Registre local flottant (copie complète de la blockchain détenue par la gare)
       const ledgerMat = new THREE.MeshStandardMaterial({
         color: 0x10b981,
         emissive: 0x059669,
         emissiveIntensity: 1.2,
         transparent: true,
-        opacity: 0.85
+        opacity: 0.9
       });
       const ledger = new THREE.Mesh(ledgerGeo, ledgerMat);
-      ledger.position.set(0.95, 1.4, 0);
+      ledger.position.set(-1.35, 2.25, 0.15);
       stationGroup.add(ledger);
 
+      // Étiquette Sprite 3D haute lisibilité au-dessus de la gare
+      const labelCanvas = document.createElement('canvas');
+      labelCanvas.width = 360;
+      labelCanvas.height = 108;
+      const labelTexture = new THREE.CanvasTexture(labelCanvas);
+      const labelMat = new THREE.SpriteMaterial({
+        map: labelTexture,
+        transparent: true,
+        depthTest: false
+      });
+      const labelSprite = new THREE.Sprite(labelMat);
+      labelSprite.position.set(0, 3.25, 0);
+      labelSprite.scale.set(3.4, 1.02, 1);
+      stationGroup.add(labelSprite);
+
+      // Marque tous les enfants pour la détection au clic 3D
+      stationGroup.traverse((child) => {
+        child.userData.stationIndex = idx;
+      });
+
       this.networkGroup.add(stationGroup);
-      this.stations.push({
+
+      const stationObj = {
         index: idx,
+        code: info.code,
         name: info.name,
+        region: info.region,
         group: stationGroup,
         beaconMat,
         ringMat,
+        windowMat,
         ledgerMat,
         ledger,
-        pos: info.pos.clone().add(new THREE.Vector3(0, 2.35, 0)),
-        synced: true,
-        pulseTime: 0
-      });
+        labelCanvas,
+        labelTexture,
+        labelSprite,
+        cableAnchor: info.pos.clone().add(new THREE.Vector3(0, 0.22, 0)),
+        online: true,
+        state: 'synced' // 'synced' | 'emitting' | 'waiting'
+      };
+
+      this.updateStationLabelSprite(stationObj);
+      this.stations.push(stationObj);
     });
 
-    // Lignes du maillage P2P reliant les gares entre elles
-    this.meshEdges.forEach(([a, b]) => {
-      const pA = this.stations[a].pos;
-      const pB = this.stations[b].pos;
+    // 3. Construction des câbles de communication P2P reliant les gares sur le territoire
+    const allEdges = [
+      ...this.primaryEdges.map((pair) => ({ pair, isBackup: false })),
+      ...this.backupEdges.map((pair) => ({ pair, isBackup: true }))
+    ];
 
-      const points = [pA, pB];
-      const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
-      const lineMat = new THREE.LineBasicMaterial({
-        color: 0x38bdf8,
+    allEdges.forEach(({ pair, isBackup }) => {
+      const [a, b] = pair;
+      const pA = this.stations[a].cableAnchor;
+      const pB = this.stations[b].cableAnchor;
+
+      const dir = new THREE.Vector3().subVectors(pB, pA);
+      const length = dir.length();
+      const mid = new THREE.Vector3().addVectors(pA, pB).multiplyScalar(0.5);
+
+      const cableRadius = isBackup ? 0.045 : 0.075;
+      const cableGeo = new THREE.CylinderGeometry(cableRadius, cableRadius, length, 8);
+      cableGeo.rotateX(Math.PI / 2);
+
+      const cableMat = new THREE.MeshStandardMaterial({
+        color: isBackup ? 0x334155 : 0x0284c7,
+        emissive: isBackup ? 0x0f172a : 0x0369a1,
+        emissiveIntensity: isBackup ? 0.3 : 0.85,
+        roughness: 0.4,
         transparent: true,
-        opacity: 0.35
+        opacity: isBackup ? 0.45 : 0.85
       });
-      const line = new THREE.Line(lineGeo, lineMat);
-      this.networkGroup.add(line);
-      this.links.push({ a, b, pA, pB, lineMat });
+
+      const cableMesh = new THREE.Mesh(cableGeo, cableMat);
+      cableMesh.position.copy(mid);
+      cableMesh.lookAt(pB);
+
+      this.networkGroup.add(cableMesh);
+      this.links.push({
+        a,
+        b,
+        isBackup,
+        pA: pA.clone(),
+        pB: pB.clone(),
+        mesh: cableMesh,
+        mat: cableMat,
+        activeRoute: false
+      });
     });
 
     scene.add(this.networkGroup);
   },
 
   /**
-   * Lance la propagation d'une nouvelle transaction à travers toutes les gares du maillage.
+   * Met à jour l'apparence 3D d'une gare et des câbles adjacents selon son état (en ligne / en panne).
+   */
+  refreshNetworkVisuals() {
+    this.stations.forEach((st) => {
+      if (!st.online) {
+        // Gare éteinte (en panne)
+        st.beaconMat.color.setHex(0xef4444);
+        st.beaconMat.emissive.setHex(0x991b1b);
+        st.beaconMat.emissiveIntensity = 0.8;
+        st.ringMat.color.setHex(0xef4444);
+        st.ringMat.opacity = 0.35;
+        st.windowMat.color.setHex(0x1e293b);
+        st.windowMat.emissive.setHex(0x000000);
+        st.windowMat.emissiveIntensity = 0.0;
+        if (st.ledger) st.ledger.visible = false;
+      } else {
+        // Gare en ligne
+        st.windowMat.color.setHex(0xfef08a);
+        st.windowMat.emissive.setHex(0xf59e0b);
+        st.windowMat.emissiveIntensity = 1.1;
+        if (st.ledger) st.ledger.visible = true;
+
+        if (st.state === 'emitting') {
+          st.beaconMat.color.setHex(0xfacc15);
+          st.beaconMat.emissive.setHex(0xeab308);
+          st.beaconMat.emissiveIntensity = 2.4;
+          st.ringMat.color.setHex(0xfacc15);
+          st.ringMat.opacity = 0.85;
+        } else if (st.state === 'waiting') {
+          st.beaconMat.color.setHex(0x38bdf8);
+          st.beaconMat.emissive.setHex(0x0284c7);
+          st.beaconMat.emissiveIntensity = 1.0;
+          st.ringMat.color.setHex(0x38bdf8);
+          st.ringMat.opacity = 0.45;
+        } else {
+          st.beaconMat.color.setHex(0x10b981);
+          st.beaconMat.emissive.setHex(0x059669);
+          st.beaconMat.emissiveIntensity = 2.0;
+          st.ringMat.color.setHex(0x10b981);
+          st.ringMat.opacity = 0.7;
+        }
+      }
+      this.updateStationLabelSprite(st);
+    });
+
+    // Mise à jour des câbles P2P
+    this.links.forEach((link) => {
+      const stA = this.stations[link.a];
+      const stB = this.stations[link.b];
+      if (!stA.online || !stB.online) {
+        // Câble coupé car l'une des deux gares est éteinte
+        link.mat.color.setHex(0x450a0a);
+        link.mat.emissive.setHex(0x000000);
+        link.mat.emissiveIntensity = 0;
+        link.mat.opacity = 0.22;
+      } else if (link.activeRoute) {
+        // Câble emprunté par la propagation Gossip actuelle
+        link.mat.color.setHex(0x10b981);
+        link.mat.emissive.setHex(0x059669);
+        link.mat.emissiveIntensity = 1.6;
+        link.mat.opacity = 0.95;
+      } else {
+        link.mat.color.setHex(link.isBackup ? 0x334155 : 0x0284c7);
+        link.mat.emissive.setHex(link.isBackup ? 0x0f172a : 0x0369a1);
+        link.mat.emissiveIntensity = link.isBackup ? 0.25 : 0.75;
+        link.mat.opacity = link.isBackup ? 0.4 : 0.8;
+      }
+    });
+  },
+
+  /**
+   * Permet d'éteindre ou de rallumer une gare (simulation de panne d'un nœud).
+   * @param {number} stationIdx
+   */
+  toggleStation(stationIdx) {
+    if (this.isPropagating) return;
+    const st = this.stations[stationIdx];
+    if (!st) return;
+
+    const onlineCount = this.stations.filter((s) => s.online).length;
+    if (st.online && onlineCount <= 2) {
+      this.statusFeedbackMessage = 'Gardez au moins 2 gares allumées pour observer un échange pair-à-pair.';
+      this.renderLeftPanel();
+      return;
+    }
+
+    st.online = !st.online;
+    st.state = st.online ? 'synced' : 'offline';
+
+    // Réinitialise le surlignage de route jusqu'à la prochaine émission
+    this.links.forEach((l) => {
+      l.activeRoute = false;
+    });
+
+    if (!st.online) {
+      this.statusFeedbackMessage = `${st.name} éteinte (en panne). Émettez une transaction pour observer comment le réseau la contourne.`;
+    } else {
+      this.statusFeedbackMessage = `${st.name} remise en service et resynchronisée avec le réseau.`;
+    }
+
+    this.refreshNetworkVisuals();
+    this.renderLeftPanel();
+  },
+
+  /**
+   * Calcule l'arbre de propagation séquentiel (Gossip de proche en proche)
+   * en contournant les gares éteintes.
+   * @param {number} sourceIdx
+   */
+  computeGossipWaves(sourceIdx) {
+    const visited = new Set([sourceIdx]);
+    let currentWaveNodes = [sourceIdx];
+    const waves = []; // Chaque vague contient [{ from, to, link }]
+
+    while (currentWaveNodes.length > 0) {
+      const nextWaveNodes = [];
+      const waveHops = [];
+
+      // 1. D'abord les liaisons primaires directes (sans croisement)
+      for (const u of currentWaveNodes) {
+        for (const [a, b] of this.primaryEdges) {
+          const v = a === u ? b : b === u ? a : -1;
+          if (v !== -1 && this.stations[v].online && !visited.has(v)) {
+            visited.add(v);
+            nextWaveNodes.push(v);
+            const link = this.links.find((l) => (l.a === u && l.b === v) || (l.a === v && l.b === u));
+            waveHops.push({ from: u, to: v, link });
+          }
+        }
+      }
+
+      // 2. Puis les liaisons secondaires / diagonales de secours si des gares sont en panne
+      for (const u of currentWaveNodes) {
+        for (const [a, b] of this.backupEdges) {
+          const v = a === u ? b : b === u ? a : -1;
+          if (v !== -1 && this.stations[v].online && !visited.has(v)) {
+            visited.add(v);
+            nextWaveNodes.push(v);
+            const link = this.links.find((l) => (l.a === u && l.b === v) || (l.a === v && l.b === u));
+            waveHops.push({ from: u, to: v, link });
+          }
+        }
+      }
+
+      if (waveHops.length > 0) {
+        waves.push({
+          hops: waveHops,
+          targets: nextWaveNodes
+        });
+      }
+
+      currentWaveNodes = nextWaveNodes;
+    }
+
+    return { waves, reachableCount: visited.size };
+  },
+
+  /**
+   * Lance la propagation séquentielle d'une transaction (protocole Gossip).
+   * Étape 1 : Gare A -> voisines immédiates (B et C).
+   * Étape 2 (seulement après réception) : B et C -> D et E.
+   * Étape 3 (seulement après réception) : D et E -> F.
    */
   broadcastTransaction(txLabel) {
     if (this.isPropagating) return;
 
-    this.isPropagating = true;
-    this.syncedCount = 1;
-    this.txCount += 1;
-    this.lastTxLabel = txLabel || `Gare #1 -> Réseau (${Math.floor(Math.random() * 25) + 5} MMI)`;
+    // Choisit la Gare A par défaut, ou la première gare en ligne si la Gare A est éteinte
+    const sourceStation = this.stations.find((s) => s.online);
+    if (!sourceStation) return;
 
-    // Réinitialise l'état des gares (Gare 0 est l'émettrice initiale)
-    this.stations.forEach((st, idx) => {
-      if (idx === 0) {
-        st.synced = true;
-        st.pulseTime = performance.now();
-        st.beaconMat.color.setHex(0xfacc15);
-        st.beaconMat.emissive.setHex(0xeab308);
-        st.ringMat.color.setHex(0xfacc15);
-      } else {
-        st.synced = false;
-        st.beaconMat.color.setHex(0x64748b);
-        st.beaconMat.emissive.setHex(0x334155);
-        st.ringMat.color.setHex(0x64748b);
-      }
+    const sourceIdx = sourceStation.index;
+    const { waves } = this.computeGossipWaves(sourceIdx);
+
+    this.isPropagating = true;
+    this.txCount += 1;
+    this.lastTxLabel = txLabel || `Bon d'expédition #${100 + this.txCount} (${sourceStation.name})`;
+
+    // Construit le résumé lisible du chemin de propagation
+    const waveNames = [`Gare ${sourceStation.code}`];
+    waves.forEach((w) => {
+      const codes = w.targets.map((idx) => this.stations[idx].code).join(', ');
+      waveNames.push(w.targets.length > 1 ? `Gares ${codes}` : `Gare ${codes}`);
+    });
+    this.lastRouteSummary = waveNames.join(' -> ');
+
+    const offlineNames = this.stations.filter((s) => !s.online).map((s) => s.name);
+    if (offlineNames.length > 0) {
+      this.statusFeedbackMessage = `Contournement de ${offlineNames.join(', ')} : propagation de proche en proche par ${this.lastRouteSummary}.`;
+    } else {
+      this.statusFeedbackMessage = `Propagation séquentielle en cours : ${this.lastRouteSummary}.`;
+    }
+
+    // Réinitialise l'état visuel des gares actives et des câbles
+    this.links.forEach((l) => {
+      l.activeRoute = false;
     });
 
-    // Crée les paquets lumineux sur les liens du maillage avec un léger décalage par saut (hop)
-    const packetGeo = new THREE.SphereGeometry(0.16, 12, 12);
-    const packetMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+    this.stations.forEach((st, idx) => {
+      if (!st.online) return;
+      st.state = idx === sourceIdx ? 'emitting' : 'waiting';
+    });
+    this.refreshNetworkVisuals();
 
-    const scheduleWave = (fromIdx, delayMs) => {
-      this.meshEdges.forEach(([a, b]) => {
-        let targetIdx = -1;
-        if (a === fromIdx) targetIdx = b;
-        else if (b === fromIdx) targetIdx = a;
+    // Nettoie d'éventuels anciens paquets
+    this.packets.forEach((p) => this.networkGroup?.remove(p.mesh));
+    this.packets = [];
 
-        if (targetIdx !== -1) {
-          const mesh = new THREE.Mesh(packetGeo, packetMat);
-          mesh.visible = false;
-          this.networkGroup.add(mesh);
+    // Création des paquets lumineux séquentiels vague par vague
+    const hopDuration = 1150; // Lent et lisible (1,15s par câble)
+    const relayPause = 260;   // Pause dans chaque gare avant de relayer à la suivante
+    const baseTime = performance.now();
 
-          this.packets.push({
-            mesh,
-            startPos: this.stations[fromIdx].pos.clone(),
-            endPos: this.stations[targetIdx].pos.clone(),
-            targetIdx,
-            startTime: performance.now() + delayMs,
-            duration: 650,
-            completed: false
-          });
-        }
+    const packetGeo = new THREE.SphereGeometry(0.24, 16, 16);
+    const haloGeo = new THREE.RingGeometry(0.28, 0.44, 20);
+
+    waves.forEach((wave, waveIdx) => {
+      const waveStart = baseTime + waveIdx * (hopDuration + relayPause);
+
+      wave.hops.forEach((hop) => {
+        const pktGroup = new THREE.Group();
+
+        const coreMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+        const core = new THREE.Mesh(packetGeo, coreMat);
+        pktGroup.add(core);
+
+        const haloMat = new THREE.MeshBasicMaterial({
+          color: 0xfacc15,
+          transparent: true,
+          opacity: 0.75,
+          side: THREE.DoubleSide
+        });
+        const halo = new THREE.Mesh(haloGeo, haloMat);
+        halo.rotation.x = -Math.PI / 2;
+        pktGroup.add(halo);
+
+        pktGroup.visible = false;
+        this.networkGroup.add(pktGroup);
+
+        this.packets.push({
+          mesh: pktGroup,
+          fromIdx: hop.from,
+          targetIdx: hop.to,
+          link: hop.link,
+          startPos: this.stations[hop.from].cableAnchor.clone(),
+          endPos: this.stations[hop.to].cableAnchor.clone(),
+          startTime: waveStart,
+          duration: hopDuration,
+          started: false,
+          completed: false
+        });
       });
-    };
+    });
 
-    // Vague 1 : depuis la Gare 0 vers ses voisines (1, 3, 4)
-    scheduleWave(0, 0);
-    // Vague 2 : relais depuis les gares 1 et 4 vers les gares 2 et 5
-    scheduleWave(1, 550);
-    scheduleWave(4, 550);
+    // Cas où toutes les voisines directes de la gare source sont coupées
+    if (this.packets.length === 0) {
+      this.isPropagating = false;
+      sourceStation.state = 'synced';
+      this.statusFeedbackMessage = `${sourceStation.name} est isolée car ses gares voisines sont éteintes.`;
+      this.refreshNetworkVisuals();
+    }
 
     this.renderLeftPanel();
   },
 
+  /**
+   * Boucle d'animation de la scène 3D (registres flottants et propagation séquentielle).
+   */
   startAnimationLoop() {
     this.stopAnimationLoop();
 
@@ -303,19 +955,15 @@ export const step4 = {
       const now = performance.now();
       const time = now * 0.003;
 
-      // Animation flottante des registres de chaque gare
+      // Animation douce des registres locaux au-dessus des gares actives
       this.stations.forEach((st, idx) => {
-        if (st.ledger) {
-          st.ledger.position.y = 1.38 + Math.sin(time * 2 + idx) * 0.08;
+        if (st.online && st.ledger) {
+          st.ledger.position.y = 2.25 + Math.sin(time * 2 + idx) * 0.06;
           st.ledger.rotation.y = Math.sin(time + idx) * 0.35;
-        }
-        if (st.synced && !this.isPropagating) {
-          const pulse = 1.4 + Math.sin(time * 3 + idx) * 0.35;
-          st.beaconMat.emissiveIntensity = pulse;
         }
       });
 
-      // Mise à jour des paquets de transaction en transit
+      // Progression séquentielle des paquets le long des câbles P2P
       if (this.packets.length > 0) {
         let allDone = true;
 
@@ -328,27 +976,48 @@ export const step4 = {
             continue;
           }
 
+          if (!pkt.started) {
+            pkt.started = true;
+            const fromSt = this.stations[pkt.fromIdx];
+            if (fromSt && fromSt.online) {
+              fromSt.state = 'emitting';
+              this.refreshNetworkVisuals();
+            }
+            if (pkt.link) {
+              pkt.link.mat.color.setHex(0xfacc15);
+              pkt.link.mat.emissive.setHex(0xeab308);
+              pkt.link.mat.emissiveIntensity = 2.0;
+              pkt.link.mat.opacity = 1.0;
+            }
+          }
+
           const progress = Math.min((now - pkt.startTime) / pkt.duration, 1.0);
           pkt.mesh.visible = true;
+          // Trajectoire rectiligne le long du câble de communication (sans rebond chaotique)
           pkt.mesh.position.lerpVectors(pkt.startPos, pkt.endPos, progress);
-          // Légère arche parabolique
-          pkt.mesh.position.y += Math.sin(progress * Math.PI) * 0.6;
+          pkt.mesh.position.y += 0.08;
 
           if (progress >= 1.0) {
             pkt.completed = true;
             pkt.mesh.visible = false;
             this.networkGroup?.remove(pkt.mesh);
 
-            const targetStation = this.stations[pkt.targetIdx];
-            if (targetStation && !targetStation.synced) {
-              targetStation.synced = true;
-              targetStation.beaconMat.color.setHex(0x10b981);
-              targetStation.beaconMat.emissive.setHex(0x059669);
-              targetStation.beaconMat.emissiveIntensity = 2.5;
-              targetStation.ringMat.color.setHex(0x10b981);
-              this.syncedCount = this.stations.filter((s) => s.synced).length;
-              this.updateFeedbackDOM();
+            if (pkt.link) {
+              pkt.link.activeRoute = true;
             }
+
+            const fromStation = this.stations[pkt.fromIdx];
+            if (fromStation && fromStation.online) {
+              fromStation.state = 'synced';
+            }
+
+            const targetStation = this.stations[pkt.targetIdx];
+            if (targetStation && targetStation.online) {
+              targetStation.state = 'synced';
+            }
+
+            this.refreshNetworkVisuals();
+            this.updateFeedbackDOM();
           } else {
             allDone = false;
           }
@@ -358,11 +1027,9 @@ export const step4 = {
           this.isPropagating = false;
           this.packets = [];
           this.stations.forEach((st) => {
-            st.beaconMat.color.setHex(0x10b981);
-            st.beaconMat.emissive.setHex(0x059669);
-            st.ringMat.color.setHex(0x10b981);
+            if (st.online) st.state = 'synced';
           });
-          this.syncedCount = this.stations.length;
+          this.refreshNetworkVisuals();
           this.renderLeftPanel();
         }
       }
@@ -380,10 +1047,91 @@ export const step4 = {
     }
   },
 
+  /**
+   * Configure la détection de clic et de survol sur les gares dans le canvas 3D.
+   */
+  setupCanvasInteractions() {
+    this.removeCanvasInteractions();
+    const canvas = document.getElementById('webgl');
+    if (!canvas) return;
+
+    const getStationIndexAtEvent = (clientX, clientY) => {
+      if (!this.ctx?.camera || !this.networkGroup) return -1;
+      const rect = canvas.getBoundingClientRect();
+      const mouse = new THREE.Vector2(
+        ((clientX - rect.left) / rect.width) * 2 - 1,
+        -((clientY - rect.top) / rect.height) * 2 + 1
+      );
+      this.raycaster.setFromCamera(mouse, this.ctx.camera);
+      const meshes = [];
+      this.stations.forEach((s) => {
+        s.group.traverse((child) => {
+          if (child.isMesh) meshes.push(child);
+        });
+      });
+
+      const hits = this.raycaster.intersectObjects(meshes, false);
+      if (hits.length > 0) {
+        let obj = hits[0].object;
+        while (obj) {
+          if (typeof obj.userData?.stationIndex === 'number') {
+            return obj.userData.stationIndex;
+          }
+          obj = obj.parent;
+        }
+      }
+      return -1;
+    };
+
+    this._onPointerDown = (e) => {
+      this.pointerDownPos = { x: e.clientX, y: e.clientY };
+    };
+
+    this._onPointerUp = (e) => {
+      const dx = e.clientX - this.pointerDownPos.x;
+      const dy = e.clientY - this.pointerDownPos.y;
+      if (Math.hypot(dx, dy) > 6) return; // Ignore les mouvements de rotation de caméra
+
+      const stationIdx = getStationIndexAtEvent(e.clientX, e.clientY);
+      if (stationIdx !== -1) {
+        this.toggleStation(stationIdx);
+      }
+    };
+
+    this._onPointerMove = (e) => {
+      const stationIdx = getStationIndexAtEvent(e.clientX, e.clientY);
+      this.hoveredStationIdx = stationIdx;
+      canvas.style.cursor = stationIdx !== -1 ? 'pointer' : '';
+    };
+
+    canvas.addEventListener('pointerdown', this._onPointerDown);
+    canvas.addEventListener('pointerup', this._onPointerUp);
+    canvas.addEventListener('pointermove', this._onPointerMove);
+  },
+
+  removeCanvasInteractions() {
+    const canvas = document.getElementById('webgl');
+    if (!canvas) return;
+    if (this._onPointerDown) canvas.removeEventListener('pointerdown', this._onPointerDown);
+    if (this._onPointerUp) canvas.removeEventListener('pointerup', this._onPointerUp);
+    if (this._onPointerMove) canvas.removeEventListener('pointermove', this._onPointerMove);
+    canvas.style.cursor = '';
+    this._onPointerDown = null;
+    this._onPointerUp = null;
+    this._onPointerMove = null;
+  },
+
+  /**
+   * Met à jour en direct le compteur de synchronisation dans le DOM.
+   */
   updateFeedbackDOM() {
     const syncEl = document.getElementById('step4-sync-val');
     if (syncEl) {
-      syncEl.textContent = `${this.syncedCount} / ${this.stations.length} Gares à jour`;
+      const onlineStations = this.stations.filter((s) => s.online);
+      const syncedStations = onlineStations.filter((s) => s.state === 'synced');
+      const offlineCount = this.stations.length - onlineStations.length;
+      const offlineSuffix = offlineCount > 0 ? ` (${offlineCount} en panne)` : '';
+      syncEl.textContent = `${syncedStations.length} / ${onlineStations.length} gares actives à jour${offlineSuffix}`;
     }
   },
 
@@ -399,57 +1147,87 @@ export const step4 = {
     const inner = document.createElement('div');
     inner.className = 'step-panel-inner';
 
+    const onlineStations = this.stations.filter((s) => s.online);
+    const syncedStations = onlineStations.filter((s) => s.state === 'synced');
+    const offlineCount = this.stations.length - onlineStations.length;
+    const offlineSuffix = offlineCount > 0 ? ` (${offlineCount} en panne)` : '';
+
+    const stationsButtonsHTML = this.stations
+      .map(
+        (st) => `
+        <button class="station-node-btn ${st.online ? 'online' : 'offline'}" data-station-idx="${st.index}" ${this.isPropagating ? 'disabled' : ''}>
+          <span>${st.name}</span>
+          <span class="station-node-dot"></span>
+        </button>
+      `
+      )
+      .join('');
+
     inner.innerHTML = `
       <header class="step-panel-header">
         <h2 class="step-panel-title">Réseau et Décentralisation</h2>
+        <p class="step-panel-subtitle">Un archipel de gares reliées en pair-à-pair (P2P)</p>
       </header>
 
       <div class="step-panel-scroll">
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Un maillage de gares sans centre unique</h3>
+          <h3 class="card-title">Qu'est-ce qu'un nœud du réseau ?</h3>
           <p>
-            Dans un réseau classique, un serveur central unique dirige le trafic. Dans une blockchain, le réseau est <strong>décentralisé</strong> : il est composé d'une multitude de <strong>nœuds</strong> (ici représentés par les 6 gares réparties autour de la voie).
+            Une gare représente un <strong>nœud</strong> : un ordinateur qui possède une copie complète du registre.
           </p>
           <p>
-            Chaque gare conserve une <strong>copie intégrale du registre</strong>. Lorsqu'une transaction est émise, elle se propage de proche en proche à toutes les gares pour vérification.
+            Lorsqu'une transaction est émise depuis la <strong>Gare A</strong>, elle se propage de proche en proche le long des lignes de communication vers ses voisines immédiates (<strong>Gares B et C</strong>), qui la transmettent ensuite à leur tour à <strong>D, E et F</strong>.
           </p>
         </article>
 
         <article class="step-card action-card animate-fade">
-          <h3 class="card-title">Propager une transaction sur le réseau</h3>
+          <h3 class="card-title">Tester la résilience du réseau</h3>
           <p class="card-instruction">
-            Diffusez un nouvel échange depuis une gare et observez la synchronisation des copies distribuées :
+            Cliquez sur une gare pour l'éteindre et observez comment la transaction trouve un autre chemin. Aucune gare n'est indispensable.
           </p>
+
+          <div class="station-nodes-grid" role="group" aria-label="État des 6 gares du réseau">
+            ${stationsButtonsHTML}
+          </div>
 
           <div class="action-choices">
             <button id="btn-step4-tx1" class="btn-choice" ${this.isPropagating ? 'disabled' : ''}>
-              <span>Émettre une transaction (Emma &rarr; Lucas : 20 MMI)</span>
+              <span>Émettre un convoi de 50 caisses depuis la première gare active</span>
               <span class="btn-choice-icon">Diffuser P2P</span>
             </button>
             <button id="btn-step4-tx2" class="btn-choice" ${this.isPropagating ? 'disabled' : ''}>
-              <span>Émettre une transaction (Gare-Sud &rarr; Quai-Est : 45 MMI)</span>
+              <span>Ajouter un bon de livraison #408 sur le réseau</span>
               <span class="btn-choice-icon">Diffuser P2P</span>
             </button>
           </div>
 
-          <div class="action-feedback-box ${this.syncedCount === 6 && !this.isPropagating ? 'success' : ''}">
+          ${this.statusFeedbackMessage
+            ? `<div class="action-feedback-status visible status-info">${this.statusFeedbackMessage}</div>`
+            : ''
+          }
+
+          <div class="action-feedback-box ${!this.isPropagating ? 'success' : ''}" style="margin-top: 10px;">
             <div class="feedback-row">
               <span class="feedback-label">Topologie réseau :</span>
-              <span class="feedback-val">Pair-à-pair (P2P) sans centre</span>
+              <span class="feedback-val">Maillage pair-à-pair (P2P) sans gare centrale</span>
             </div>
             <div class="feedback-row">
               <span class="feedback-label">Dernier message :</span>
               <span class="feedback-val">${this.lastTxLabel}</span>
             </div>
             <div class="feedback-row">
+              <span class="feedback-label">Chemin suivi :</span>
+              <span class="feedback-val">${this.lastRouteSummary}</span>
+            </div>
+            <div class="feedback-row">
               <span class="feedback-label">Copies distribuées :</span>
-              <span id="step4-sync-val" class="feedback-val ${this.syncedCount === 6 ? 'success-val' : 'hash-val'}">
-                ${this.syncedCount} / 6 Gares synchronisées
+              <span id="step4-sync-val" class="feedback-val ${!this.isPropagating ? 'success-val' : 'hash-val'}">
+                ${syncedStations.length} / ${onlineStations.length} gares actives à jour${offlineSuffix}
               </span>
             </div>
             <div class="feedback-row">
               <span class="feedback-label">Registre local :</span>
-              <span class="feedback-val">${this.txCount} transactions validées</span>
+              <span class="feedback-val">${this.txCount} échanges inscrits dans chaque gare active</span>
             </div>
           </div>
         </article>
@@ -457,7 +1235,7 @@ export const step4 = {
         <article class="step-card keypoint-card animate-fade">
           <h4 class="card-title keypoint-title">Point clé</h4>
           <p class="keypoint-text">
-            Si une gare tombe en panne ou tente de tricher sur son registre local, les 5 autres gares conservent la version authentique : il n'y a aucun point de défaillance unique.
+            Même si une ou plusieurs gares tombent en panne, les messages contournent l'obstacle et les gares restantes maintiennent le registre à jour sans interruption de service.
           </p>
         </article>
 
@@ -475,12 +1253,21 @@ export const step4 = {
   },
 
   setupEvents() {
+    document.querySelectorAll('.station-node-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.stationIdx, 10);
+        if (!isNaN(idx)) {
+          this.toggleStation(idx);
+        }
+      });
+    });
+
     document.getElementById('btn-step4-tx1')?.addEventListener('click', () => {
-      this.broadcastTransaction('Emma -> Lucas (20 MMI)');
+      this.broadcastTransaction('50 caisses de matériel (Fret P2P)');
     });
 
     document.getElementById('btn-step4-tx2')?.addEventListener('click', () => {
-      this.broadcastTransaction('Gare-Sud -> Quai-Est (45 MMI)');
+      this.broadcastTransaction('Bon de livraison #408 - Réseau ferré');
     });
 
     document.getElementById('btn-step4-action-next')?.addEventListener('click', () => {

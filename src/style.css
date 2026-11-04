@@ -1101,6 +1101,8 @@ body {
   background: rgba(56, 189, 248, 0.15);
   padding: 2px 6px;
   border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Champ de saisie personnalisé */
@@ -1235,12 +1237,19 @@ body {
 }
 
 .feedback-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: minmax(115px, auto) 1fr;
+  align-items: baseline;
+  gap: 10px;
   min-width: 0;
   width: 100%;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.feedback-row:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
 .feedback-label {
@@ -1249,18 +1258,77 @@ body {
   white-space: nowrap;
   flex-shrink: 0;
   font-size: 0.74rem;
+  line-height: 1.4;
 }
 
 .feedback-val {
   color: #38bdf8;
   font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
+  word-break: break-word;
   text-align: right;
   min-width: 0;
-  flex: 1;
   font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+/* Grille d'état des gares / nœuds (Étape 4) */
+.station-nodes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+.station-node-btn {
+  appearance: none;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: 7px;
+  padding: 6px 8px;
+  color: #ecfdf5;
+  font-family: inherit;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.station-node-btn:hover {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: #34d399;
+  transform: translateY(-1px);
+}
+
+.station-node-btn.offline {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #fecaca;
+}
+
+.station-node-btn.offline:hover {
+  background: rgba(239, 68, 68, 0.24);
+  border-color: #f87171;
+}
+
+.station-node-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+  flex-shrink: 0;
+}
+
+.station-node-btn.offline .station-node-dot {
+  background: #ef4444;
+  box-shadow: 0 0 6px #ef4444;
 }
 
 .feedback-val.hash-val {
