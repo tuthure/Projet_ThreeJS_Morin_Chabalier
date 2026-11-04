@@ -174,11 +174,13 @@ export const step3 = {
     const el1 = document.getElementById('tooltip-spot-w1');
     const el2 = document.getElementById('tooltip-spot-w2');
 
+    el1?.addEventListener('pointerdown', (e) => e.stopPropagation());
     el1?.querySelector('.scene-tooltip-pill')?.addEventListener('click', (e) => {
       e.stopPropagation();
       this.toggleTooltipSpot('spot-w1');
     });
 
+    el2?.addEventListener('pointerdown', (e) => e.stopPropagation());
     el2?.querySelector('.scene-tooltip-pill')?.addEventListener('click', (e) => {
       e.stopPropagation();
       this.toggleTooltipSpot('spot-w2');
@@ -336,7 +338,7 @@ export const step3 = {
 
         if (projLabel1.z > 1 || projSocket1.z > 1 || projCoupler2.z > 1) {
           this.tooltipLayer.style.opacity = '0';
-          this.tooltipLayer.style.pointerEvents = 'none';
+          this.tooltipLayer.style.visibility = 'hidden';
         } else {
           const lx1 = (projLabel1.x * 0.5 + 0.5) * width;
           const ly1 = (-projLabel1.y * 0.5 + 0.5) * height;
@@ -350,7 +352,7 @@ export const step3 = {
           // Masquage si passe derriere le volet gauche
           const isCovered = width > 768 && Math.min(lx1, sx1, cx2) < 420;
           this.tooltipLayer.style.opacity = isCovered ? '0' : '1';
-          this.tooltipLayer.style.pointerEvents = isCovered ? 'none' : 'auto';
+          this.tooltipLayer.style.visibility = isCovered ? 'hidden' : 'visible';
 
           // Calcul des positions des 2 pastilles flottantes
           const pill1_X = (lx1 + sx1) * 0.5;

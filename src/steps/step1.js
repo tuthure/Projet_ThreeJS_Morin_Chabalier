@@ -187,7 +187,7 @@ export const step1 = {
       <div id="tooltip-spot-hash" class="scene-tooltip" style="--spot-color: ${colorHash}; z-index: 12;">
         <button type="button" class="scene-tooltip-pill">
           <span class="scene-tooltip-dot"></span>
-          <span class="scene-tooltip-label">Hash #1 : <code>${hashShort}...</code></span>
+          <span class="scene-tooltip-label">Hash : <code>${hashShort}...</code></span>
         </button>
         <div class="scene-tooltip-card">
           <div class="scene-tooltip-card-title">4. Empreinte du bloc (Hash SHA-256)</div>
@@ -198,6 +198,7 @@ export const step1 = {
 
     ['prev', 'cargo', 'nonce', 'hash'].forEach((id) => {
       const el = document.getElementById(`tooltip-spot-${id}`);
+      el?.addEventListener('pointerdown', (e) => e.stopPropagation());
       el?.querySelector('.scene-tooltip-pill')?.addEventListener('click', (e) => {
         e.stopPropagation();
         const nextId = this.activeSpotId === id ? null : id;
@@ -343,7 +344,7 @@ export const step1 = {
           prHashPlate.z > 1
         ) {
           this.tooltipLayer.style.opacity = '0';
-          this.tooltipLayer.style.pointerEvents = 'none';
+          this.tooltipLayer.style.visibility = 'hidden';
         } else {
           const toX = (v) => (v.x * 0.5 + 0.5) * width;
           const toY = (v) => (-v.y * 0.5 + 0.5) * height;
@@ -368,7 +369,7 @@ export const step1 = {
           const minX = Math.min(prevPlateX, cargoX, hashPlateX);
           const isCovered = width > 768 && minX < 390;
           this.tooltipLayer.style.opacity = isCovered ? '0' : '1';
-          this.tooltipLayer.style.pointerEvents = isCovered ? 'none' : 'auto';
+          this.tooltipLayer.style.visibility = isCovered ? 'hidden' : 'visible';
 
           // Rangée supérieure (3 infobulles espacées proprement sans chevauchement)
           const topBaseY = Math.min(prevPlateY, cargoY, hashPlateY) - 74;
@@ -543,14 +544,13 @@ export const step1 = {
 
             <button type="button" class="anatomy-item-btn" data-part="hash" style="--item-color: ${colorHash};">
               <span class="anatomy-dot"></span>
-              <span class="anatomy-name">4. Hash du bloc (Sceau actuel)</span>
+              <span class="anatomy-name">4. Hash (Sceau actuel)</span>
               <code class="anatomy-code">${hashShort}...</code>
             </button>
 
             <button type="button" class="anatomy-item-btn active" data-part="all" style="--item-color: #94a3b8;">
               <span class="anatomy-dot"></span>
               <span class="anatomy-name">Vue d'ensemble du wagon</span>
-              <code class="anatomy-code">Complet</code>
             </button>
           </div>
         </article>

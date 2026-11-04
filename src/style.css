@@ -1777,7 +1777,7 @@ body {
 .scene-tooltips-layer {
   position: absolute;
   inset: 0;
-  pointer-events: none;
+  pointer-events: none !important;
   z-index: 15;
   overflow: hidden;
 }
