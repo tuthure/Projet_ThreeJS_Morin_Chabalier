@@ -504,10 +504,10 @@ export const step5 = {
     this.currentNonce = 0;
     this.animFramesDone = 0;
 
-    // Durée allongée pour bien voir défiler les tentatives aléatoires selon la difficulté
-    if (this.difficulty === 1) this.animTotalFrames = 110;
-    else if (this.difficulty === 2) this.animTotalFrames = 195;
-    else this.animTotalFrames = 290;
+    // Durée équilibrée selon la difficulté (~1.1s, ~1.7s, ~2.5s)
+    if (this.difficulty === 1) this.animTotalFrames = 65;
+    else if (this.difficulty === 2) this.animTotalFrames = 105;
+    else this.animTotalFrames = 150;
 
     this.renderLeftPanel();
   },
