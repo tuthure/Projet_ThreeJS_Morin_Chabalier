@@ -6,14 +6,16 @@ import { hashToColorHex } from '../three/WagonMesh.js';
  * Mise en scène 3D centrée sur les wagons :
  * - À gauche : le convoi déjà validé (Locomotive #0 et Wagon #1), dont les Hashs
  *   commencent déjà par le nombre de zéros exigé ("0", "00" ou "000").
- * - À droite, reculé à l'écart sur les rails : le Wagon #2 candidat, dont le Hash
- *   ne commence pas encore par des zéros et qui ne peut donc pas s'atteler.
+ * - À droite, à distance sur les rails (x = 9.35) : un nouveau Wagon #2 candidat,
+ *   dont le Hash ne commence pas encore par des zéros et qui ne peut donc pas s'atteler.
  * - L'utilisateur peut :
  *   1) Cliquer directement sur la molette 3D du Nonce (ou son infobulle) pour
  *      tourner d'un cran (+1) à la main et constater que le Hash change mais reste refusé.
  *   2) Lancer le minage automatique dans le panneau gauche : la molette tourne à
  *      toute vitesse jusqu'à tomber sur un Hash commençant par les zéros requis,
- *      puis le Wagon #2 avance sur les rails et vient s'atteler au Wagon #1.
+ *      puis le Wagon #2 avance sur les rails (9.35 -> 7.60) et s'attelle au Wagon #1.
+ *   3) S'il souhaite recommencer une fois le wagon attelé, le wagon attaché disparaît
+ *      et un nouveau wagon candidat apparaît directement à distance (jamais de marche arrière).
  */
 export const step5 = {
   id: 5,
@@ -38,10 +40,12 @@ export const step5 = {
   boundOnPointerDown: null,
   boundOnPointerUp: null,
 
-  // Positions sur l'axe X du Wagon #2 (écarté vs attelé)
+  // Positions sur l'axe X du Wagon #2 (arrivée -> attente à distance -> attelé)
+  spawnWagon2X: 10.65,
   unminedWagon2X: 9.35,
   minedWagon2X: 7.6,
   currentWagon2X: 9.35,
+  currentWagon2Scale: 1.0,
   targetWheelAngle: 0,
   currentWheelAngle: 0,
   manualSparkTimer: 0,
@@ -51,6 +55,7 @@ export const step5 = {
   isMined: false,
   hasEverMined: false,
   manualClicksCount: 0,
+  candidateCounter: 0,
   currentNonce: 0,
   currentHash: '7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069',
 
@@ -74,6 +79,7 @@ export const step5 = {
     this.isMined = false;
     this.hasEverMined = false;
     this.manualClicksCount = 0;
+    this.candidateCounter = 0;
     this.activeSpotId = null;
     this.attemptsDone = 0;
     this.realAttempts = 0;
@@ -103,7 +109,7 @@ export const step5 = {
       }
     }
 
-    this.prepareConvoyForDifficulty();
+    this.prepareConvoyForDifficulty(false);
     this.buildWheelEffects();
     this.setupTooltipsLayer();
     this.createMiningTooltips();
@@ -126,10 +132,11 @@ export const step5 = {
     this.stopAnimationLoop();
     this.removeWheelPointerEvents();
 
-    // Remet le Wagon #2 à sa place nominale en quittant l'étape
+    // Remet le Wagon #2 à sa place et son échelle nominales en quittant l'étape
     const wagon2 = this.ctx?.trainConvoy?.getWagon(2);
     if (wagon2) {
       wagon2.position.x = this.minedWagon2X;
+      wagon2.scale.setScalar(1);
       if (wagon2.couplerGroup && wagon2.defaultCouplerPosition) {
         wagon2.couplerGroup.position.copy(wagon2.defaultCouplerPosition);
         wagon2.couplerGroup.rotation.z = 0;
@@ -158,13 +165,12 @@ export const step5 = {
   },
 
   /**
-   * Garantit la cohérence de toute la chaîne :
+   * Garantit la cohérence de toute la chaîne et fait apparaître un nouveau Wagon #2 candidat à distance :
    * - La Locomotive (#0) et le Wagon #1 commencent tous deux par le nombre de zéros exigé ("0", "00" ou "000").
-   * - Le Wagon #2 (candidat) a son PreviousHash branché sur le Wagon #1, mais son propre Hash
-   *   ne commence PAS par zéro tant qu'il n'a pas été miné.
-   * - Le Wagon #2 est reculé à droite (x = 9.35) à l'écart du Wagon #1.
+   * - Le Wagon #2 (candidat) apparaît directement à distance à droite (sans jamais reculer depuis le train).
+   * @param {boolean} [animateSpawn=true] - Si vrai, fait apparaître le nouveau wagon à distance avec une transition d'entrée.
    */
-  prepareConvoyForDifficulty() {
+  prepareConvoyForDifficulty(animateSpawn = true) {
     const { trainConvoy } = this.ctx;
     if (!trainConvoy || !trainConvoy.blockchain) return;
 
@@ -176,18 +182,20 @@ export const step5 = {
     const wagon2 = trainConvoy.getWagon(2);
     if (!block0 || !block1 || !block2 || !wagon1 || !wagon2) return;
 
+    this.candidateCounter += 1;
+
     // 1. Mine les wagons déjà présents dans le train selon la difficulté choisie
     block0.mineBlock(this.difficulty);
     block1.previousHash = block0.hash;
     block1.mineBlock(this.difficulty);
 
-    // 2. Prépare le Wagon #2 dans un état initial "non miné" (son hash ne commence pas par '0')
+    // 2. Prépare un nouveau Wagon #2 dans un état initial "non miné" (son hash ne commence pas par '0')
     block2.previousHash = block1.hash;
-    block2._miningSalt = `attente-diff-${this.difficulty}`;
+    block2._miningSalt = `candidat-${this.candidateCounter}-diff-${this.difficulty}`;
     block2.nonce = 0;
     block2.hash = block2.calculateHash();
     while (block2.hash.startsWith('0')) {
-      block2._miningSalt = `attente-${Math.random().toString(36).substring(2, 7)}`;
+      block2._miningSalt = `candidat-${Math.random().toString(36).substring(2, 7)}`;
       block2.hash = block2.calculateHash();
     }
 
@@ -196,11 +204,21 @@ export const step5 = {
     this.attemptsDone = 0;
     this.manualClicksCount = 0;
     this.isMined = false;
+    this.isMining = false;
+    this.targetWheelAngle = 0;
+    this.currentWheelAngle = 0;
 
-    // 3. Synchronise l'affichage des plaques et recule physiquement le Wagon #2 à l'écart
+    // 3. Synchronise l'affichage des plaques et place immédiatement le nouveau wagon à distance à droite
     trainConvoy.sync();
-    this.currentWagon2X = this.unminedWagon2X;
+    if (animateSpawn) {
+      this.currentWagon2X = this.spawnWagon2X;
+      this.currentWagon2Scale = 0.01;
+    } else {
+      this.currentWagon2X = this.unminedWagon2X;
+      this.currentWagon2Scale = 1.0;
+    }
     wagon2.position.x = this.currentWagon2X;
+    wagon2.scale.setScalar(this.currentWagon2Scale);
   },
 
   /**
@@ -282,7 +300,13 @@ export const step5 = {
     };
 
     this.boundOnPointerMove = (e) => {
-      if (this.isMining) return;
+      if (this.isMining || this.isMined) {
+        if (this.isHoveringWheel) {
+          this.isHoveringWheel = false;
+          canvas.style.cursor = '';
+        }
+        return;
+      }
       const hit = isIntersectingWheel(e.clientX, e.clientY);
       if (hit !== this.isHoveringWheel) {
         this.isHoveringWheel = hit;
@@ -296,7 +320,7 @@ export const step5 = {
     };
 
     this.boundOnPointerUp = (e) => {
-      if (this.isMining) return;
+      if (this.isMining || this.isMined) return;
       const dx = e.clientX - this.pointerDownPos.x;
       const dy = e.clientY - this.pointerDownPos.y;
       if (Math.hypot(dx, dy) > 6) return; // Ignore un glisser-déposer de caméra
@@ -329,7 +353,7 @@ export const step5 = {
    * Tourne manuellement la molette du Nonce d'un cran (+1) suite à un clic sur la molette 3D ou son infobulle.
    */
   stepManualNonce() {
-    if (this.isMining) return;
+    if (this.isMining || this.isMined) return;
 
     const { trainConvoy } = this.ctx;
     const wagon2 = trainConvoy?.getWagon(2);
@@ -457,7 +481,7 @@ export const step5 = {
       <div id="tooltip-s5-nonce" class="scene-tooltip tooltip-below" style="--spot-color: ${colorNonce}; z-index: 12;">
         <button type="button" class="scene-tooltip-pill" title="Cliquer pour tourner la molette d'un cran (+1)">
           <span class="scene-tooltip-dot"></span>
-          <span class="scene-tooltip-label">Molette Nonce : <code id="s5-pill-nonce-code">${this.currentNonce}</code> · <span style="text-decoration: underline; color: #fde68a;">+1 cran</span></span>
+          <span class="scene-tooltip-label">Molette Nonce : <code id="s5-pill-nonce-code">${this.currentNonce}</code><span id="s5-pill-nonce-action"> · <span style="text-decoration: underline; color: #fde68a;">+1 cran</span></span></span>
         </button>
       </div>
     `;
@@ -501,9 +525,6 @@ export const step5 = {
     const convoy = this.ctx?.trainConvoy;
     if (!convoy || !convoy.blockchain) return;
 
-    // Si le wagon était déjà attelé, on le recule d'abord pour relancer un nouveau tirage
-    this.isMined = false;
-
     // Exécute le vrai minage SHA-256 sur le dernier wagon (Wagon #2)
     const result = convoy.blockchain.mineLatestBlock(this.difficulty);
 
@@ -512,6 +533,7 @@ export const step5 = {
     this.foundHash = result.hash;
 
     this.isMining = true;
+    this.isMined = false;
     this.attemptsDone = 0;
     this.currentNonce = 0;
     this.animFramesDone = 0;
@@ -610,11 +632,15 @@ export const step5 = {
         }
       }
 
-      // 2. Translation fluide du Wagon #2 : à l'écart (9.35) tant que non miné, avance à 7.60 pour s'atteler une fois miné
+      // 2. Position et échelle du Wagon #2 :
+      //    - Apparition à distance (10.65 -> 9.35)
+      //    - Une fois miné, avance vers la gauche (9.35 -> 7.60) pour s'atteler au Wagon #1
       if (wagon2) {
         const targetX = this.isMined ? this.minedWagon2X : this.unminedWagon2X;
         this.currentWagon2X = THREE.MathUtils.lerp(this.currentWagon2X, targetX, Math.min(1, dt * 6.5));
+        this.currentWagon2Scale = THREE.MathUtils.lerp(this.currentWagon2Scale, 1.0, Math.min(1, dt * 9.0));
         wagon2.position.x = this.currentWagon2X;
+        wagon2.scale.setScalar(this.currentWagon2Scale);
 
         // Rotation mécanique des crans de la molette du Nonce
         this.currentWheelAngle = THREE.MathUtils.lerp(
@@ -727,7 +753,7 @@ export const step5 = {
         const prHash = pHashPlate.project(camera);
         const prNonce = pNonce.project(camera);
 
-        if (prW1.z > 1 || prHash.z > 1 || prNonce.z > 1) {
+        if (prW1.z > 1 || prHash.z > 1 || prNonce.z > 1 || this.currentWagon2Scale < 0.35) {
           this.tooltipLayer.style.opacity = '0';
           this.tooltipLayer.style.visibility = 'hidden';
         } else {
@@ -795,6 +821,7 @@ export const step5 = {
     const pillHashEl = document.getElementById('s5-pill-hash-code');
     const pillBadgeEl = document.getElementById('s5-pill-hash-badge');
     const pillNonceEl = document.getElementById('s5-pill-nonce-code');
+    const pillNonceActionEl = document.getElementById('s5-pill-nonce-action');
 
     const targetPrefix = '0'.repeat(this.difficulty);
     const avgLabel = this.getTheoreticalAverageLabel(this.difficulty);
@@ -834,6 +861,9 @@ export const step5 = {
     }
     if (pillNonceEl) {
       pillNonceEl.textContent = String(this.currentNonce);
+    }
+    if (pillNonceActionEl) {
+      pillNonceActionEl.style.display = this.isMined ? 'none' : 'inline';
     }
 
     const wagon2 = this.ctx?.trainConvoy?.getWagon(2);
@@ -905,7 +935,7 @@ export const step5 = {
           </div>
 
           <button id="btn-step5-mine" class="btn-panel-primary" ${this.isMining ? 'disabled' : ''}>
-            <span>${this.isMining ? 'Rotation rapide de la molette...' : (this.isMined ? 'Relancer un nouveau minage' : 'Lancer le minage automatique')}</span>
+            <span>${this.isMining ? 'Rotation rapide de la molette...' : (this.isMined ? 'Recommencer avec un nouveau wagon' : 'Lancer le minage automatique')}</span>
           </button>
 
           <div class="action-feedback-box ${this.isMined ? 'success' : (this.isMining || this.attemptsDone > 0 ? 'error' : '')}">
@@ -961,7 +991,7 @@ export const step5 = {
       document.getElementById(`btn-diff-${lvl}`)?.addEventListener('click', () => {
         if (this.isMining) return;
         this.difficulty = lvl;
-        this.prepareConvoyForDifficulty();
+        this.prepareConvoyForDifficulty(true);
         this.createMiningTooltips();
         this.updateLiveMiningDOM();
         this.renderLeftPanel();
@@ -969,7 +999,16 @@ export const step5 = {
     });
 
     document.getElementById('btn-step5-mine')?.addEventListener('click', () => {
-      this.startMining();
+      if (this.isMining) return;
+      if (this.isMined) {
+        // Le wagon attaché disparaît et un nouveau wagon candidat apparaît à distance
+        this.prepareConvoyForDifficulty(true);
+        this.createMiningTooltips();
+        this.updateLiveMiningDOM();
+        this.renderLeftPanel();
+      } else {
+        this.startMining();
+      }
     });
 
     document.getElementById('btn-step5-action-prev')?.addEventListener('click', () => {
