@@ -622,16 +622,10 @@ export const step5 = {
           }
         }
 
-        // État du bras d'attelage et du voyant du Wagon #2
-        const isCoupledPosition = Math.abs(this.currentWagon2X - this.minedWagon2X) < 0.08 && this.isMined;
+        // Le bras d'attelage reste bien droit à l'horizontale, prêt à s'encastrer en avançant
         if (wagon2.couplerGroup && wagon2.defaultCouplerPosition) {
-          if (!isCoupledPosition) {
-            wagon2.couplerGroup.position.y = wagon2.defaultCouplerPosition.y - 0.12;
-            wagon2.couplerGroup.rotation.z = 0.12;
-          } else {
-            wagon2.couplerGroup.position.copy(wagon2.defaultCouplerPosition);
-            wagon2.couplerGroup.rotation.z = 0;
-          }
+          wagon2.couplerGroup.position.copy(wagon2.defaultCouplerPosition);
+          wagon2.couplerGroup.rotation.z = 0;
         }
 
         if (wagon2.beaconMaterial) {
