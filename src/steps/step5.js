@@ -44,6 +44,7 @@ export const step5 = {
   difficulty: 1, // 1 ("0"), 2 ("00") ou 3 ("000") zéros requis
   isMining: false,
   isMined: false,
+  wasCoupled: false,
   hasEverMined: false,
   candidateCounter: 0,
   currentNonce: 0,
@@ -219,7 +220,9 @@ export const step5 = {
     this.currentHash = block2.hash;
     this.attemptsDone = 0;
     this.isMined = false;
+    this.wasCoupled = false;
     this.isMining = false;
+    this.couplerFlashAlpha = 0;
     this.targetWheelAngle = 0;
     this.currentWheelAngle = 0;
 
@@ -257,7 +260,7 @@ export const step5 = {
       opacity: 0
     });
     this.couplerFlashRing = new THREE.Mesh(ringGeo, ringMat);
-    this.couplerFlashRing.position.set(5.1, 0, 0);
+    this.couplerFlashRing.position.set(5.28, 0, 0);
     this.fxGroup.add(this.couplerFlashRing);
 
     scene.add(this.fxGroup);
@@ -364,7 +367,6 @@ export const step5 = {
       this.foundNonce = this.currentNonce;
       this.foundHash = this.currentHash;
       this.realAttempts = this.attemptsDone;
-      this.couplerFlashAlpha = 1.0;
     }
 
     wagon2.colorHash.set(hashToColorHex(this.currentHash));
@@ -584,7 +586,6 @@ export const step5 = {
           this.isMining = false;
           this.isMined = true;
           this.hasEverMined = true;
-          this.couplerFlashAlpha = 1.0;
 
           if (wagon2 && block2) {
             block2.nonce = this.foundNonce;
@@ -622,10 +623,22 @@ export const step5 = {
           }
         }
 
-        // Le bras d'attelage reste bien droit à l'horizontale, prêt à s'encastrer en avançant
+        // État du bras d'attelage et déclenchement de l'aura au moment exact du contact physique
+        const isCoupledPosition = Math.abs(this.currentWagon2X - this.minedWagon2X) < 0.06 && this.isMined;
+        if (isCoupledPosition && !this.wasCoupled) {
+          this.wasCoupled = true;
+          this.couplerFlashAlpha = 1.0;
+        } else if (!isCoupledPosition) {
+          this.wasCoupled = false;
+        }
         if (wagon2.couplerGroup && wagon2.defaultCouplerPosition) {
-          wagon2.couplerGroup.position.copy(wagon2.defaultCouplerPosition);
-          wagon2.couplerGroup.rotation.z = 0;
+          if (!isCoupledPosition) {
+            wagon2.couplerGroup.position.y = wagon2.defaultCouplerPosition.y - 0.12;
+            wagon2.couplerGroup.rotation.z = 0.12;
+          } else {
+            wagon2.couplerGroup.position.copy(wagon2.defaultCouplerPosition);
+            wagon2.couplerGroup.rotation.z = 0;
+          }
         }
 
         if (wagon2.beaconMaterial) {
