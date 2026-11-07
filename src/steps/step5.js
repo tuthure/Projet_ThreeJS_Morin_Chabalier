@@ -41,10 +41,10 @@ export const step5 = {
   boundOnPointerUp: null,
 
   // Positions sur l'axe X du Wagon #2 (arrivée -> attente à distance -> attelé)
-  spawnWagon2X: 10.65,
-  unminedWagon2X: 9.35,
+  spawnWagon2X: 9.45,
+  unminedWagon2X: 8.55,
   minedWagon2X: 7.6,
-  currentWagon2X: 9.35,
+  currentWagon2X: 8.55,
   currentWagon2Scale: 1.0,
   targetWheelAngle: 0,
   currentWheelAngle: 0,
@@ -115,11 +115,11 @@ export const step5 = {
     this.createMiningTooltips();
     this.setupWheelPointerEvents();
 
-    // Cadrage englobant le Wagon #1 (déjà validé à gauche), l'écart sur les rails et le Wagon #2 (candidat à droite)
+    // Cadrage rapproché et centré sur la zone d'attelage et le Wagon #2 (avec le Wagon #1 visible à gauche)
     if (cameraController) {
       cameraController.moveTo(
-        new THREE.Vector3(6.4, 2.05, 6.6),
-        new THREE.Vector3(6.5, 0.48, 0),
+        new THREE.Vector3(6.65, 1.55, 5.15),
+        new THREE.Vector3(6.55, 0.45, 0),
         1.15
       );
     }
@@ -771,13 +771,13 @@ export const step5 = {
           this.tooltipLayer.style.opacity = isCovered ? '0' : '1';
           this.tooltipLayer.style.visibility = isCovered ? 'hidden' : 'visible';
 
-          const pillW1X = Math.max(470, Math.min(w1x, hx - 250));
+          const pillW1X = Math.max(430, Math.min(w1x, hx - 220));
           const pillW1Y = w1y - 72;
 
-          const pillHashX = Math.max(pillW1X + 250, hx);
+          const pillHashX = Math.max(pillW1X + 220, hx);
           const pillHashY = hy - 72;
 
-          const pillNonceX = Math.max(470, nx);
+          const pillNonceX = Math.max(450, nx);
           const pillNonceY = ny + 68;
 
           const elW1 = document.getElementById('tooltip-s5-w1');
