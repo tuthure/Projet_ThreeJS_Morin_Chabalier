@@ -8,14 +8,8 @@ import { hashToColorHex } from '../three/WagonMesh.js';
  *   commencent déjà par le nombre de zéros exigé ("0", "00" ou "000").
  * - À droite, à distance sur les rails (x = 8.55) : un nouveau Wagon #2 candidat,
  *   dont le Hash ne commence pas encore par des zéros et qui ne peut donc pas s'atteler.
- * - L'utilisateur peut :
- *   1) Cliquer directement sur la molette 3D du Nonce (ou son infobulle) pour
- *      tourner d'un cran (+1) à la main et constater que le Hash change mais reste refusé.
- *   2) Lancer le minage automatique dans le panneau gauche : la molette tourne à
- *      grande vitesse jusqu'à tomber sur un Hash commençant par les zéros requis,
- *      puis le Wagon #2 avance sur les rails (8.55 -> 7.60) et s'attelle au Wagon #1.
- *   3) S'il souhaite recommencer une fois le wagon attelé, le wagon attaché disparaît
- *      et un nouveau wagon candidat apparaît directement à distance.
+ * - Cohérence mécanique stricte : 1 essai = +1 sur le Nonce = +1 cran (45°) sur la molette.
+ *   Le minage automatique poursuit directement à partir du cran actuel jusqu'au Nonce gagnant.
  */
 export const step5 = {
   id: 5,
@@ -51,18 +45,18 @@ export const step5 = {
   isMining: false,
   isMined: false,
   hasEverMined: false,
-  manualClicksCount: 0,
   candidateCounter: 0,
   currentNonce: 0,
+  startMiningNonce: 0,
   currentHash: '7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069',
 
-  // Résultats réels du tirage SHA-256 automatique
+  // Résultats réels du tirage SHA-256
   attemptsDone: 0,
   realAttempts: 0,
   foundNonce: 0,
   foundHash: '',
   animFramesDone: 0,
-  animTotalFrames: 110,
+  animTotalFrames: 60,
 
   init(context) {
     this.ctx = context;
@@ -75,7 +69,6 @@ export const step5 = {
     this.isMining = false;
     this.isMined = false;
     this.hasEverMined = false;
-    this.manualClicksCount = 0;
     this.candidateCounter = 0;
     this.activeSpotId = null;
     this.attemptsDone = 0;
@@ -159,9 +152,10 @@ export const step5 = {
   },
 
   /**
-   * Garantit la cohérence de toute la chaîne et fait apparaître un nouveau Wagon #2 candidat à distance :
+   * Garantit la cohérence de toute la chaîne et prépare un Wagon #2 candidat :
    * - La Locomotive (#0) et le Wagon #1 commencent tous deux par le nombre de zéros exigé ("0", "00" ou "000").
-   * - Le Wagon #2 (candidat) apparaît directement à distance à droite (sans jamais reculer depuis le train).
+   * - Le Wagon #2 reçoit une graine (_miningSalt) dont le vrai Nonce gagnant se trouve à une distance
+   *   pédagogique réaliste (jamais dès le 1er ou 2e essai), utilisée aussi bien en clic manuel qu'en minage auto.
    * @param {boolean} [animateSpawn=true] - Si vrai, fait apparaître le nouveau wagon à distance avec une transition d'entrée.
    */
   prepareConvoyForDifficulty(animateSpawn = true) {
@@ -183,20 +177,47 @@ export const step5 = {
     block1.previousHash = block0.hash;
     block1.mineBlock(this.difficulty);
 
-    // 2. Prépare un nouveau Wagon #2 dans un état initial "non miné" (son hash ne commence pas par '0')
+    // 2. Prépare le Wagon #2 et pré-calcule son vrai Nonce gagnant (au moins 7 crans en Facile,
+    //    35 en Standard, 250 en Difficile pour éviter les tirages triviaux à 1 ou 2 essais).
     block2.previousHash = block1.hash;
-    block2._miningSalt = `candidat-${this.candidateCounter}-diff-${this.difficulty}`;
+    const minTargetNonce = this.difficulty === 1 ? 7 : this.difficulty === 2 ? 35 : 250;
+    const maxTargetNonce = this.difficulty === 1 ? 26 : Infinity;
+    const targetPrefix = '0'.repeat(this.difficulty);
+
+    let winningNonce = 0;
+    let winningHash = '';
+    let saltTry = 0;
+
+    do {
+      saltTry += 1;
+      block2._miningSalt = `c-${this.candidateCounter}-d${this.difficulty}-${saltTry}-${Math.random().toString(36).substring(2, 7)}`;
+      block2.nonce = 0;
+      let h = block2.calculateHash();
+      // Le Nonce 0 initial ne doit jamais commencer par '0'
+      if (h.startsWith('0')) continue;
+
+      let n = 0;
+      while (!h.startsWith(targetPrefix)) {
+        n += 1;
+        block2.nonce = n;
+        h = block2.calculateHash();
+      }
+      winningNonce = n;
+      winningHash = h;
+    } while ((winningNonce < minTargetNonce || winningNonce > maxTargetNonce) && saltTry < 40);
+
+    // Remet le Wagon #2 à son état initial (Nonce = 0, non miné) avec cette même graine
     block2.nonce = 0;
     block2.hash = block2.calculateHash();
-    while (block2.hash.startsWith('0')) {
-      block2._miningSalt = `candidat-${Math.random().toString(36).substring(2, 7)}`;
-      block2.hash = block2.calculateHash();
-    }
 
-    this.currentNonce = block2.nonce;
+    this.foundNonce = winningNonce;
+    this.foundHash = winningHash;
+    this.realAttempts = winningNonce;
+
+    this.currentNonce = 0;
+    this.startMiningNonce = 0;
     this.currentHash = block2.hash;
     this.attemptsDone = 0;
-    this.manualClicksCount = 0;
     this.isMined = false;
     this.isMining = false;
     this.targetWheelAngle = 0;
@@ -216,7 +237,7 @@ export const step5 = {
   },
 
   /**
-   * Crée uniquement l'anneau lumineux de verrouillage d'attelage (sans flammes ni étincelles sur la molette).
+   * Crée uniquement l'anneau lumineux de verrouillage d'attelage.
    */
   buildCouplerEffect() {
     const { scene } = this.ctx;
@@ -317,7 +338,8 @@ export const step5 = {
   },
 
   /**
-   * Tourne manuellement la molette du Nonce d'un cran (+1) suite à un clic sur la molette 3D ou son infobulle.
+   * Tourne manuellement la molette du Nonce d'un cran (+1) :
+   * 1 clic = +1 sur le Nonce = +1 cran exact (45°) sur la molette.
    */
   stepManualNonce() {
     if (this.isMining || this.isMined) return;
@@ -327,36 +349,22 @@ export const step5 = {
     const block2 = trainConvoy?.getBlock(2);
     if (!wagon2 || !block2) return;
 
-    this.manualClicksCount += 1;
-    this.attemptsDone += 1;
     this.currentNonce += 1;
-    this.targetWheelAngle += Math.PI / 4; // 1 cran = 45° (8 crans sur la molette)
+    this.attemptsDone = this.currentNonce;
+    this.targetWheelAngle = this.currentNonce * (Math.PI / 4);
 
     const targetPrefix = '0'.repeat(this.difficulty);
     block2.nonce = this.currentNonce;
     block2.hash = block2.calculateHash();
-
-    // Sur les 3 premiers clics manuels, évite qu'un coup de chance (1/16 en difficulté 1)
-    // ne tombe déjà sur un zéro afin que l'utilisateur observe bien le refus d'attelage.
-    if (this.manualClicksCount <= 3 && block2.hash.startsWith(targetPrefix)) {
-      while (block2.hash.startsWith(targetPrefix)) {
-        block2._miningSalt = `manuel-${this.manualClicksCount}-${Math.random().toString(36).substring(2, 6)}`;
-        block2.hash = block2.calculateHash();
-      }
-    }
-
     this.currentHash = block2.hash;
-    const matchesTarget = this.currentHash.startsWith(targetPrefix);
 
-    if (matchesTarget) {
+    if (this.currentHash.startsWith(targetPrefix)) {
       this.isMined = true;
       this.hasEverMined = true;
       this.foundNonce = this.currentNonce;
       this.foundHash = this.currentHash;
       this.realAttempts = this.attemptsDone;
       this.couplerFlashAlpha = 1.0;
-    } else {
-      this.isMined = false;
     }
 
     wagon2.colorHash.set(hashToColorHex(this.currentHash));
@@ -483,46 +491,29 @@ export const step5 = {
   },
 
   /**
-   * Lance la recherche automatique du Nonce sur le Wagon #2.
+   * Lance le minage automatique à partir du cran actuel jusqu'au Nonce gagnant :
+   * Le nombre de crans tournés correspond exactement au nombre d'essais restants.
    */
   startMining() {
-    if (this.isMining) return;
+    if (this.isMining || this.isMined) return;
 
-    const convoy = this.ctx?.trainConvoy;
-    if (!convoy || !convoy.blockchain) return;
-
-    // Exécute le vrai minage SHA-256 sur le dernier wagon (Wagon #2)
-    const result = convoy.blockchain.mineLatestBlock(this.difficulty);
-
-    this.foundNonce = result.nonce;
-    this.realAttempts = result.attempts;
-    this.foundHash = result.hash;
+    this.startMiningNonce = this.currentNonce;
+    const remainingCrans = Math.max(1, this.foundNonce - this.startMiningNonce);
 
     this.isMining = true;
-    this.isMined = false;
-    this.attemptsDone = 0;
-    this.currentNonce = 0;
     this.animFramesDone = 0;
 
-    // Durée équilibrée selon la difficulté (~1.1s, ~1.7s, ~2.5s)
-    if (this.difficulty === 1) this.animTotalFrames = 65;
-    else if (this.difficulty === 2) this.animTotalFrames = 105;
-    else this.animTotalFrames = 150;
+    // En difficulté 1, on laisse ~4 frames par cran pour voir chaque cran tourner un par un.
+    // En difficulté 2 et 3, la durée reste proportionnelle au nombre d'essais tout en restant rapide.
+    if (this.difficulty === 1) {
+      this.animTotalFrames = Math.min(95, Math.max(24, remainingCrans * 4));
+    } else if (this.difficulty === 2) {
+      this.animTotalFrames = Math.min(115, Math.max(45, Math.round(remainingCrans * 0.45)));
+    } else {
+      this.animTotalFrames = Math.min(150, Math.max(75, Math.round(remainingCrans * 0.05)));
+    }
 
     this.renderLeftPanel();
-  },
-
-  /**
-   * Génère un hash hexadécimal intermédiaire ne commençant pas par 0 pendant la recherche.
-   */
-  generateRandomHex(length = 24) {
-    const firstChars = '123456789abcdef';
-    const chars = '0123456789abcdef';
-    let out = firstChars[Math.floor(Math.random() * firstChars.length)];
-    for (let i = 1; i < length; i++) {
-      out += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return out;
   },
 
   startAnimationLoop() {
@@ -558,30 +549,38 @@ export const step5 = {
       const wagon2 = trainConvoy?.getWagon(2);
       const block2 = trainConvoy?.getBlock(2);
 
-      // 1. Animation du minage automatique
+      // 1. Animation du minage automatique (1 essai = +1 Nonce = +1 cran exact)
       if (this.isMining) {
         this.animFramesDone += 1;
         const progress = Math.min(this.animFramesDone / this.animTotalFrames, 1.0);
 
         if (progress < 1.0) {
-          this.attemptsDone = Math.max(1, Math.floor(this.realAttempts * progress));
-          this.currentNonce = this.attemptsDone;
-          this.targetWheelAngle += 0.36;
+          const nextNonce = Math.min(
+            this.foundNonce - 1,
+            this.startMiningNonce + Math.max(1, Math.floor((this.foundNonce - this.startMiningNonce) * progress))
+          );
 
-          if (wagon2 && block2 && this.animFramesDone % 4 === 0) {
-            this.currentHash = this.generateRandomHex(24);
-            block2.nonce = this.currentNonce;
-            block2.hash = this.currentHash;
-            wagon2.colorHash.set(hashToColorHex(this.currentHash));
-            wagon2.renderPlates();
+          if (nextNonce !== this.currentNonce) {
+            this.currentNonce = nextNonce;
+            this.attemptsDone = this.currentNonce;
+            this.targetWheelAngle = this.currentNonce * (Math.PI / 4);
+
+            if (wagon2 && block2) {
+              block2.nonce = this.currentNonce;
+              this.currentHash = block2.calculateHash();
+              block2.hash = this.currentHash;
+              wagon2.colorHash.set(hashToColorHex(this.currentHash));
+              wagon2.renderPlates();
+            }
+
+            this.updateLiveMiningDOM();
           }
-
-          this.updateLiveMiningDOM();
         } else {
-          // Nonce gagnant trouvé !
-          this.attemptsDone = this.realAttempts;
+          // Nonce gagnant atteint !
           this.currentNonce = this.foundNonce;
+          this.attemptsDone = this.foundNonce;
           this.currentHash = this.foundHash;
+          this.targetWheelAngle = this.foundNonce * (Math.PI / 4);
           this.isMining = false;
           this.isMined = true;
           this.hasEverMined = true;
@@ -609,11 +608,11 @@ export const step5 = {
         wagon2.position.x = this.currentWagon2X;
         wagon2.scale.setScalar(this.currentWagon2Scale);
 
-        // Rotation mécanique des crans de la molette du Nonce
+        // Rotation mécanique des crans de la molette du Nonce (1 cran = Math.PI / 4)
         this.currentWheelAngle = THREE.MathUtils.lerp(
           this.currentWheelAngle,
           this.targetWheelAngle,
-          Math.min(1, dt * 16.0)
+          Math.min(1, dt * 18.0)
         );
         if (wagon2.nonceWheel) {
           wagon2.nonceWheel.rotation.set(Math.PI / 2, this.currentWheelAngle, 0);
@@ -759,7 +758,7 @@ export const step5 = {
     const avgLabel = this.getTheoreticalAverageLabel(this.difficulty);
 
     if (nonceEl) {
-      nonceEl.textContent = `${this.currentNonce} (${this.attemptsDone} essai${this.attemptsDone > 1 ? 's' : ''} · moy. ~${avgLabel})`;
+      nonceEl.textContent = `${this.currentNonce} (${this.attemptsDone} cran${this.attemptsDone > 1 ? 's' : ''} · moy. ~${avgLabel})`;
     }
     if (hashEl) {
       hashEl.textContent = `${this.currentHash.substring(0, 14)}...`;
@@ -827,9 +826,9 @@ export const step5 = {
     const targetPrefix = '0'.repeat(this.difficulty);
     const avgLabel = this.getTheoreticalAverageLabel(this.difficulty);
 
-    let nonceStatusHTML = `${this.currentNonce} (${this.attemptsDone} essai${this.attemptsDone > 1 ? 's' : ''} · moy. ~${avgLabel})`;
+    let nonceStatusHTML = `${this.currentNonce} (${this.attemptsDone} cran${this.attemptsDone > 1 ? 's' : ''} · moy. ~${avgLabel})`;
     if (this.isMined) {
-      nonceStatusHTML = `Nonce ${this.foundNonce} trouvé en ${this.realAttempts} essai${this.realAttempts > 1 ? 's' : ''} (moy. ~${avgLabel})`;
+      nonceStatusHTML = `Nonce ${this.foundNonce} trouvé en ${this.realAttempts} cran${this.realAttempts > 1 ? 's' : ''} (moy. ~${avgLabel})`;
     }
 
     inner.innerHTML = `
@@ -901,7 +900,7 @@ export const step5 = {
           <article class="step-card keypoint-card animate-fade">
             <h4 class="card-title keypoint-title">Point clé : En réalité, c'est beaucoup plus long</h4>
             <p class="keypoint-text">
-              Ici, le calcul est volontairement simplifié (1 à 3 zéros, soit ~${avgLabel} essais) pour ne durer que quelques secondes. Sur une vraie blockchain comme Bitcoin, le réseau exige environ <strong>19 zéros d'affilée</strong> : même avec des milliers d'ordinateurs spécialisés, il faut en moyenne <strong>10 minutes</strong> pour valider un seul bloc.
+              Ici, le calcul est volontairement simplifié (1 à 3 zéros, soit ~${avgLabel} crans) pour ne durer qu'une à deux secondes. Sur une vraie blockchain comme Bitcoin, le réseau exige environ <strong>19 zéros d'affilée</strong> : même avec des milliers d'ordinateurs spécialisés, il faut en moyenne <strong>10 minutes</strong> pour valider un seul bloc.
             </p>
           </article>
         ` : ''}
