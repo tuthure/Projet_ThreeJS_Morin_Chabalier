@@ -2,14 +2,17 @@ import * as THREE from 'three';
 
 /**
  * Étape 6 : Comparaison des consensus (PoW vs PoS).
- * Mise en scène comparative sur les 3 mêmes gares du réseau (Béziers, Nîmes, Montpellier)
- * cherchant à atteler le prochain wagon (Wagon #2) au train arrêté à quai :
- * - Mode Preuve de Travail (PoW) : Course de puissance de calcul. Les 3 gares tournent et
- *   consomment de l'énergie en même temps ; la première qui trouve le Nonce attelle le wagon,
- *   et toute l'énergie dépensée par les 2 autres gares est perdue.
- * - Mode Preuve d'Enjeu (PoS) : Tirage au sort pondéré par la caution (Stake). Chaque gare
- *   immobilise une pile de jetons en garantie ; le réseau tire au sort une seule gare qui
- *   attelle le wagon sans que personne ne gaspille d'électricité.
+ * Mise en scène comparative sur les 3 gares du réseau (Gare A, Gare B, Gare C)
+ * cherchant à atteler le prochain wagon (Wagon #2) :
+ * - Mode Preuve de Travail (PoW — La course des 3 molettes) :
+ *   Chaque gare possède sa propre molette crantée du Nonce qui tourne selon sa puissance
+ *   (Gare A : rapide 50 %, Gare B : moyenne 35 %, Gare C : lente 15 %).
+ *   Les 3 molettes tournent en même temps : la première qui tombe sur "00..." attelle le wagon,
+ *   et les 2 autres ont tourné à fond pour rien.
+ * - Mode Preuve d'Enjeu (PoS — La loterie proportionnelle sur caution) :
+ *   Les molettes laissent place à des piles de jetons déposés en caution (50, 35 et 15 jetons).
+ *   Un curseur balaie la barre de tirage (50 % / 35 % / 15 %) et désigne une seule gare qui
+ *   attelle directement le wagon sans que les autres ne dépensent d'énergie.
  */
 export const step6 = {
   id: 6,
@@ -22,9 +25,11 @@ export const step6 = {
   // État d'animation ('idle' | 'running' | 'done')
   simState: 'idle',
   simTimer: 0,
-  simDuration: 1.25,
+  simDuration: 1.5,
   winnerIndex: 0,
   rouletteHighlightIndex: 0,
+  lotteryCursorPercent: 25,
+  lotteryTargetPercent: 25,
   hasTestedPoW: false,
   hasTestedPoS: false,
 
@@ -39,44 +44,43 @@ export const step6 = {
   consensusGroup: null,
   validators: [],
   tooltipLayer: null,
-  activeSpotId: null,
 
   validatorData: [
     {
-      id: 'beziers',
-      name: 'Gare de Béziers',
-      shortName: 'Béziers',
+      id: 'gare-a',
+      name: 'Gare A',
       share: 50,
       probLabel: '50 %',
-      machines: 3,
-      coins: 10,
-      speedFactor: 1.35,
-      x: 2.2,
-      z: -2.85
+      speedLabel: ' Vitesse rapide',
+      tokens: 50,
+      coinsMeshCount: 10,
+      maxCrans: 32,
+      x: 2.8,
+      z: -2.45
     },
     {
-      id: 'nimes',
-      name: 'Gare de Nîmes',
-      shortName: 'Nîmes',
+      id: 'gare-b',
+      name: 'Gare B',
       share: 35,
       probLabel: '35 %',
-      machines: 2,
-      coins: 7,
-      speedFactor: 0.95,
-      x: 5.4,
-      z: -3.25
+      speedLabel: 'Vitesse moyenne',
+      tokens: 35,
+      coinsMeshCount: 7,
+      maxCrans: 21,
+      x: 5.6,
+      z: -2.75
     },
     {
-      id: 'montpellier',
-      name: 'Gare de Montpellier',
-      shortName: 'Montpellier',
+      id: 'gare-c',
+      name: 'Gare C',
       share: 15,
       probLabel: '15 %',
-      machines: 1,
-      coins: 3,
-      speedFactor: 0.45,
-      x: 8.6,
-      z: -2.85
+      speedLabel: 'Vitesse lente',
+      tokens: 15,
+      coinsMeshCount: 3,
+      maxCrans: 9,
+      x: 8.4,
+      z: -2.45
     }
   ],
 
@@ -92,9 +96,10 @@ export const step6 = {
     this.simTimer = 0;
     this.winnerIndex = 0;
     this.rouletteHighlightIndex = 0;
+    this.lotteryCursorPercent = 25;
+    this.lotteryTargetPercent = 25;
     this.hasTestedPoW = false;
     this.hasTestedPoS = false;
-    this.activeSpotId = null;
     this.currentWagon2X = this.unminedWagon2X;
     this.wasCoupled = false;
     this.couplerFlashAlpha = 0;
@@ -103,7 +108,7 @@ export const step6 = {
       cameraController.setViewOffset(210);
     }
 
-    // Le train reste à l'arrêt pour que les 3 gares soient fixes par rapport au décor
+    // Le train reste à l'arrêt
     if (environment) {
       environment.setSpeed(0);
     }
@@ -127,11 +132,11 @@ export const step6 = {
     this.createStationTooltips();
     this.applyModeVisuals();
 
-    // Cadrage panoramique englobant les 3 gares en arrière-plan et le train au premier plan
+    // Cadrage rapproché englobant les 3 Gares (A, B, C) et la jonction Wagon #1 <-> Wagon #2
     if (cameraController) {
       cameraController.moveTo(
-        new THREE.Vector3(5.5, 3.25, 7.6),
-        new THREE.Vector3(5.5, 0.55, -0.9),
+        new THREE.Vector3(5.85, 2.75, 6.7),
+        new THREE.Vector3(5.75, 0.55, -0.75),
         1.15
       );
     }
@@ -173,9 +178,41 @@ export const step6 = {
   },
 
   /**
-   * Construit les 3 plateformes des gares (Béziers, Nîmes, Montpellier) :
-   * - Chaque gare possède un groupe PoW (colonnes de calcul) et un groupe PoS (pile de jetons en caution).
-   * - Chaque gare est reliée par une ligne au point d'attelage (x = 5.28) entre le Wagon #1 et le Wagon #2.
+   * Dessine le cadran central de la molette 3D d'une gare en mode PoW.
+   */
+  renderStationWheelDial(canvas, texture, cranCount, borderColor = '#f59e0b') {
+    if (!canvas || !texture) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.arc(128, 128, 120, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.arc(128, 128, 114, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = borderColor;
+    ctx.font = 'bold 26px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('NONCE', 128, 74);
+
+    ctx.fillStyle = '#fef08a';
+    ctx.font = 'bold 68px monospace';
+    ctx.fillText(String(cranCount), 128, 144);
+
+    texture.needsUpdate = true;
+  },
+
+  /**
+   * Construit les 3 plateformes (Gare A, Gare B, Gare C) :
+   * - En mode PoW : une grande molette crantée du Nonce orientée face caméra sur chaque gare.
+   * - En mode PoS : une pile de jetons dorés déposés en caution (50, 35, 15 jetons).
    */
   buildConsensusScene() {
     const { scene } = this.ctx;
@@ -188,22 +225,25 @@ export const step6 = {
     this.consensusGroup = new THREE.Group();
     this.validators = [];
 
-    const platformGeo = new THREE.CylinderGeometry(0.95, 1.08, 0.18, 24);
+    const platformGeo = new THREE.CylinderGeometry(0.92, 1.05, 0.18, 24);
     const platformMat = new THREE.MeshStandardMaterial({
       color: 0x1e293b,
       roughness: 0.65,
       metalness: 0.3
     });
 
-    const machineBodyGeo = new THREE.BoxGeometry(0.34, 0.85, 0.34);
-    const machineBodyMat = new THREE.MeshStandardMaterial({
+    const wheelStandGeo = new THREE.BoxGeometry(0.36, 0.72, 0.18);
+    const wheelStandMat = new THREE.MeshStandardMaterial({
       color: 0x0f172a,
       metalness: 0.85,
       roughness: 0.3
     });
-    const machineCoreGeo = new THREE.BoxGeometry(0.24, 0.58, 0.37);
 
-    const coinGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.11, 20);
+    const wheelGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.12, 24);
+    const toothGeo = new THREE.BoxGeometry(0.085, 0.13, 0.11);
+    const dialGeo = new THREE.CircleGeometry(0.38, 32);
+
+    const coinGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.11, 20);
     const couplerTarget = new THREE.Vector3(5.28, 0.05, 0);
 
     this.validatorData.forEach((v) => {
@@ -215,7 +255,7 @@ export const step6 = {
       vGroup.add(platform);
 
       // Anneau lumineux périphérique
-      const ringGeo = new THREE.RingGeometry(0.98, 1.14, 32);
+      const ringGeo = new THREE.RingGeometry(0.95, 1.12, 32);
       const ringMat = new THREE.MeshBasicMaterial({
         color: 0x38bdf8,
         side: THREE.DoubleSide
@@ -225,29 +265,54 @@ export const step6 = {
       ring.position.y = 0.1;
       vGroup.add(ring);
 
-      // --- 1. Équipement PoW : Unités de calcul (3, 2 ou 1 tours de hachage) ---
+      // --- 1. Équipement PoW : Grande molette crantée du Nonce (comme à l'étape 5) ---
       const powNodeGroup = new THREE.Group();
-      const coreMaterials = [];
-      const spacing = 0.44;
-      const startX = -((v.machines - 1) * spacing) / 2;
 
-      for (let m = 0; m < v.machines; m++) {
-        const mx = startX + m * spacing;
-        const body = new THREE.Mesh(machineBodyGeo, machineBodyMat);
-        body.position.set(mx, 0.52, 0);
-        powNodeGroup.add(body);
+      const stand = new THREE.Mesh(wheelStandGeo, wheelStandMat);
+      stand.position.set(0, 0.42, -0.06);
+      powNodeGroup.add(stand);
 
-        const coreMat = new THREE.MeshStandardMaterial({
-          color: 0xfef08a,
-          emissive: 0xf59e0b,
-          emissiveIntensity: 0.7,
-          roughness: 0.2
-        });
-        coreMaterials.push(coreMat);
-        const core = new THREE.Mesh(machineCoreGeo, coreMat);
-        core.position.set(mx, 0.52, 0);
-        powNodeGroup.add(core);
+      const wheelMat = new THREE.MeshStandardMaterial({
+        color: 0x78350f,
+        metalness: 0.8,
+        roughness: 0.35,
+        emissive: 0x451a03,
+        emissiveIntensity: 0.25
+      });
+      const wheelMesh = new THREE.Mesh(wheelGeo, wheelMat);
+      wheelMesh.rotation.x = Math.PI / 2;
+      wheelMesh.position.set(0, 0.65, 0.08);
+      powNodeGroup.add(wheelMesh);
+
+      const toothMat = new THREE.MeshStandardMaterial({
+        color: 0xf59e0b,
+        metalness: 0.85,
+        roughness: 0.25,
+        emissive: 0xb45309,
+        emissiveIntensity: 0.35
+      });
+      for (let i = 0; i < 8; i++) {
+        const angle = (i * Math.PI) / 4;
+        const tooth = new THREE.Mesh(toothGeo, toothMat);
+        tooth.position.set(Math.cos(angle) * 0.44, 0, Math.sin(angle) * 0.44);
+        tooth.rotation.y = -angle + Math.PI / 2;
+        wheelMesh.add(tooth);
       }
+
+      // Cadran central fixe (toujours droit pendant que les crans tournent)
+      const dialCanvas = document.createElement('canvas');
+      dialCanvas.width = 256;
+      dialCanvas.height = 256;
+      const dialTex = new THREE.CanvasTexture(dialCanvas);
+      this.renderStationWheelDial(dialCanvas, dialTex, 0, '#f59e0b');
+
+      const dialMesh = new THREE.Mesh(
+        dialGeo,
+        new THREE.MeshBasicMaterial({ map: dialTex, transparent: true })
+      );
+      dialMesh.position.set(0, 0.65, 0.145);
+      powNodeGroup.add(dialMesh);
+
       vGroup.add(powNodeGroup);
 
       // --- 2. Équipement PoS : Pile de jetons déposés en caution (10, 7 ou 3 jetons) ---
@@ -260,16 +325,16 @@ export const step6 = {
         roughness: 0.2
       });
 
-      for (let c = 0; c < v.coins; c++) {
+      for (let c = 0; c < v.coinsMeshCount; c++) {
         const coin = new THREE.Mesh(coinGeo, coinMat);
-        coin.position.set(0, 0.16 + c * 0.125, 0);
+        coin.position.set(0, 0.16 + c * 0.12, 0);
         posNodeGroup.add(coin);
       }
       vGroup.add(posNodeGroup);
 
       // Faisceau reliant la gare au point d'attelage du Wagon #2
       const linePoints = [
-        new THREE.Vector3(v.x, -0.28, v.z + 0.95),
+        new THREE.Vector3(v.x, -0.28, v.z + 0.92),
         couplerTarget.clone()
       ];
       const lineGeo = new THREE.BufferGeometry().setFromPoints(linePoints);
@@ -287,11 +352,17 @@ export const step6 = {
         group: vGroup,
         powNodeGroup,
         posNodeGroup,
+        wheelMesh,
+        toothMat,
+        dialCanvas,
+        dialTex,
         ringMat,
-        coreMaterials,
         coinMat,
         lineMat,
-        currentAttempts: 0
+        currentCrans: 0,
+        targetCrans: v.maxCrans,
+        currentAngle: 0,
+        currentHash: 'a4f9c2...'
       });
     });
 
@@ -327,14 +398,14 @@ export const step6 = {
   },
 
   /**
-   * Crée les 3 infobulles SVG nettes au-dessus des 3 gares (Béziers, Nîmes, Montpellier).
+   * Crée les 3 infobulles SVG au-dessus des 3 gares (Gare A, Gare B, Gare C).
    */
   createStationTooltips() {
     if (!this.tooltipLayer) return;
 
     const svgLinesHTML = this.validatorData
       .map(
-        (v, idx) => `
+        (_, idx) => `
         <line id="s6-line-${idx}" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" opacity="0.85" />
         <circle id="s6-dot-out-${idx}" r="6.5" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity="0.8" />
         <circle id="s6-dot-in-${idx}" r="3" fill="#38bdf8" />
@@ -349,7 +420,7 @@ export const step6 = {
           <button type="button" class="scene-tooltip-pill">
             <span class="scene-tooltip-dot"></span>
             <span class="scene-tooltip-label">
-              <strong>${v.shortName}</strong> (<span id="s6-pill-share-${idx}">${v.probLabel}</span>) ·
+              <strong>${v.name}</strong> (<span id="s6-pill-share-${idx}">${v.probLabel}</span>) ·
               <span id="s6-pill-status-${idx}" style="color: #94a3b8;">Prête</span>
             </span>
           </button>
@@ -374,7 +445,7 @@ export const step6 = {
   },
 
   /**
-   * Bascule entre PoW et PoS en conservant les 3 mêmes gares à l'écran.
+   * Bascule entre PoW et PoS en conservant les 3 mêmes gares (Gare A, Gare B, Gare C).
    * @param {'pow'|'pos'} targetMode
    */
   setMode(targetMode) {
@@ -385,40 +456,13 @@ export const step6 = {
     this.wasCoupled = false;
     this.couplerFlashAlpha = 0;
     this.currentWagon2X = this.unminedWagon2X;
-
-    this.applyModeVisuals();
-    this.updateTooltipsDOM();
-    this.renderLeftPanel();
-  },
-
-  /**
-   * Tire un index gagnant (0, 1 ou 2) selon les parts 50 % / 35 % / 15 %.
-   */
-  pickWeightedWinner() {
-    const r = Math.random() * 100;
-    if (r < 50) return 0;
-    if (r < 85) return 1;
-    return 2;
-  },
-
-  /**
-   * Lance soit la course de calcul (PoW), soit le tirage au sort sur caution (PoS).
-   */
-  startConsensusRound() {
-    if (this.simState === 'running') return;
-
-    // Si le Wagon #2 était déjà attelé, on le replace à distance pour la nouvelle manche
-    this.currentWagon2X = this.unminedWagon2X;
-    this.wasCoupled = false;
-    this.couplerFlashAlpha = 0;
-
-    this.winnerIndex = this.pickWeightedWinner();
-    this.simState = 'running';
-    this.simTimer = 0;
-    this.simDuration = this.mode === 'pow' ? 1.35 : 0.95;
+    this.lotteryCursorPercent = 25;
 
     this.validators.forEach((v) => {
-      v.currentAttempts = 0;
+      v.currentCrans = 0;
+      v.currentAngle = 0;
+      if (v.wheelMesh) v.wheelMesh.rotation.set(Math.PI / 2, 0, 0);
+      this.renderStationWheelDial(v.dialCanvas, v.dialTex, 0, '#f59e0b');
     });
 
     this.applyModeVisuals();
@@ -427,7 +471,61 @@ export const step6 = {
   },
 
   /**
-   * Met à jour la visibilité des équipements PoW / PoS et les couleurs des 3 gares.
+   * Tire un index gagnant (0, 1 ou 2) selon les parts 50 % / 35 % / 15 %
+   * et calcule la position exacte correspondante sur la barre de loterie (0..100%).
+   */
+  pickWeightedWinner() {
+    const r = Math.random() * 100;
+    this.lotteryTargetPercent = Math.max(4, Math.min(96, r));
+    if (r < 50) return 0; // Gare A (0% .. 50%)
+    if (r < 85) return 1; // Gare B (50% .. 85%)
+    return 2;             // Gare C (85% .. 100%)
+  },
+
+  /**
+   * Génère un court hash hexadécimal ne commençant pas par 0.
+   */
+  randomRejectedHash() {
+    const first = '123456789abcdef';
+    const hex = '0123456789abcdef';
+    let out = first[Math.floor(Math.random() * first.length)];
+    for (let i = 0; i < 5; i++) {
+      out += hex[Math.floor(Math.random() * hex.length)];
+    }
+    return `${out}...`;
+  },
+
+  /**
+   * Lance soit la course des 3 molettes (PoW), soit la loterie sur caution (PoS).
+   */
+  startConsensusRound() {
+    if (this.simState === 'running') return;
+
+    this.currentWagon2X = this.unminedWagon2X;
+    this.wasCoupled = false;
+    this.couplerFlashAlpha = 0;
+
+    this.winnerIndex = this.pickWeightedWinner();
+    this.simState = 'running';
+    this.simTimer = 0;
+    this.simDuration = this.mode === 'pow' ? 1.55 : 1.25;
+
+    const jitter = 0.85 + Math.random() * 0.3;
+    this.validators.forEach((v) => {
+      v.currentCrans = 0;
+      v.currentAngle = 0;
+      v.targetCrans = Math.max(5, Math.round(v.data.maxCrans * jitter));
+      v.currentHash = this.randomRejectedHash();
+      this.renderStationWheelDial(v.dialCanvas, v.dialTex, 0, '#f59e0b');
+    });
+
+    this.applyModeVisuals();
+    this.updateTooltipsDOM();
+    this.renderLeftPanel();
+  },
+
+  /**
+   * Met à jour la visibilité des molettes PoW / cautions PoS et les couleurs des 3 gares.
    */
   applyModeVisuals() {
     const isPoW = this.mode === 'pow';
@@ -441,14 +539,12 @@ export const step6 = {
 
       if (this.simState === 'running') {
         if (isPoW) {
-          // En PoW, les 3 gares chauffent simultanément
-          colorHex = 0xf97316;
+          colorHex = 0xf59e0b;
           lineOpacity = 0.65;
         } else {
-          // En PoS, un curseur lumineux balaie les gares sans surchauffe
           const isHighlighted = idx === this.rouletteHighlightIndex;
           colorHex = isHighlighted ? 0xfacc15 : 0x38bdf8;
-          lineOpacity = isHighlighted ? 0.85 : 0.25;
+          lineOpacity = isHighlighted ? 0.85 : 0.22;
         }
       } else if (this.simState === 'done') {
         const isWinner = idx === this.winnerIndex;
@@ -464,31 +560,11 @@ export const step6 = {
       v.ringMat.color.setHex(colorHex);
       v.lineMat.color.setHex(colorHex);
       v.lineMat.opacity = lineOpacity;
-
-      v.coreMaterials.forEach((cMat) => {
-        if (this.simState === 'running' && isPoW) {
-          cMat.color.setHex(0xffedd5);
-          cMat.emissive.setHex(0xf97316);
-          cMat.emissiveIntensity = 1.6;
-        } else if (this.simState === 'done' && idx === this.winnerIndex) {
-          cMat.color.setHex(0xd1fae5);
-          cMat.emissive.setHex(0x10b981);
-          cMat.emissiveIntensity = 1.3;
-        } else if (this.simState === 'done' && isPoW) {
-          cMat.color.setHex(0xfecaca);
-          cMat.emissive.setHex(0xdc2626);
-          cMat.emissiveIntensity = 0.55;
-        } else {
-          cMat.color.setHex(0xfef08a);
-          cMat.emissive.setHex(0xf59e0b);
-          cMat.emissiveIntensity = 0.7;
-        }
-      });
     });
   },
 
   /**
-   * Met à jour le texte et la couleur des 3 infobulles au-dessus des gares.
+   * Met à jour les 3 infobulles 3D et le bloc de suivi dans le volet gauche.
    */
   updateTooltipsDOM() {
     const isPoW = this.mode === 'pow';
@@ -500,26 +576,27 @@ export const step6 = {
       const lineEl = document.getElementById(`s6-line-${idx}`);
       const dotInEl = document.getElementById(`s6-dot-in-${idx}`);
       const dotOutEl = document.getElementById(`s6-dot-out-${idx}`);
+      const raceStatEl = document.getElementById(`s6-race-stat-${idx}`);
 
       if (shareEl) {
         shareEl.textContent = isPoW
-          ? `${v.data.probLabel} calcul`
-          : `${v.data.coins} jetons (${v.data.probLabel})`;
+          ? `${v.data.probLabel} puissance`
+          : `${v.data.tokens} jetons (${v.data.probLabel})`;
       }
 
       let spotColor = '#38bdf8';
-      let statusText = isPoW ? 'Prête à miner' : 'Caution déposée';
+      let statusText = isPoW ? v.data.speedLabel : 'Caution prête';
       let statusColor = '#94a3b8';
 
       if (this.simState === 'running') {
         if (isPoW) {
-          spotColor = '#f97316';
-          statusText = `${v.currentAttempts.toLocaleString('fr-FR')} essais...`;
-          statusColor = '#fdba74';
+          spotColor = '#f59e0b';
+          statusText = `Cran #${v.currentCrans} (${v.currentHash})`;
+          statusColor = '#fde68a';
         } else {
           const isHigh = idx === this.rouletteHighlightIndex;
           spotColor = isHigh ? '#facc15' : '#38bdf8';
-          statusText = isHigh ? 'Tirage...' : 'En attente';
+          statusText = isHigh ? 'Sous le curseur...' : 'Au repos';
           statusColor = isHigh ? '#fde047' : '#94a3b8';
         }
       } else if (this.simState === 'done') {
@@ -527,16 +604,16 @@ export const step6 = {
         if (isWinner) {
           spotColor = '#10b981';
           statusText = isPoW
-            ? `1re (${v.currentAttempts.toLocaleString('fr-FR')} essais) · Attelle`
-            : 'Tirée au sort · Attelle';
+            ? `Trouvé "00..." (${v.currentCrans} crans) · Gagnante !`
+            : 'Tirée au sort · Attelle le wagon !';
           statusColor = '#34d399';
         } else if (isPoW) {
           spotColor = '#ef4444';
-          statusText = `Battue (${v.currentAttempts.toLocaleString('fr-FR')} essais perdus)`;
+          statusText = `Battue (${v.currentCrans} crans tournés pour rien)`;
           statusColor = '#fca5a5';
         } else {
           spotColor = '#64748b';
-          statusText = 'Non tirée (0 énergie perdue)';
+          statusText = 'Au repos (0 énergie dépensée)';
           statusColor = '#94a3b8';
         }
       }
@@ -545,6 +622,10 @@ export const step6 = {
         statusEl.textContent = statusText;
         statusEl.style.color = statusColor;
       }
+      if (raceStatEl) {
+        raceStatEl.textContent = statusText;
+        raceStatEl.style.color = statusColor;
+      }
       if (pillWrap) {
         pillWrap.style.setProperty('--spot-color', spotColor);
       }
@@ -552,6 +633,11 @@ export const step6 = {
       if (dotInEl) dotInEl.setAttribute('fill', spotColor);
       if (dotOutEl) dotOutEl.setAttribute('stroke', spotColor);
     });
+
+    const cursorEl = document.getElementById('step6-lottery-cursor');
+    if (cursorEl) {
+      cursorEl.style.left = `${this.lotteryCursorPercent.toFixed(1)}%`;
+    }
   },
 
   startAnimationLoop() {
@@ -585,7 +671,7 @@ export const step6 = {
       const { trainConvoy, camera } = this.ctx;
       const wagon2 = trainConvoy?.getWagon(2);
 
-      // 1. Progression de la simulation (Course PoW ou Tirage PoS)
+      // 1. Progression de la simulation (Course des 3 molettes PoW ou Loterie PoS)
       if (this.simState === 'running') {
         this.simTimer += dt;
         const progress = Math.min(this.simTimer / this.simDuration, 1.0);
@@ -593,12 +679,29 @@ export const step6 = {
         if (progress < 1.0) {
           if (this.mode === 'pow') {
             this.validators.forEach((v) => {
-              v.currentAttempts = Math.floor(progress * 28000 * v.data.speedFactor);
+              const newCrans = Math.max(1, Math.floor(v.targetCrans * progress));
+              if (newCrans !== v.currentCrans) {
+                v.currentCrans = newCrans;
+                v.currentHash = this.randomRejectedHash();
+                this.renderStationWheelDial(v.dialCanvas, v.dialTex, v.currentCrans, '#f59e0b');
+              }
+              const targetAngle = v.currentCrans * (Math.PI / 4);
+              v.currentAngle = THREE.MathUtils.lerp(v.currentAngle, targetAngle, Math.min(1, dt * 18));
+              if (v.wheelMesh) {
+                v.wheelMesh.rotation.set(Math.PI / 2, v.currentAngle, 0);
+              }
             });
           } else {
-            // Balayage rapide entre les 3 gares avant de s'arrêter sur la gagnante
-            const stepIndex = Math.floor(progress * 11);
-            this.rouletteHighlightIndex = stepIndex % 3;
+            // Le curseur de loterie balaie la barre (0..100%) avant d'atterrir sur lotteryTargetPercent
+            const easeOut = 1 - Math.pow(1 - progress, 3);
+            const sweep = Math.sin(progress * Math.PI * 3.5) * (1 - progress) * 42;
+            this.lotteryCursorPercent = Math.max(
+              3,
+              Math.min(97, THREE.MathUtils.lerp(12, this.lotteryTargetPercent, easeOut) + sweep)
+            );
+            if (this.lotteryCursorPercent < 50) this.rouletteHighlightIndex = 0;
+            else if (this.lotteryCursorPercent < 85) this.rouletteHighlightIndex = 1;
+            else this.rouletteHighlightIndex = 2;
             this.applyModeVisuals();
           }
           this.updateTooltipsDOM();
@@ -608,11 +711,22 @@ export const step6 = {
           if (this.mode === 'pow') {
             this.hasTestedPoW = true;
             this.validators.forEach((v, idx) => {
-              const base = Math.floor(28000 * v.data.speedFactor);
-              v.currentAttempts = idx === this.winnerIndex ? Math.max(4200, base) : Math.max(3100, base - 1200);
+              v.currentCrans = v.targetCrans;
+              const isWinner = idx === this.winnerIndex;
+              v.currentHash = isWinner ? '00e4a1...' : this.randomRejectedHash();
+              this.renderStationWheelDial(
+                v.dialCanvas,
+                v.dialTex,
+                v.currentCrans,
+                isWinner ? '#10b981' : '#ef4444'
+              );
+              if (v.wheelMesh) {
+                v.wheelMesh.rotation.set(Math.PI / 2, v.currentCrans * (Math.PI / 4), 0);
+              }
             });
           } else {
             this.hasTestedPoS = true;
+            this.lotteryCursorPercent = this.lotteryTargetPercent;
             this.rouletteHighlightIndex = this.winnerIndex;
           }
 
@@ -660,7 +774,7 @@ export const step6 = {
         }
       }
 
-      // 3. Aura circulaire verte au verrouillage de l'attelage
+      // 3. Aura circulaire verte au verrouillage exact de l'attelage
       if (this.couplerFlashRing) {
         if (this.couplerFlashAlpha > 0.01) {
           this.couplerFlashAlpha = Math.max(0, this.couplerFlashAlpha - dt * 1.4);
@@ -673,7 +787,7 @@ export const step6 = {
         }
       }
 
-      // 4. Projection 2D des 3 infobulles au-dessus des 3 gares
+      // 4. Projection 2D des 3 infobulles au-dessus des 3 gares (ancrées sur le sommet pour ne pas cacher les molettes)
       if (this.tooltipLayer && camera && this.validators.length === 3) {
         const width = window.innerWidth;
         const height = window.innerHeight;
@@ -682,7 +796,7 @@ export const step6 = {
 
         let anyBehind = false;
         const pts = this.validators.map((v) => {
-          const topY = this.mode === 'pow' ? 0.98 : 0.22 + v.data.coins * 0.125;
+          const topY = this.mode === 'pow' ? 1.15 : 0.22 + v.data.coinsMeshCount * 0.12;
           const worldP = new THREE.Vector3(v.data.x, -0.4 + topY, v.data.z);
           const pr = worldP.project(camera);
           if (pr.z > 1) anyBehind = true;
@@ -704,7 +818,7 @@ export const step6 = {
 
           pts.forEach((pt, idx) => {
             const px = pillXs[idx];
-            const py = pt.y - 54;
+            const py = pt.y - 52;
             const el = document.getElementById(`tooltip-s6-${idx}`);
             if (el) {
               el.style.transform = `translate3d(${px.toFixed(1)}px, ${py.toFixed(1)}px, 0) translate(-50%, -50%)`;
@@ -754,37 +868,74 @@ export const step6 = {
 
     const actionButtonLabel = isPoW
       ? isRunning
-        ? 'Course de calcul en cours...'
+        ? 'Les 3 molettes tournent...'
         : isDone
-          ? 'Relancer une course (PoW)'
-          : 'Lancer la course de minage (PoW)'
+          ? 'Relancer la course des 3 molettes'
+          : 'Lancer la course des 3 molettes (PoW)'
       : isRunning
         ? 'Tirage au sort en cours...'
         : isDone
           ? 'Relancer un tirage au sort (PoS)'
           : 'Tirer au sort une gare (PoS)';
 
+    const visualWidgetHTML = isPoW
+      ? `
+        <div class="pow-race-box">
+          ${this.validators
+            .map((v, idx) => {
+              const rowClass = isDone ? (idx === this.winnerIndex ? 'winner' : 'loser') : '';
+              const statText = isDone
+                ? idx === this.winnerIndex
+                  ? `Trouvé "00..." (${v.currentCrans} crans) · Gagnante !`
+                  : `Battue (${v.currentCrans} crans pour rien)`
+                : v.data.speedLabel;
+              const statColor = isDone ? (idx === this.winnerIndex ? '#34d399' : '#fca5a5') : '#94a3b8';
+              return `
+                <div class="pow-race-row ${rowClass}">
+                  <span class="pow-race-name">${v.data.name} (${v.data.probLabel})</span>
+                  <span id="s6-race-stat-${idx}" class="pow-race-stat" style="color: ${statColor};">${statText}</span>
+                </div>
+              `;
+            })
+            .join('')}
+        </div>
+      `
+      : `
+        <div class="pos-lottery-box">
+          <div class="pos-lottery-title">
+            <span>Barre de loterie (selon caution déposée)</span>
+            <span style="color: #facc15;">1 seule gare élue</span>
+          </div>
+          <div class="pos-lottery-track">
+            <div class="pos-lottery-segment seg-a ${isDone && this.winnerIndex === 0 ? 'winner' : ''}">Gare A (50 %)</div>
+            <div class="pos-lottery-segment seg-b ${isDone && this.winnerIndex === 1 ? 'winner' : ''}">Gare B (35 %)</div>
+            <div class="pos-lottery-segment seg-c ${isDone && this.winnerIndex === 2 ? 'winner' : ''}">C (15 %)</div>
+            <div id="step6-lottery-cursor" class="pos-lottery-cursor" style="left: ${this.lotteryCursorPercent.toFixed(1)}%;"></div>
+          </div>
+        </div>
+      `;
+
     const feedbackHTML = isPoW
       ? `
         <div class="action-feedback-box ${isDone ? 'error' : ''}">
           <div class="feedback-row">
             <span class="feedback-label">Principe :</span>
-            <span class="feedback-val">Les 3 gares font tourner leurs machines <strong>en même temps</strong> pour trouver le Nonce en premier.</span>
+            <span class="feedback-val">Les 3 gares tournent chacune leur <strong>molette du Nonce en même temps</strong> (plus une gare est puissante, plus sa molette tourne vite).</span>
           </div>
           <div class="feedback-row">
-            <span class="feedback-label">Résultat :</span>
+            <span class="feedback-label">Gagnante :</span>
             <span class="feedback-val ${isDone ? 'success-val' : ''}">
               ${isDone
-                ? `La <strong>${winner.name}</strong> (${winner.probLabel} de la puissance) gagne et attelle le Wagon #2.`
-                : 'Lancez la course pour voir quelle gare trouve le Nonce en premier.'}
+                ? `La <strong>${winner.name}</strong> tombe sur "00..." en premier et attelle le Wagon #2.`
+                : 'La première gare qui tombe sur "00..." gagne.'}
             </span>
           </div>
           <div class="feedback-row">
-            <span class="feedback-label">Coût énergétique :</span>
+            <span class="feedback-label">Inconvénient :</span>
             <span class="feedback-val error-val">
               ${isDone
-                ? 'Élevé : les 2 autres gares ont calculé à plein régime pour rien.'
-                : 'Toutes les gares dépensent de l’électricité à chaque bloc.'}
+                ? 'Les 2 autres gares ont fait tourner leur molette à fond pour rien (énergie perdue).'
+                : 'Toutes les gares perdantes dépensent de l’électricité en pure perte.'}
             </span>
           </div>
         </div>
@@ -793,20 +944,20 @@ export const step6 = {
         <div class="action-feedback-box ${isDone ? 'success' : ''}">
           <div class="feedback-row">
             <span class="feedback-label">Principe :</span>
-            <span class="feedback-val">Chaque gare bloque des jetons en <strong>caution (Stake)</strong>. Le réseau tire au sort une seule gare avant tout calcul.</span>
+            <span class="feedback-val">Plus de course de molettes : chaque gare dépose des <strong>jetons en caution</strong> qui lui donnent une part sur la barre de tirage.</span>
           </div>
           <div class="feedback-row">
-            <span class="feedback-label">Résultat :</span>
+            <span class="feedback-label">Gagnante :</span>
             <span class="feedback-val ${isDone ? 'success-val' : ''}">
               ${isDone
-                ? `La <strong>${winner.name}</strong> (${winner.probLabel} des jetons en caution) est tirée au sort et attelle le Wagon #2.`
-                : 'Lancez le tirage pour désigner la gare qui attellera le wagon.'}
+                ? `Le curseur désigne la <strong>${winner.name}</strong> (${winner.tokens} jetons), qui attelle seule le Wagon #2.`
+                : 'Le curseur tire au sort une seule gare avant tout travail.'}
             </span>
           </div>
           <div class="feedback-row">
-            <span class="feedback-label">Coût & sécurité :</span>
+            <span class="feedback-label">Avantage :</span>
             <span class="feedback-val success-val">
-              Aucune énergie gaspillée. Si la gare choisie triche, elle perd sa caution.
+              Seule la gare tirée au sort travaille : les 2 autres restent au repos (99,9 % d'électricité économisée).
             </span>
           </div>
         </div>
@@ -819,29 +970,25 @@ export const step6 = {
 
       <div class="step-panel-scroll">
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Quelle gare a le droit d'atteler le wagon ?</h3>
+          <h3 class="card-title">Comment départager les 3 gares ?</h3>
           <p>
-            À l'étape 5, on a vu comment <strong>une</strong> gare valide un wagon. Mais sur le réseau, <strong>toutes les gares</strong> veulent valider le prochain wagon pour toucher la récompense.
-          </p>
-          <p>
-            Il existe deux grandes méthodes pour les départager : la <strong>Preuve de Travail (PoW)</strong> et la <strong>Preuve d'Enjeu (PoS)</strong>.
+            Les <strong>Gares A, B et C</strong> veulent toutes les trois valider et atteler le prochain wagon. Deux méthodes existent : faire la <strong>course avec 3 molettes (PoW)</strong>, ou <strong>tirer au sort 1 seule gare avant de travailler (PoS)</strong>.
           </p>
         </article>
 
         <article class="step-card action-card animate-fade">
-          <h3 class="card-title">Comparer sur les 3 gares</h3>
-          <p class="card-instruction">
-            Basculez entre les deux méthodes et lancez une validation :
-          </p>
+          <h3 class="card-title">Comparateur : Course vs Loterie</h3>
 
           <div class="difficulty-selector-row" role="tablist" aria-label="Choix du mécanisme de consensus">
             <button id="btn-tab-pow" class="btn-diff-option ${isPoW ? 'active' : ''}" role="tab" aria-selected="${isPoW}" ${isRunning ? 'disabled' : ''}>
-              <span>PoW (Course de calcul)</span>
+              <span>PoW (3 molettes en course)</span>
             </button>
             <button id="btn-tab-pos" class="btn-diff-option ${!isPoW ? 'active' : ''}" role="tab" aria-selected="${!isPoW}" ${isRunning ? 'disabled' : ''}>
-              <span>PoS (Tirage sur caution)</span>
+              <span>PoS (Loterie sur caution)</span>
             </button>
           </div>
+
+          ${visualWidgetHTML}
 
           <button id="btn-step6-run" class="btn-panel-primary" ${isRunning ? 'disabled' : ''}>
             <span>${actionButtonLabel}</span>
@@ -852,9 +999,9 @@ export const step6 = {
 
         ${(this.hasTestedPoW || this.hasTestedPoS) ? `
           <article class="step-card keypoint-card animate-fade">
-            <h4 class="card-title keypoint-title">Point clé : Puissance électrique vs Caution</h4>
+            <h4 class="card-title keypoint-title">Point clé : Pourquoi le PoS a été inventé</h4>
             <p class="keypoint-text">
-              En <strong>PoW (Bitcoin)</strong>, tout le monde calcule en même temps et seule la plus rapide gagne : c'est très sûr, mais énergivore. En <strong>PoS (Ethereum)</strong>, on tire au sort une seule gare selon sa caution avant de fabriquer le bloc : cela économise 99,9 % d'électricité.
+              En <strong>PoW (Bitcoin)</strong>, toutes les gares du monde tournent leur molette en même temps, mais une seule gagne : tout le calcul des autres est perdu. En <strong>PoS (Ethereum)</strong>, on tire au sort la gare gagnante <strong>avant</strong> de travailler grâce à sa caution, ce qui divise la consommation électrique par mille.
             </p>
           </article>
         ` : ''}
