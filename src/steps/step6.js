@@ -569,8 +569,7 @@ export const step6 = {
           <button type="button" class="scene-tooltip-pill">
             <span class="scene-tooltip-dot"></span>
             <span class="scene-tooltip-label">
-              <strong>${v.name}</strong> (<span id="s6-pill-share-${idx}">${v.probLabel}</span>) ·
-              <span id="s6-pill-status-${idx}" style="color: #94a3b8;">Prête</span>
+              <strong>${v.name}</strong> · <span id="s6-pill-status-${idx}" style="color: #cbd5e1;">${v.probLabel}</span>
             </span>
           </button>
         </div>
@@ -783,73 +782,59 @@ export const step6 = {
   },
 
   /**
-   * Met à jour les 3 infobulles 3D et le bloc de suivi dans le volet gauche.
+   * Met à jour les 3 infobulles 3D et la barre de loterie.
    */
   updateTooltipsDOM() {
     const isPoW = this.mode === 'pow';
-    const shortWinHash = `${this.winningHash.substring(0, 6)}...`;
+    const speedWords = ['rapide', 'moyenne', 'lente'];
 
     this.validators.forEach((v, idx) => {
-      const shareEl = document.getElementById(`s6-pill-share-${idx}`);
       const statusEl = document.getElementById(`s6-pill-status-${idx}`);
       const pillWrap = document.getElementById(`tooltip-s6-${idx}`);
       const lineEl = document.getElementById(`s6-line-${idx}`);
       const dotInEl = document.getElementById(`s6-dot-in-${idx}`);
       const dotOutEl = document.getElementById(`s6-dot-out-${idx}`);
-      const raceStatEl = document.getElementById(`s6-race-stat-${idx}`);
-      const raceRowEl = document.getElementById(`s6-race-row-${idx}`);
       const segEl = document.getElementById(`s6-seg-${idx}`);
 
-      if (shareEl) {
-        shareEl.textContent = isPoW
-          ? `${v.data.probLabel} · ${v.data.speedLabel}`
-          : `${v.data.tokens} jetons (${v.data.probLabel})`;
-      }
-
       let spotColor = '#38bdf8';
-      let statusText = isPoW ? `Prête (${v.data.speedLabel})` : `${v.data.tokens} jetons en caution`;
-      let statusColor = '#94a3b8';
-      let rowStateClass = '';
+      let statusText = isPoW
+        ? `${v.data.probLabel} (${speedWords[idx]})`
+        : `${v.data.tokens} jetons (${v.data.probLabel})`;
+      let statusColor = '#cbd5e1';
 
       if (this.simState === 'running') {
         spotColor = '#f59e0b';
-        statusText = `Nonce #${v.currentCrans} -> ${v.currentHash}`;
+        statusText = `${v.data.probLabel} · Nonce #${v.currentCrans}`;
         statusColor = '#fde68a';
       } else if (this.simState === 'lottery') {
         const isHigh = idx === this.rouletteHighlightIndex;
         spotColor = isHigh ? '#facc15' : '#38bdf8';
-        statusText = isHigh ? 'Sous le curseur de tirage...' : 'En attente du tirage';
+        statusText = `${v.data.tokens} jetons (${v.data.probLabel})`;
         statusColor = isHigh ? '#fde047' : '#94a3b8';
-        if (isHigh) rowStateClass = 'sweep-active';
       } else if (this.simState === 'pos_mining') {
         const isWinner = idx === this.winnerIndex;
         if (isWinner) {
           spotColor = '#f59e0b';
-          statusText = `Élue ! Molette : Nonce #${v.currentCrans} -> ${v.currentHash}`;
+          statusText = `Élue · Nonce #${v.currentCrans}`;
           statusColor = '#fde68a';
-          rowStateClass = 'sweep-active';
         } else {
           spotColor = '#64748b';
-          statusText = 'Non tirée · Pas de molette (0 cran)';
+          statusText = 'Au repos (0 cran)';
           statusColor = '#94a3b8';
         }
       } else if (this.simState === 'done') {
         const isWinner = idx === this.winnerIndex;
         if (isWinner) {
           spotColor = '#10b981';
-          statusText = isPoW
-            ? `Nonce #${v.currentCrans} (${shortWinHash}) · Attelle le wagon !`
-            : `Élue · Nonce #${v.currentCrans} (${shortWinHash}) · Attelle le wagon !`;
+          statusText = `Gagnante (Nonce #${v.currentCrans})`;
           statusColor = '#34d399';
-          rowStateClass = 'winner';
         } else if (isPoW) {
           spotColor = '#ef4444';
-          statusText = `Battue (${v.currentCrans} crans tournés pour rien)`;
+          statusText = `Battue (${v.currentCrans} crans)`;
           statusColor = '#fca5a5';
-          rowStateClass = 'loser';
         } else {
           spotColor = '#64748b';
-          statusText = 'Au repos · 0 cran tourné (0 énergie)';
+          statusText = 'Au repos (0 cran)';
           statusColor = '#94a3b8';
         }
       }
@@ -857,13 +842,6 @@ export const step6 = {
       if (statusEl) {
         statusEl.textContent = statusText;
         statusEl.style.color = statusColor;
-      }
-      if (raceStatEl) {
-        raceStatEl.textContent = statusText;
-        raceStatEl.style.color = statusColor;
-      }
-      if (raceRowEl) {
-        raceRowEl.className = `pow-race-row ${rowStateClass}`;
       }
       if (segEl) {
         const segBase = idx === 0 ? 'seg-a' : idx === 1 ? 'seg-b' : 'seg-c';
@@ -1189,133 +1167,62 @@ export const step6 = {
     const winner = this.validatorData[this.winnerIndex];
     const isBusy = this.simState === 'running' || this.simState === 'lottery' || this.simState === 'pos_mining';
     const isDone = this.simState === 'done';
-    const shortWinHash = `${this.winningHash.substring(0, 6)}...`;
 
     const actionButtonLabel = isPoW
       ? this.simState === 'running'
-        ? 'Course des 3 molettes en cours...'
+        ? 'Course en cours...'
         : isDone
-          ? 'Relancer la course sur un nouveau wagon'
-          : 'Lancer la course des 3 molettes (PoW)'
+          ? 'Relancer la course (nouveau wagon)'
+          : 'Lancer la course des 3 molettes'
       : this.simState === 'lottery'
-        ? '1/2 · Tirage au sort en cours...'
+        ? 'Tirage au sort en cours...'
         : this.simState === 'pos_mining'
-          ? `2/2 · La ${winner.name} tourne seule sa molette...`
+          ? `La ${winner.name} tourne seule sa molette...`
           : isDone
-            ? 'Relancer un tirage sur un nouveau wagon'
-            : 'Tirer au sort 1 gare et valider (PoS)';
+            ? 'Relancer un tirage (nouveau wagon)'
+            : 'Tirer au sort une gare';
 
-    const stationRowsHTML = this.validators
-      .map((v, idx) => {
-        const isWinner = idx === this.winnerIndex;
-        let rowClass = '';
-        let statText = isPoW ? `Prête (${v.data.speedLabel})` : `${v.data.tokens} jetons en caution`;
-        let statColor = '#94a3b8';
-
-        if (this.simState === 'pos_mining') {
-          if (isWinner) {
-            rowClass = 'sweep-active';
-            statText = `Élue ! Molette : Nonce #${v.currentCrans}...`;
-            statColor = '#fde68a';
-          } else {
-            statText = 'Non tirée · Pas de molette (0 cran)';
-          }
-        } else if (isDone) {
-          if (isWinner) {
-            rowClass = 'winner';
-            statText = isPoW
-              ? `Nonce #${v.currentCrans} (${shortWinHash}) · Attelle le wagon !`
-              : `Élue · Nonce #${v.currentCrans} (${shortWinHash}) · Attelle le wagon !`;
-            statColor = '#34d399';
-          } else if (isPoW) {
-            rowClass = 'loser';
-            statText = `Battue (${v.currentCrans} crans pour rien)`;
-            statColor = '#fca5a5';
-          } else {
-            statText = 'Au repos · 0 cran tourné (0 énergie)';
-          }
-        }
-
-        const labelLeft = isPoW
-          ? `${v.data.name} (${v.data.probLabel} · ${v.data.speedLabel.split(' ')[0]} ${v.data.speedLabel.split(' ')[1]})`
-          : `${v.data.name} (${v.data.tokens}/100 jetons = ${v.data.probLabel})`;
-
-        return `
-          <div id="s6-race-row-${idx}" class="pow-race-row ${rowClass}">
-            <span class="pow-race-name">${labelLeft}</span>
-            <span id="s6-race-stat-${idx}" class="pow-race-stat" style="color: ${statColor};">${statText}</span>
-          </div>
-        `;
-      })
-      .join('');
-
-    const visualWidgetHTML = isPoW
+    const modeExplanationHTML = isPoW
       ? `
-        <div class="pow-race-box">
-          <div class="share-meaning-banner">
-            <strong>Que représentent les % en PoW ?</strong> La part de la <strong>puissance informatique totale</strong> du réseau : plus une gare a de machines, plus sa molette tourne vite (10, 7 ou 3 crans/s), donc plus elle a de chances de trouver le bon Nonce en premier.
-          </div>
-          ${stationRowsHTML}
+        <div class="share-meaning-banner">
+          <strong>Part de puissance (50 %, 35 %, 15 %) :</strong> plus une gare possède d'ordinateurs, plus sa molette tourne vite pour trouver le bon Nonce en premier.
         </div>
       `
       : `
+        <div class="share-meaning-banner">
+          <strong>Part de caution (100 jetons au total) :</strong> chaque jeton déposé donne 1 % de la barre de tirage ci-dessous (50, 35 et 15 %).
+        </div>
         <div class="pos-lottery-box">
-          <div class="share-meaning-banner">
-            <strong>Que représentent les % en PoS ?</strong> Sur <strong>100 jetons déposés en caution au total</strong> par les 3 gares, 1 jeton = 1 % de la barre de tirage au sort (50 jetons = 50 % de chances d'être élue).
-          </div>
-          <div class="pos-lottery-title">
-            <span>Barre de tirage (100 jetons au total)</span>
-            <span style="color: #facc15;">1 seule molette tournera</span>
-          </div>
           <div class="pos-lottery-track">
-            <div id="s6-seg-0" class="pos-lottery-segment seg-a ${(this.simState === 'pos_mining' || isDone) && this.winnerIndex === 0 ? 'winner' : ''}">Gare A (50 jetons · 50 %)</div>
-            <div id="s6-seg-1" class="pos-lottery-segment seg-b ${(this.simState === 'pos_mining' || isDone) && this.winnerIndex === 1 ? 'winner' : ''}">Gare B (35 · 35 %)</div>
+            <div id="s6-seg-0" class="pos-lottery-segment seg-a ${(this.simState === 'pos_mining' || isDone) && this.winnerIndex === 0 ? 'winner' : ''}">Gare A (50 %)</div>
+            <div id="s6-seg-1" class="pos-lottery-segment seg-b ${(this.simState === 'pos_mining' || isDone) && this.winnerIndex === 1 ? 'winner' : ''}">Gare B (35 %)</div>
             <div id="s6-seg-2" class="pos-lottery-segment seg-c ${(this.simState === 'pos_mining' || isDone) && this.winnerIndex === 2 ? 'winner' : ''}">C (15 %)</div>
             <div id="step6-lottery-cursor" class="pos-lottery-cursor" style="left: ${this.lotteryCursorPercent.toFixed(1)}%;"></div>
           </div>
-          ${stationRowsHTML}
         </div>
       `;
 
-    const feedbackHTML = isPoW
-      ? `
-        <div class="action-feedback-box ${isDone ? 'error' : ''}">
-          <div class="feedback-row">
-            <span class="feedback-label">Gagnante :</span>
-            <span class="feedback-val ${isDone ? 'success-val' : ''}">
-              ${isDone
-                ? `La <strong>${winner.name}</strong> trouve le <strong>Nonce #${this.winningNonce}</strong> (Hash <code>${shortWinHash}</code>) et l'inscrit sur le Wagon #2.`
-                : 'Les 3 molettes tournent en même temps jusqu’à trouver un Hash commençant par "0...".'}
-            </span>
+    const resultHTML = isDone
+      ? isPoW
+        ? `
+          <div class="action-feedback-box error">
+            <div class="feedback-row">
+              <span class="feedback-val">
+                La <strong>${winner.name}</strong> a trouvé le <strong>Nonce #${this.winningNonce}</strong> en premier et attelle le Wagon #2. Les 2 autres gares ont tourné pour rien (énergie perdue).
+              </span>
+            </div>
           </div>
-          <div class="feedback-row">
-            <span class="feedback-label">Inconvénient :</span>
-            <span class="feedback-val error-val">
-              ${isDone
-                ? 'Les 2 autres gares ont fait tourner leur molette en même temps pour rien (électricité perdue).'
-                : 'Toutes les gares non gagnantes tournent à fond en pure perte.'}
-            </span>
+        `
+        : `
+          <div class="action-feedback-box success">
+            <div class="feedback-row">
+              <span class="feedback-val">
+                La <strong>${winner.name}</strong> a été tirée au sort : seule sa molette a tourné jusqu'au <strong>Nonce #${this.winningNonce}</strong>. Les 2 autres sont restées au repos (0 énergie perdue).
+              </span>
+            </div>
           </div>
-        </div>
-      `
-      : `
-        <div class="action-feedback-box ${isDone ? 'success' : ''}">
-          <div class="feedback-row">
-            <span class="feedback-label">Gagnante :</span>
-            <span class="feedback-val ${isDone ? 'success-val' : ''}">
-              ${isDone
-                ? `Tirée au sort, seule la <strong>${winner.name}</strong> a sorti sa molette, trouvé le <strong>Nonce #${this.winningNonce}</strong> (<code>${shortWinHash}</code>) et attelé le Wagon #2.`
-                : 'Le tirage désigne 1 seule gare : seule sa molette apparaît et tourne.'}
-            </span>
-          </div>
-          <div class="feedback-row">
-            <span class="feedback-label">Avantage :</span>
-            <span class="feedback-val success-val">
-              Les 2 autres gares n'ont même pas sorti leur molette (0 cran tourné, 99,9 % d'énergie économisée).
-            </span>
-          </div>
-        </div>
-      `;
+        `
+      : '';
 
     inner.innerHTML = `
       <header class="step-panel-header">
@@ -1326,36 +1233,34 @@ export const step6 = {
         <article class="step-card context-card animate-fade">
           <h3 class="card-title">Comment départager les 3 gares ?</h3>
           <p>
-            Les <strong>Gares A, B et C</strong> veulent toutes les trois valider et atteler le <strong>Wagon #2</strong>. Comparez la <strong>course des 3 molettes (PoW)</strong> et le <strong>tirage au sort préalable (PoS)</strong>.
+            Les <strong>Gares A, B et C</strong> veulent toutes valider le <strong>Wagon #2</strong>. Comparez la <strong>course (PoW)</strong> et le <strong>tirage au sort (PoS)</strong>.
           </p>
         </article>
 
         <article class="step-card action-card animate-fade">
-          <h3 class="card-title">Comparateur : Course vs Loterie</h3>
-
           <div class="difficulty-selector-row" role="tablist" aria-label="Choix du mécanisme de consensus">
             <button id="btn-tab-pow" class="btn-diff-option ${isPoW ? 'active' : ''}" role="tab" aria-selected="${isPoW}" ${isBusy ? 'disabled' : ''}>
-              <span>PoW (3 molettes en course)</span>
+              <span>PoW (Course)</span>
             </button>
             <button id="btn-tab-pos" class="btn-diff-option ${!isPoW ? 'active' : ''}" role="tab" aria-selected="${!isPoW}" ${isBusy ? 'disabled' : ''}>
-              <span>PoS (Loterie puis 1 molette)</span>
+              <span>PoS (Loterie)</span>
             </button>
           </div>
 
-          ${visualWidgetHTML}
+          ${modeExplanationHTML}
 
           <button id="btn-step6-run" class="btn-panel-primary" ${isBusy ? 'disabled' : ''}>
             <span>${actionButtonLabel}</span>
           </button>
 
-          ${feedbackHTML}
+          ${resultHTML}
         </article>
 
         ${(this.hasTestedPoW || this.hasTestedPoS) ? `
           <article class="step-card keypoint-card animate-fade">
-            <h4 class="card-title keypoint-title">Point clé : Pourquoi le PoS a été inventé</h4>
+            <h4 class="card-title keypoint-title">Point clé : PoW vs PoS</h4>
             <p class="keypoint-text">
-              En <strong>PoW (Bitcoin)</strong>, toutes les gares tournent leur molette en même temps, mais une seule gagne : tout le calcul des autres est perdu. En <strong>PoS (Ethereum)</strong>, on tire d'abord au sort la gare gagnante grâce à sa caution, puis <strong>seule sa molette tourne</strong> pour valider le wagon.
+              En <strong>PoW (Bitcoin)</strong>, les 3 molettes tournent en même temps : le calcul des perdantes est gaspillé. En <strong>PoS (Ethereum)</strong>, on tire d'abord au sort la gare gagnante, puis <strong>seule sa molette tourne</strong>.
             </p>
           </article>
         ` : ''}
