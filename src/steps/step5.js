@@ -1,10 +1,15 @@
 import * as THREE from 'three';
+import { hashToColorHex } from '../three/WagonMesh.js';
 
 /**
  * Étape 5 : Validation et minage (Proof of Work).
- * Métaphore : La locomotive fournit un effort mécanique et thermique intense
- * pour faire tourner la combinaison du verrou (Nonce) jusqu'à obtenir un Hash
- * commençant par le nombre de zéros exigé par la difficulté du réseau.
+ * Métaphore corrigée et limpide :
+ * - Le train est arrêté à quai devant une Gare-Atelier (un nœud mineur du réseau).
+ * - Un nouveau wagon (Wagon #2) attend d'être validé et attelé au convoi.
+ * - C'est la Gare-Atelier qui travaille et surchauffe en faisant tourner à toute vitesse
+ *   la molette mécanique du Nonce sur le châssis du wagon jusqu'à trouver un Hash
+ *   commençant par le nombre de zéros exigé par la difficulté ("0", "00" ou "000").
+ * - Dès que le bon Nonce est trouvé, l'attelage se verrouille et le train repart.
  */
 export const step5 = {
   id: 5,
@@ -13,16 +18,23 @@ export const step5 = {
 
   rafId: null,
   miningGroup: null,
+  stationBeaconMat: null,
+  stationFurnaceMat: null,
+  couplerArmMesh: null,
   sparks: [],
   overheatSmoke: [],
   heatLight: null,
 
+  tooltipLayer: null,
+  activeSpotId: null,
+
   difficulty: 1, // 1 ("0"), 2 ("00") ou 3 ("000") zéros requis
   isMining: false,
   isMined: false,
+  hasEverMined: false,
   currentNonce: 0,
   currentHash: '7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069',
-  heatLevel: 0, // 0.0 à 1.0
+  heatLevel: 0,
 
   // Résultats réels du tirage SHA-256
   attemptsDone: 0,
@@ -42,8 +54,8 @@ export const step5 = {
     this.difficulty = 1;
     this.isMining = false;
     this.isMined = false;
-    this.currentNonce = 0;
-    this.currentHash = '7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069';
+    this.hasEverMined = false;
+    this.activeSpotId = null;
     this.heatLevel = 0;
     this.attemptsDone = 0;
     this.realAttempts = 0;
@@ -54,26 +66,32 @@ export const step5 = {
       cameraController.setViewOffset(210);
     }
 
+    // Le train s'arrête en gare pour faire valider et atteler son nouveau wagon
     if (environment) {
-      environment.setSpeed(1.2);
+      environment.setSpeed(0);
     }
 
     if (trainConvoy) {
       trainConvoy.resetConvoy([
-        '50 caisses de matériel',
-        'Bon de livraison #402 - Quai Central'
+        { emetteur: 'Arthur', destinataire: 'Alban', montant: 15, unite: 'MMI-Coin' },
+        { emetteur: 'Alban', destinataire: 'Equipe-R507', montant: 30, unite: 'MMI-Coin' }
       ]);
       if (cameraController) {
         cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
       }
     }
 
-    this.buildMiningEffects();
+    this.prepareUnminedWagon();
+    this.buildStationWorkshop();
+    this.setupTooltipsLayer();
+    this.createMiningTooltips();
 
+    // Cadrage sur le Wagon #2 arrêté devant la Gare-Atelier
+    const wagon2Pos = trainConvoy ? trainConvoy.getWagonPosition(2) : new THREE.Vector3(7.6, 0, 0);
     if (cameraController) {
       cameraController.moveTo(
-        new THREE.Vector3(-1.4, 2.15, 5.4),
-        new THREE.Vector3(0.4, 0.55, 0),
+        new THREE.Vector3(wagon2Pos.x - 0.2, 1.85, 4.8),
+        new THREE.Vector3(wagon2Pos.x, 0.55, -0.3),
         1.2
       );
     }
@@ -84,15 +102,23 @@ export const step5 = {
 
   exit() {
     this.stopAnimationLoop();
-    this.resetLocomotiveMaterials();
+
+    if (this.tooltipLayer) {
+      this.tooltipLayer.remove();
+      this.tooltipLayer = null;
+    }
 
     if (this.miningGroup && this.ctx?.scene) {
       this.ctx.scene.remove(this.miningGroup);
       this.miningGroup = null;
     }
+
     this.sparks = [];
     this.overheatSmoke = [];
     this.heatLight = null;
+    this.stationBeaconMat = null;
+    this.stationFurnaceMat = null;
+    this.couplerArmMesh = null;
 
     const panel = document.getElementById('step-panel-left');
     if (panel) {
@@ -102,23 +128,36 @@ export const step5 = {
   },
 
   /**
-   * Réinitialise les matériaux de la chaudière à leur teinte normale.
+   * Place le Wagon #2 dans un état initial "non miné" (son hash ne commence pas par 0)
+   * afin qu'il soit en attente de validation par la gare.
    */
-  resetLocomotiveMaterials() {
-    const loco = this.ctx?.trainConvoy?.getWagon(0);
-    if (loco && loco.bodyMaterials) {
-      loco.bodyMaterials.forEach((mat) => {
-        mat.emissive.setHex(0x000000);
-        mat.emissiveIntensity = 0;
-      });
+  prepareUnminedWagon() {
+    const { trainConvoy } = this.ctx;
+    const wagon2 = trainConvoy?.getWagon(2);
+    const block2 = trainConvoy?.getBlock(2);
+    if (!wagon2 || !block2) return;
+
+    block2._miningSalt = 'attente-gare';
+    block2.nonce = 0;
+    block2.hash = block2.calculateHash();
+    while (block2.hash.startsWith('0')) {
+      block2.nonce++;
+      block2.hash = block2.calculateHash();
     }
+
+    this.currentNonce = block2.nonce;
+    this.currentHash = block2.hash;
+
+    wagon2.colorHash.set(hashToColorHex(block2.hash));
+    wagon2.renderPlates();
   },
 
   /**
-   * Construit les particules d'étincelles et la fumée de surchauffe (sans cercle filaire gênant la plaque).
+   * Construit la Gare-Atelier de minage (Nœud mineur) juste derrière le Wagon #2 (x = 7.6, z = -1.75),
+   * avec sa cheminée industrielle, sa chaudière de calcul et ses particules de surchauffe.
    */
-  buildMiningEffects() {
-    const { scene } = this.ctx;
+  buildStationWorkshop() {
+    const { scene, trainConvoy } = this.ctx;
     if (!scene) return;
 
     if (this.miningGroup) {
@@ -129,13 +168,120 @@ export const step5 = {
     this.sparks = [];
     this.overheatSmoke = [];
 
-    // 1. Lumière de surchauffe thermique sur la chaudière
-    this.heatLight = new THREE.PointLight(0xff5500, 0, 7.0);
-    this.heatLight.position.set(-0.4, 0.8, 0.6);
+    const wagon2Pos = trainConvoy ? trainConvoy.getWagonPosition(2) : new THREE.Vector3(7.6, 0, 0);
+    const gx = wagon2Pos.x;
+    const gz = -1.75;
+
+    const stationRoot = new THREE.Group();
+    stationRoot.position.set(gx, 0, gz);
+    this.miningGroup.add(stationRoot);
+
+    // 1. Quai en pierre / béton bordant les rails
+    const platformGeo = new THREE.BoxGeometry(3.6, 0.32, 1.4);
+    const platformMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 });
+    const platform = new THREE.Mesh(platformGeo, platformMat);
+    platform.position.set(0, -0.18, 0.25);
+    stationRoot.add(platform);
+
+    // Ligne jaune de sécurité en bordure de quai
+    const safetyGeo = new THREE.BoxGeometry(3.5, 0.02, 0.07);
+    const safetyMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+    const safetyLine = new THREE.Mesh(safetyGeo, safetyMat);
+    safetyLine.position.set(0, -0.01, 0.86);
+    stationRoot.add(safetyLine);
+
+    // 2. Bâtiment de la Gare-Atelier
+    const hallGeo = new THREE.BoxGeometry(2.6, 1.35, 1.05);
+    const brickMat = new THREE.MeshStandardMaterial({ color: 0x7c2d12, roughness: 0.7 });
+    const hall = new THREE.Mesh(hallGeo, brickMat);
+    hall.position.set(0, 0.65, -0.05);
+    stationRoot.add(hall);
+
+    const roofGeo = new THREE.ConeGeometry(1.95, 0.65, 4);
+    const roofMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.55, flatShading: true });
+    const roof = new THREE.Mesh(roofGeo, roofMat);
+    roof.position.set(0, 1.65, -0.05);
+    roof.rotation.y = Math.PI / 4;
+    roof.scale.set(1.1, 1.0, 0.65);
+    stationRoot.add(roof);
+
+    // Panneau frontal "GARE-ATELIER (MINEUR)"
+    const signCanvas = document.createElement('canvas');
+    signCanvas.width = 512;
+    signCanvas.height = 96;
+    const sctx = signCanvas.getContext('2d');
+    sctx.fillStyle = '#0f172a';
+    sctx.fillRect(0, 0, 512, 96);
+    sctx.strokeStyle = '#38bdf8';
+    sctx.lineWidth = 6;
+    sctx.strokeRect(4, 4, 504, 88);
+    sctx.fillStyle = '#f8fafc';
+    sctx.font = 'bold 34px monospace';
+    sctx.textAlign = 'center';
+    sctx.textBaseline = 'middle';
+    sctx.fillText('GARE-ATELIER (MINEUR)', 256, 50);
+    const signTex = new THREE.CanvasTexture(signCanvas);
+    const signMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.9, 0.36),
+      new THREE.MeshBasicMaterial({ map: signTex })
+    );
+    signMesh.position.set(0, 1.15, 0.49);
+    stationRoot.add(signMesh);
+
+    // 3. Cœur thermique / Machine de hachage visible en façade de la gare
+    const furnaceGeo = new THREE.BoxGeometry(1.2, 0.55, 0.12);
+    this.stationFurnaceMat = new THREE.MeshStandardMaterial({
+      color: 0xfef08a,
+      emissive: 0xf59e0b,
+      emissiveIntensity: 0.9,
+      roughness: 0.2
+    });
+    const furnace = new THREE.Mesh(furnaceGeo, this.stationFurnaceMat);
+    furnace.position.set(0, 0.52, 0.48);
+    stationRoot.add(furnace);
+
+    // 4. Grande cheminée industrielle d'extraction (à droite de la gare)
+    const stackGeo = new THREE.CylinderGeometry(0.22, 0.28, 2.2, 16);
+    const metalMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.3 });
+    const chimney = new THREE.Mesh(stackGeo, metalMat);
+    chimney.position.set(1.05, 1.25, -0.15);
+    stationRoot.add(chimney);
+
+    // 5. Sémaphore lumineux de validation (à gauche du quai)
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.6, 8), metalMat);
+    mast.position.set(-1.45, 0.8, 0.45);
+    stationRoot.add(mast);
+
+    this.stationBeaconMat = new THREE.MeshStandardMaterial({
+      color: 0xfacc15,
+      emissive: 0xeab308,
+      emissiveIntensity: 1.8
+    });
+    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 16), this.stationBeaconMat);
+    beacon.position.set(-1.45, 1.62, 0.45);
+    stationRoot.add(beacon);
+
+    // 6. Portique / Bras de transmission reliant la gare au châssis du Wagon #2
+    const armGeo = new THREE.CylinderGeometry(0.055, 0.055, 1.6, 12);
+    armGeo.rotateX(Math.PI / 2);
+    const armMat = new THREE.MeshStandardMaterial({
+      color: 0xf59e0b,
+      emissive: 0xd97706,
+      emissiveIntensity: 0.6,
+      metalness: 0.7,
+      roughness: 0.3
+    });
+    this.couplerArmMesh = new THREE.Mesh(armGeo, armMat);
+    this.couplerArmMesh.position.set(gx, 0.2, -0.8);
+    this.miningGroup.add(this.couplerArmMesh);
+
+    // 7. Lumière de surchauffe thermique
+    this.heatLight = new THREE.PointLight(0xff5500, 0, 8.0);
+    this.heatLight.position.set(gx, 1.2, -0.6);
     this.miningGroup.add(this.heatLight);
 
-    // 2. Étincelles incandescentes jaillissant des roues et de la chaudière
-    const sparkGeo = new THREE.BoxGeometry(0.06, 0.06, 0.06);
+    // 8. Étincelles jaillissant de la machine de la gare et de la molette du Nonce
+    const sparkGeo = new THREE.BoxGeometry(0.055, 0.055, 0.055);
     for (let i = 0; i < 36; i++) {
       const sparkMat = new THREE.MeshBasicMaterial({
         color: i % 2 === 0 ? 0xfacc15 : 0xf97316,
@@ -145,18 +291,19 @@ export const step5 = {
       const spark = new THREE.Mesh(sparkGeo, sparkMat);
       spark.visible = false;
       spark.userData = {
-        vx: (Math.random() - 0.3) * 3.5,
-        vy: 1.2 + Math.random() * 2.8,
-        vz: (Math.random() - 0.5) * 3.0,
+         nearWheel: i < 18,
+        vx: (Math.random() - 0.5) * 2.8,
+        vy: 1.0 + Math.random() * 2.5,
+        vz: (Math.random() - 0.5) * 2.5,
         age: Math.random(),
-        lifetime: 0.45 + Math.random() * 0.4
+        lifetime: 0.4 + Math.random() * 0.35
       };
       this.miningGroup.add(spark);
       this.sparks.push(spark);
     }
 
-    // 3. Panache de fumée dense de surchauffe à la sortie de la cheminée
-    const smokeGeo = new THREE.SphereGeometry(0.22, 8, 8);
+    // 9. Panache de fumée sortant de la cheminée de la Gare-Atelier
+    const smokeGeo = new THREE.SphereGeometry(0.22, 10, 10);
     for (let i = 0; i < 18; i++) {
       const smokeMat = new THREE.MeshStandardMaterial({
         color: 0xfb923c,
@@ -180,6 +327,84 @@ export const step5 = {
   },
 
   /**
+   * Initialise le conteneur DOM pour les infobulles 3D projetées.
+   */
+  setupTooltipsLayer() {
+    const hud = document.getElementById('hud');
+    if (!hud) return;
+
+    if (!this.tooltipLayer) {
+      this.tooltipLayer = document.createElement('div');
+      this.tooltipLayer.id = 'step5-tooltips-layer';
+      this.tooltipLayer.className = 'scene-tooltips-layer';
+      hud.appendChild(this.tooltipLayer);
+    }
+    this.tooltipLayer.innerHTML = '';
+  },
+
+  /**
+   * Construit les 2 infobulles SVG pointant vers l'étiquette Hash et la molette Nonce du Wagon #2.
+   */
+  createMiningTooltips() {
+    if (!this.tooltipLayer) return;
+
+    const { trainConvoy } = this.ctx;
+    const wagon2 = trainConvoy?.getWagon(2);
+    if (!wagon2) return;
+
+    const colorHash = '#' + wagon2.colorHash.getHexString();
+    const colorNonce = '#f59e0b';
+    const hashShort = this.currentHash.substring(0, 10);
+
+    this.tooltipLayer.innerHTML = `
+      <svg id="step5-tooltips-svg" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 10;">
+        <line id="s5-line-hash" stroke="${colorHash}" stroke-width="2" stroke-linecap="round" opacity="0.9" />
+        <circle id="s5-dot-hash-out" r="7" fill="none" stroke="${colorHash}" stroke-width="1.5" opacity="0.8" />
+        <circle id="s5-dot-hash-in" r="3.5" fill="${colorHash}" />
+
+        <line id="s5-line-nonce" stroke="${colorNonce}" stroke-width="2" stroke-linecap="round" opacity="0.9" />
+        <circle id="s5-dot-nonce-out" r="7" fill="none" stroke="${colorNonce}" stroke-width="1.5" opacity="0.8" />
+        <circle id="s5-dot-nonce-in" r="3.5" fill="${colorNonce}" />
+      </svg>
+
+      <!-- Infobulle 1 : Hash du Wagon #2 -->
+      <div id="tooltip-s5-hash" class="scene-tooltip" style="--spot-color: ${colorHash}; z-index: 12;">
+        <button type="button" class="scene-tooltip-pill">
+          <span class="scene-tooltip-dot"></span>
+          <span class="scene-tooltip-label">Hash : <code id="s5-pill-hash-code">${hashShort}...</code></span>
+        </button>
+        <div class="scene-tooltip-card">
+          <div class="scene-tooltip-card-title">Empreinte calculée (Wagon #2)</div>
+          <p class="scene-tooltip-card-text">Pour que le wagon soit accepté par le réseau, ce Hash doit commencer par le nombre de zéros imposé par la difficulté.</p>
+        </div>
+      </div>
+
+      <!-- Infobulle 2 : Molette du Nonce (placée sous le wagon) -->
+      <div id="tooltip-s5-nonce" class="scene-tooltip tooltip-below" style="--spot-color: ${colorNonce}; z-index: 12;">
+        <button type="button" class="scene-tooltip-pill">
+          <span class="scene-tooltip-dot"></span>
+          <span class="scene-tooltip-label">Molette Nonce : <code id="s5-pill-nonce-code">${this.currentNonce}</code></span>
+        </button>
+        <div class="scene-tooltip-card">
+          <div class="scene-tooltip-card-title">Compteur mécanique (Nonce)</div>
+          <p class="scene-tooltip-card-text">La Gare-Atelier fait tourner cette molette cran par cran jusqu'à obtenir un Hash conforme sans modifier les transactions.</p>
+        </div>
+      </div>
+    `;
+
+    ['hash', 'nonce'].forEach((id) => {
+      const el = document.getElementById(`tooltip-s5-${id}`);
+      el?.addEventListener('pointerdown', (e) => e.stopPropagation());
+      el?.querySelector('.scene-tooltip-pill')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.activeSpotId = this.activeSpotId === id ? null : id;
+        document.getElementById('tooltip-s5-hash')?.classList.toggle('active', this.activeSpotId === 'hash');
+        document.getElementById('tooltip-s5-nonce')?.classList.toggle('active', this.activeSpotId === 'nonce');
+      });
+    });
+  },
+
+  /**
    * Retourne la moyenne théorique d'essais selon la difficulté hexadécimale (16^d).
    * @param {number} diff
    */
@@ -190,7 +415,7 @@ export const step5 = {
   },
 
   /**
-   * Lance la recherche réelle du Nonce (SHA-256 avec timestamp/sel aléatoire avant le while).
+   * Lance la recherche réelle du Nonce par la Gare-Atelier sur le Wagon #2.
    */
   startMining() {
     if (this.isMining) return;
@@ -198,7 +423,12 @@ export const step5 = {
     const convoy = this.ctx?.trainConvoy;
     if (!convoy || !convoy.blockchain) return;
 
-    // Exécute le vrai minage SHA-256 (qui injecte un léger timestamp aléatoire avant la boucle while)
+    // Arrête le train à quai pendant le travail de la gare
+    if (this.ctx?.environment) {
+      this.ctx.environment.setSpeed(0);
+    }
+
+    // Exécute le vrai minage SHA-256 sur le dernier wagon (Wagon #2)
     const result = convoy.blockchain.mineLatestBlock(this.difficulty);
 
     this.foundNonce = result.nonce;
@@ -211,25 +441,21 @@ export const step5 = {
     this.currentNonce = 0;
     this.animFramesDone = 0;
 
-    // Durée d'animation visuelle fluide adaptée au niveau de difficulté
-    if (this.difficulty === 1) this.animTotalFrames = 32;
-    else if (this.difficulty === 2) this.animTotalFrames = 55;
-    else this.animTotalFrames = 85;
-
-    if (this.ctx?.environment) {
-      this.ctx.environment.setSpeed(5.5);
-    }
+    if (this.difficulty === 1) this.animTotalFrames = 38;
+    else if (this.difficulty === 2) this.animTotalFrames = 62;
+    else this.animTotalFrames = 92;
 
     this.renderLeftPanel();
   },
 
   /**
-   * Génère un faux hash hexadécimal aléatoire pendant les frames de recherche.
+   * Génère un hash hexadécimal intermédiaire ne commençant pas par 0 pendant la recherche.
    */
   generateRandomHex(length = 24) {
-    const chars = '123456789abcdef';
-    let out = '';
-    for (let i = 0; i < length; i++) {
+    const firstChars = '123456789abcdef';
+    const chars = '0123456789abcdef';
+    let out = firstChars[Math.floor(Math.random() * firstChars.length)];
+    for (let i = 1; i < length; i++) {
       out += chars[Math.floor(Math.random() * chars.length)];
     }
     return out;
@@ -238,6 +464,24 @@ export const step5 = {
   startAnimationLoop() {
     this.stopAnimationLoop();
 
+    const setLineAndDot = (lineId, dotInId, dotOutId, x1, y1, x2, y2) => {
+      const line = document.getElementById(lineId);
+      const dotIn = document.getElementById(dotInId);
+      const dotOut = document.getElementById(dotOutId);
+      if (line) {
+        line.setAttribute('x1', x1.toFixed(1));
+        line.setAttribute('y1', y1.toFixed(1));
+        line.setAttribute('x2', x2.toFixed(1));
+        line.setAttribute('y2', y2.toFixed(1));
+      }
+      if (dotIn && dotOut) {
+        dotIn.setAttribute('cx', x2.toFixed(1));
+        dotIn.setAttribute('cy', y2.toFixed(1));
+        dotOut.setAttribute('cx', x2.toFixed(1));
+        dotOut.setAttribute('cy', y2.toFixed(1));
+      }
+    };
+
     let lastStepTime = performance.now();
 
     const loop = () => {
@@ -245,7 +489,10 @@ export const step5 = {
       const dt = Math.min((now - lastStepTime) / 1000, 0.05);
       lastStepTime = now;
 
-      const loco = this.ctx?.trainConvoy?.getWagon(0);
+      const { trainConvoy, camera } = this.ctx;
+      const wagon2 = trainConvoy?.getWagon(2);
+      const block2 = trainConvoy?.getBlock(2);
+      const wagon2Pos = trainConvoy ? trainConvoy.getWagonPosition(2) : new THREE.Vector3(7.6, 0, 0);
 
       if (this.isMining) {
         this.animFramesDone += 1;
@@ -256,46 +503,117 @@ export const step5 = {
           this.attemptsDone = Math.max(1, Math.floor(this.realAttempts * progress));
           this.currentNonce = this.attemptsDone;
           this.currentHash = this.generateRandomHex(24);
+
+          // Rotation physique rapide de la molette du Nonce sur le Wagon #2
+          if (wagon2 && block2) {
+            if (wagon2.nonceWheel) {
+              wagon2.nonceWheel.rotateOnAxis(new THREE.Vector3(0, 1, 0), 0.55);
+            }
+            // Rafraîchit les plaques 3D toutes les 3 frames pour rester à 60 FPS
+            if (this.animFramesDone % 3 === 0) {
+              block2.nonce = this.currentNonce;
+              block2.hash = this.currentHash;
+              wagon2.colorHash.set(hashToColorHex(this.currentHash));
+              wagon2.renderPlates();
+            }
+          }
+
           this.updateLiveMiningDOM();
         } else {
-          // Résultat réel atteint !
+          // Nonce gagnant trouvé !
           this.attemptsDone = this.realAttempts;
           this.currentNonce = this.foundNonce;
           this.currentHash = this.foundHash;
           this.isMining = false;
           this.isMined = true;
+          this.hasEverMined = true;
           this.heatLevel = 0.0;
 
+          if (wagon2 && block2) {
+            block2.nonce = this.foundNonce;
+            block2.hash = this.foundHash;
+            wagon2.colorHash.set(hashToColorHex(this.foundHash));
+            wagon2.renderPlates();
+          }
+
+          if (trainConvoy) {
+            trainConvoy.sync();
+          }
+
+          // Le convoi validé peut repartir
           if (this.ctx?.environment) {
-            this.ctx.environment.setSpeed(2.0);
+            this.ctx.environment.setSpeed(2.2);
           }
 
-          const convoy = this.ctx?.trainConvoy;
-          if (convoy) {
-            if (convoy.blockchain.chain.length < 4) {
-              convoy.addBlock('Convoi validé par Preuve de Travail');
-            }
-            convoy.sync();
-          }
-
-          this.resetLocomotiveMaterials();
+          this.updateLiveMiningDOM();
           this.renderLeftPanel();
         }
       } else {
         this.heatLevel = THREE.MathUtils.lerp(this.heatLevel, 0, dt * 3.0);
       }
 
-      // Effets visuels 3D sur la locomotive (rougeoiement, étincelles, fumée)
-      if (loco && loco.bodyMaterials) {
-        loco.bodyMaterials.forEach((mat) => {
-          if (this.isMining) {
-            mat.emissive.setHex(0xdc2626);
-            mat.emissiveIntensity = this.heatLevel * 0.75 + Math.sin(now * 0.03) * 0.15;
-          } else if (this.isMined) {
-            mat.emissive.setHex(0x059669);
-            mat.emissiveIntensity = Math.max(0, this.heatLevel * 0.5);
+      // État mécanique de l'attelage et du voyant du Wagon #2
+      if (wagon2) {
+        if (wagon2.couplerGroup && wagon2.defaultCouplerPosition) {
+          if (!this.isMined) {
+            // En attente de validation : attelage abaissé
+            wagon2.couplerGroup.position.y = wagon2.defaultCouplerPosition.y - 0.18;
+            wagon2.couplerGroup.rotation.z = 0.16;
+          } else {
+            // Validé par la Preuve de Travail : attelage verrouillé
+            wagon2.couplerGroup.position.copy(wagon2.defaultCouplerPosition);
+            wagon2.couplerGroup.rotation.z = 0;
           }
-        });
+        }
+        if (wagon2.beaconMaterial) {
+          if (this.isMining) {
+            wagon2.beaconMaterial.color.setHex(0xf97316);
+            wagon2.beaconMaterial.emissive.setHex(0xea580c);
+            wagon2.beaconMaterial.emissiveIntensity = 2.2;
+          } else if (this.isMined) {
+            wagon2.beaconMaterial.color.setHex(0x10b981);
+            wagon2.beaconMaterial.emissive.setHex(0x059669);
+            wagon2.beaconMaterial.emissiveIntensity = 1.8;
+          } else {
+            wagon2.beaconMaterial.color.setHex(0xfacc15);
+            wagon2.beaconMaterial.emissive.setHex(0xeab308);
+            wagon2.beaconMaterial.emissiveIntensity = 1.5;
+          }
+        }
+        if (wagon2.rearRingMaterial) {
+          wagon2.rearRingMaterial.color.copy(wagon2.colorHash);
+          wagon2.rearRingMaterial.emissive.copy(wagon2.colorHash);
+        }
+      }
+
+      // Effets thermiques sur la Gare-Atelier
+      if (this.stationFurnaceMat) {
+        if (this.isMining) {
+          this.stationFurnaceMat.color.setHex(0xffedd5);
+          this.stationFurnaceMat.emissive.setHex(0xef4444);
+          this.stationFurnaceMat.emissiveIntensity = 1.8 + this.heatLevel * 2.2 + Math.sin(now * 0.04) * 0.4;
+        } else if (this.isMined) {
+          this.stationFurnaceMat.color.setHex(0xd1fae5);
+          this.stationFurnaceMat.emissive.setHex(0x10b981);
+          this.stationFurnaceMat.emissiveIntensity = 1.2;
+        } else {
+          this.stationFurnaceMat.color.setHex(0xfef08a);
+          this.stationFurnaceMat.emissive.setHex(0xf59e0b);
+          this.stationFurnaceMat.emissiveIntensity = 0.8;
+        }
+      }
+
+      if (this.stationBeaconMat) {
+        if (this.isMining) {
+          this.stationBeaconMat.color.setHex(0xef4444);
+          this.stationBeaconMat.emissive.setHex(0xdc2626);
+        } else if (this.isMined) {
+          this.stationBeaconMat.color.setHex(0x10b981);
+          this.stationBeaconMat.emissive.setHex(0x059669);
+        } else {
+          this.stationBeaconMat.color.setHex(0xfacc15);
+          this.stationBeaconMat.emissive.setHex(0xeab308);
+        }
       }
 
       if (this.heatLight) {
@@ -304,56 +622,110 @@ export const step5 = {
           this.heatLight.intensity = 2.5 + this.heatLevel * 4.5 + Math.random() * 1.5;
         } else if (this.isMined) {
           this.heatLight.color.setHex(0x10b981);
-          this.heatLight.intensity = 2.2;
+          this.heatLight.intensity = 1.8;
         } else {
           this.heatLight.intensity = 0;
         }
       }
 
-      // Animation des étincelles
+      // Étincelles sur la Gare-Atelier et sur la molette du Nonce
       this.sparks.forEach((spark) => {
         if (this.isMining) {
           spark.visible = true;
           spark.userData.age += dt;
           if (spark.userData.age >= spark.userData.lifetime) {
             spark.userData.age = 0;
-            spark.position.set(
-              -0.8 + Math.random() * 1.2,
-              -0.15 + Math.random() * 0.7,
-              (Math.random() - 0.5) * 1.1
-            );
+            if (spark.userData.nearWheel) {
+              spark.position.set(
+                wagon2Pos.x + (Math.random() - 0.5) * 0.35,
+                0.2 + (Math.random() - 0.5) * 0.25,
+                0.68 + (Math.random() - 0.5) * 0.2
+              );
+            } else {
+              spark.position.set(
+                wagon2Pos.x + (Math.random() - 0.5) * 1.4,
+                0.5 + Math.random() * 0.5,
+                -1.25 + (Math.random() - 0.5) * 0.3
+              );
+            }
           } else {
             spark.position.x += spark.userData.vx * dt;
             spark.position.y += spark.userData.vy * dt;
             spark.position.z += spark.userData.vz * dt;
-            const lifeRatio = 1 - spark.userData.age / spark.userData.lifetime;
-            spark.material.opacity = lifeRatio;
+            spark.material.opacity = 1 - spark.userData.age / spark.userData.lifetime;
           }
         } else {
           spark.visible = false;
         }
       });
 
-      // Animation de la fumée de surchauffe
+      // Panache de fumée à la sortie de la cheminée de la Gare-Atelier
       this.overheatSmoke.forEach((puff) => {
         if (this.isMining) {
           puff.visible = true;
-          puff.userData.age += dt * (1.5 + this.difficulty * 0.4);
+          puff.userData.age += dt * (1.4 + this.difficulty * 0.4);
           if (puff.userData.age >= puff.userData.lifetime) {
             puff.userData.age = 0;
-            puff.position.set(-0.9, 1.4, (Math.random() - 0.5) * 0.15);
-            puff.scale.setScalar(0.4);
+            puff.position.set(wagon2Pos.x + 1.05, 2.38, -1.9);
+            puff.scale.setScalar(0.38);
           } else {
             const r = puff.userData.age / puff.userData.lifetime;
-            puff.position.x += dt * 3.2;
+            puff.position.x += dt * 1.2;
             puff.position.y += dt * 2.4;
-            puff.scale.setScalar(0.4 + r * 2.2);
+            puff.scale.setScalar(0.38 + r * 2.1);
             puff.material.opacity = (1 - r) * 0.65;
           }
         } else {
           puff.visible = false;
         }
       });
+
+      // Projection 2D des 2 infobulles SVG sur le Wagon #2
+      if (this.tooltipLayer && camera && wagon2) {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        const pHashPlate = wagon2.localToWorld(new THREE.Vector3(0.0, 0.62, 0.605));
+        const pNonce = wagon2.localToWorld(new THREE.Vector3(0.0, 0.2, 0.71));
+
+        const prHash = pHashPlate.project(camera);
+        const prNonce = pNonce.project(camera);
+
+        if (prHash.z > 1 || prNonce.z > 1) {
+          this.tooltipLayer.style.opacity = '0';
+          this.tooltipLayer.style.visibility = 'hidden';
+        } else {
+          const toX = (v) => (v.x * 0.5 + 0.5) * width;
+          const toY = (v) => (-v.y * 0.5 + 0.5) * height;
+
+          const hx = toX(prHash);
+          const hy = toY(prHash);
+          const nx = toX(prNonce);
+          const ny = toY(prNonce);
+
+          const isCovered = width > 768 && Math.min(hx, nx) < 410;
+          this.tooltipLayer.style.opacity = isCovered ? '0' : '1';
+          this.tooltipLayer.style.visibility = isCovered ? 'hidden' : 'visible';
+
+          const pillHashX = Math.max(460, hx);
+          const pillHashY = hy - 68;
+
+          const pillNonceX = Math.max(460, nx);
+          const pillNonceY = ny + 64;
+
+          const elHash = document.getElementById('tooltip-s5-hash');
+          const elNonce = document.getElementById('tooltip-s5-nonce');
+          if (elHash) {
+            elHash.style.transform = `translate3d(${pillHashX.toFixed(1)}px, ${pillHashY.toFixed(1)}px, 0) translate(-50%, -50%)`;
+          }
+          if (elNonce) {
+            elNonce.style.transform = `translate3d(${pillNonceX.toFixed(1)}px, ${pillNonceY.toFixed(1)}px, 0) translate(-50%, -50%)`;
+          }
+
+          setLineAndDot('s5-line-hash', 's5-dot-hash-in', 's5-dot-hash-out', pillHashX, pillHashY + 14, hx, hy);
+          setLineAndDot('s5-line-nonce', 's5-dot-nonce-in', 's5-dot-nonce-out', pillNonceX, pillNonceY - 14, nx, ny);
+        }
+      }
 
       this.rafId = requestAnimationFrame(loop);
     };
@@ -371,16 +743,43 @@ export const step5 = {
   updateLiveMiningDOM() {
     const nonceEl = document.getElementById('step5-nonce-val');
     const hashEl = document.getElementById('step5-hash-val');
-    const tempEl = document.getElementById('step5-temp-val');
+    const statusEl = document.getElementById('step5-status-val');
+    const pillHashEl = document.getElementById('s5-pill-hash-code');
+    const pillNonceEl = document.getElementById('s5-pill-nonce-code');
+
     const avgLabel = this.getTheoreticalAverageLabel(this.difficulty);
 
     if (nonceEl) {
-      nonceEl.textContent = `Recherche en cours : ${this.attemptsDone} essais... (Moyenne théorique : ${avgLabel} essais)`;
+      nonceEl.textContent = `${this.currentNonce} (${this.attemptsDone} essais · moy. ${avgLabel})`;
     }
-    if (hashEl) hashEl.textContent = `${this.currentHash.substring(0, 16)}...`;
-    if (tempEl) {
-      const deg = Math.round(120 + this.heatLevel * 720);
-      tempEl.textContent = `Surchauffe (${deg}°C)`;
+    if (hashEl) {
+      hashEl.textContent = `${this.currentHash.substring(0, 14)}...`;
+    }
+    if (statusEl) {
+      const deg = Math.round(110 + this.heatLevel * 650);
+      statusEl.textContent = this.isMining
+        ? `Gare en surchauffe (${deg}°C)`
+        : 'Wagon validé et attelé au train';
+    }
+    if (pillHashEl) {
+      pillHashEl.textContent = `${this.currentHash.substring(0, 10)}...`;
+    }
+    if (pillNonceEl) {
+      pillNonceEl.textContent = String(this.currentNonce);
+    }
+
+    const { trainConvoy } = this.ctx;
+    const wagon2 = trainConvoy?.getWagon(2);
+    if (wagon2) {
+      const colorHash = '#' + wagon2.colorHash.getHexString();
+      const elHash = document.getElementById('tooltip-s5-hash');
+      if (elHash) elHash.style.setProperty('--spot-color', colorHash);
+      const lineHash = document.getElementById('s5-line-hash');
+      const dotIn = document.getElementById('s5-dot-hash-in');
+      const dotOut = document.getElementById('s5-dot-hash-out');
+      if (lineHash) lineHash.setAttribute('stroke', colorHash);
+      if (dotIn) dotIn.setAttribute('fill', colorHash);
+      if (dotOut) dotOut.setAttribute('stroke', colorHash);
     }
   },
 
@@ -399,11 +798,11 @@ export const step5 = {
     const targetPrefix = '0'.repeat(this.difficulty);
     const avgLabel = this.getTheoreticalAverageLabel(this.difficulty);
 
-    let nonceStatusHTML = `En attente de lancement (Moyenne théorique : ${avgLabel} essais)`;
+    let nonceStatusHTML = `${this.currentNonce} (Moyenne théorique : ~${avgLabel} essais)`;
     if (this.isMining) {
-      nonceStatusHTML = `Recherche en cours : ${this.attemptsDone} essais... (Moyenne théorique : ${avgLabel} essais)`;
+      nonceStatusHTML = `${this.currentNonce} (${this.attemptsDone} essais... · moy. ~${avgLabel})`;
     } else if (this.isMined) {
-      nonceStatusHTML = `Nonce trouvé : ${this.foundNonce}, après ${this.realAttempts} essais réels. (Moyenne théorique : ${avgLabel} essais)`;
+      nonceStatusHTML = `Nonce ${this.foundNonce} trouvé en ${this.realAttempts} essais (moy. ~${avgLabel})`;
     }
 
     inner.innerHTML = `
@@ -413,19 +812,19 @@ export const step5 = {
 
       <div class="step-panel-scroll">
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">L'effort mécanique de la Preuve de Travail</h3>
+          <h3 class="card-title">Le travail de la Gare-Atelier</h3>
           <p>
-            Pour valider et sceller un nouveau wagon, la locomotive doit résoudre une énigme cryptographique : tourner la molette du <strong>Nonce</strong> jusqu'à trouver un <strong>Hash</strong> commençant par un nombre imposé de zéros (la <strong>difficulté</strong>).
+            Ce n'est pas le train lui-même qui valide les blocs, mais <strong>une gare du réseau (un nœud mineur)</strong>.
           </p>
           <p>
-            Comme chaque caractère hexadécimal a 1 chance sur 16 d'être un zéro, le nombre d'essais varie à chaque tirage autour d'une moyenne mathématique précise.
+            Le train est arrêté à quai : pour avoir le droit d'atteler le <strong>Wagon #2</strong>, la Gare-Atelier doit faire tourner sa <strong>molette du Nonce</strong> jusqu'à trouver un <strong>Hash commençant par "${targetPrefix}"</strong>.
           </p>
         </article>
 
         <article class="step-card action-card animate-fade">
-          <h3 class="card-title">Simulateur de minage (Proof of Work)</h3>
+          <h3 class="card-title">Atelier de Preuve de Travail (PoW)</h3>
           <p class="card-instruction">
-            Choisissez la cible de difficulté puis lancez la chauffe plusieurs fois pour comparer votre tirage à la moyenne théorique :
+            Choisissez le nombre de zéros exigé par le réseau puis lancez la machine de la gare :
           </p>
 
           <div class="difficulty-selector-row">
@@ -441,48 +840,50 @@ export const step5 = {
           </div>
 
           <button id="btn-step5-mine" class="btn-panel-primary" ${this.isMining ? 'disabled' : ''}>
-            <span>${this.isMining ? 'Calcul intensif en cours...' : (this.isMined ? 'Relancer un nouveau tirage de minage' : 'Lancer le minage du bloc')}</span>
+            <span>${this.isMining ? 'Rotation de la molette en cours...' : (this.isMined ? 'Relancer un nouveau tirage en gare' : 'Lancer le minage par la gare')}</span>
           </button>
 
           <div class="action-feedback-box ${this.isMined ? 'success' : (this.isMining ? 'error' : '')}">
             <div class="feedback-row">
-              <span class="feedback-label">Cible requise :</span>
-              <span class="feedback-val">Débuter par "${targetPrefix}"</span>
+              <span class="feedback-label">Cible exigée :</span>
+              <span class="feedback-val">Hash débutant par "${targetPrefix}"</span>
             </div>
             <div class="feedback-row">
-              <span class="feedback-label">Résultat du tirage :</span>
+              <span class="feedback-label">Molette Nonce :</span>
               <span id="step5-nonce-val" class="feedback-val">${nonceStatusHTML}</span>
             </div>
             <div class="feedback-row">
-              <span class="feedback-label">Hash calculé :</span>
-              <span id="step5-hash-val" class="feedback-val ${this.isMined ? 'success-val' : 'hash-val'}">${this.currentHash.substring(0, 16)}...</span>
+              <span class="feedback-label">Hash obtenu :</span>
+              <span id="step5-hash-val" class="feedback-val ${this.isMined ? 'success-val' : 'hash-val'}">${this.currentHash.substring(0, 14)}...</span>
             </div>
             <div class="feedback-row">
-              <span class="feedback-label">État chaudière :</span>
-              <span id="step5-temp-val" class="feedback-val ${this.isMined ? 'success-val' : (this.isMining ? 'error-val' : '')}">
-                ${this.isMining ? 'Surchauffe en cours...' : (this.isMined ? 'Bloc validé et scellé' : 'Prête (Repos)')}
+              <span class="feedback-label">État en gare :</span>
+              <span id="step5-status-val" class="feedback-val ${this.isMined ? 'success-val' : (this.isMining ? 'error-val' : '')}">
+                ${this.isMining ? 'Gare en surchauffe...' : (this.isMined ? 'Wagon validé et attelé au train' : 'Wagon en attente de minage')}
               </span>
             </div>
           </div>
-
-          <div class="alert-box-info" style="margin-top: 8px;">
-            <strong>Vérification :</strong> Un seul calcul suffit pour que les autres gares valident ce wagon.
-          </div>
         </article>
 
-        <article class="step-card keypoint-card animate-fade">
-          <h4 class="card-title keypoint-title">Point clé</h4>
-          <p class="keypoint-text">
-            Trouver un Hash commençant par "${targetPrefix}" demande en moyenne ${avgLabel} essais par force brute, mais le hasard peut être chanceux ou malchanceux. En revanche, vérifier le résultat final est instantané : un seul calcul suffit.
-          </p>
-        </article>
+        ${this.hasEverMined ? `
+          <article class="step-card keypoint-card animate-fade">
+            <h4 class="card-title keypoint-title">Point clé : Difficile à trouver, instantané à vérifier</h4>
+            <p class="keypoint-text">
+              Trouver un Hash commençant par "${targetPrefix}" oblige la gare à tester en moyenne <strong>${avgLabel} combinaisons</strong> par force brute. En revanche, une fois le Nonce trouvé, toutes les autres gares du réseau vérifient le wagon en <strong>un seul calcul</strong>.
+            </p>
+          </article>
+        ` : ''}
 
-        <div class="substep-action-box animate-fade">
+        <nav class="step-nav-bar animate-fade">
+          <button id="btn-step5-action-prev" class="btn-panel-ghost">
+            <span class="btn-arrow">&larr;</span>
+            <span>Étape 4 : Réseau</span>
+          </button>
           <button id="btn-step5-action-next" class="btn-panel-primary">
-            <span>Étape 6 : Consensus PoW vs PoS</span>
+            <span>Étape 6 : Consensus</span>
             <span class="btn-arrow">&rarr;</span>
           </button>
-        </div>
+        </nav>
       </div>
     `;
 
@@ -496,12 +897,23 @@ export const step5 = {
         if (this.isMining) return;
         this.difficulty = lvl;
         this.isMined = false;
+        if (this.ctx?.environment) {
+          this.ctx.environment.setSpeed(0);
+        }
+        this.prepareUnminedWagon();
+        this.updateLiveMiningDOM();
         this.renderLeftPanel();
       });
     });
 
     document.getElementById('btn-step5-mine')?.addEventListener('click', () => {
       this.startMining();
+    });
+
+    document.getElementById('btn-step5-action-prev')?.addEventListener('click', () => {
+      if (typeof this.ctx.onPrevStep === 'function') {
+        this.ctx.onPrevStep();
+      }
     });
 
     document.getElementById('btn-step5-action-next')?.addEventListener('click', () => {
