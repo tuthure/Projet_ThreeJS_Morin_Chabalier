@@ -6,8 +6,8 @@ import { Block } from './Block.js';
  */
 export class Blockchain {
   constructor() {
-    this.chain = [this.createGenesisBlock()];
     this.difficulty = 1;
+    this.chain = [this.createGenesisBlock()];
   }
 
   /**
@@ -26,18 +26,19 @@ export class Blockchain {
   }
 
   /**
-   * Genere le premier bloc du convoi (Bloc Genesis).
+   * Genere le premier bloc du convoi (Bloc Genesis), deja mine selon la difficulte par defaut.
    * @returns {Block}
    */
   createGenesisBlock() {
-    const nonce = this.generateUniqueNonce();
-    return new Block(
+    const block = new Block(
       0,
       Date.now(),
       { type: 'GENESIS', label: 'Origine du convoi', transactions: 0 },
       '0',
-      nonce
+      0
     );
+    block.mineBlock(this.difficulty || 1);
+    return block;
   }
 
   /**
@@ -49,7 +50,8 @@ export class Blockchain {
   }
 
   /**
-   * Ajoute un nouveau wagon a la suite de la chaine.
+   * Ajoute un nouveau wagon a la suite de la chaine, mine par defaut pour que tous les wagons
+   * valides du convoi commencent bien par le nombre de zeros requis.
    * @param {any} data - Transactions ou donnees transportees.
    * @returns {Block} Le bloc nouvellement cree et ajoute.
    */
@@ -57,8 +59,8 @@ export class Blockchain {
     const latestBlock = this.getLatestBlock();
     const newIndex = this.chain.length;
     const newTimestamp = Date.now();
-    const nonce = this.generateUniqueNonce();
-    const newBlock = new Block(newIndex, newTimestamp, data, latestBlock.hash, nonce);
+    const newBlock = new Block(newIndex, newTimestamp, data, latestBlock.hash, 0);
+    newBlock.mineBlock(this.difficulty || 1);
 
     this.chain.push(newBlock);
     return newBlock;

@@ -527,7 +527,24 @@ export class WagonMesh extends THREE.Group {
     this.nonceWheel.position.set(0, 0.2, 0.68);
     this.nonceGroup.add(this.nonceWheel);
 
-    // Disque circulaire imprime DIRECTEMENT sur la face avant de la molette marron
+    // 8 crans mecaniques dores autour de la molette pour bien voir chaque rotation
+    const toothGeo = new THREE.BoxGeometry(0.036, 0.064, 0.052);
+    const toothMat = new THREE.MeshStandardMaterial({
+      color: 0xf59e0b,
+      metalness: 0.85,
+      roughness: 0.25,
+      emissive: 0xb45309,
+      emissiveIntensity: 0.35
+    });
+    for (let i = 0; i < 8; i++) {
+      const angle = (i * Math.PI) / 4;
+      const tooth = new THREE.Mesh(toothGeo, toothMat);
+      tooth.position.set(Math.cos(angle) * 0.168, 0, Math.sin(angle) * 0.168);
+      tooth.rotation.y = -angle + Math.PI / 2;
+      this.nonceWheel.add(tooth);
+    }
+
+    // Disque circulaire fixe au centre (reste toujours a l'endroit pendant que les crans tournent)
     const nonceCanvas = document.createElement('canvas');
     nonceCanvas.width = 256;
     nonceCanvas.height = 256;
@@ -542,9 +559,8 @@ export class WagonMesh extends THREE.Group {
       side: THREE.DoubleSide
     });
     const dialDisc = new THREE.Mesh(dialDiscGeo, dialDiscMat);
-    dialDisc.position.set(0, 0.031, 0);
-    dialDisc.rotation.x = -Math.PI / 2;
-    this.nonceWheel.add(dialDisc);
+    dialDisc.position.set(0, 0.2, 0.713);
+    this.nonceGroup.add(dialDisc);
 
     this.add(this.nonceGroup);
   }
