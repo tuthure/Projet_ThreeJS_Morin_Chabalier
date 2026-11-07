@@ -6,16 +6,16 @@ import { hashToColorHex } from '../three/WagonMesh.js';
  * Mise en scène 3D centrée sur les wagons :
  * - À gauche : le convoi déjà validé (Locomotive #0 et Wagon #1), dont les Hashs
  *   commencent déjà par le nombre de zéros exigé ("0", "00" ou "000").
- * - À droite, à distance sur les rails (x = 9.35) : un nouveau Wagon #2 candidat,
+ * - À droite, à distance sur les rails (x = 8.55) : un nouveau Wagon #2 candidat,
  *   dont le Hash ne commence pas encore par des zéros et qui ne peut donc pas s'atteler.
  * - L'utilisateur peut :
  *   1) Cliquer directement sur la molette 3D du Nonce (ou son infobulle) pour
  *      tourner d'un cran (+1) à la main et constater que le Hash change mais reste refusé.
  *   2) Lancer le minage automatique dans le panneau gauche : la molette tourne à
- *      toute vitesse jusqu'à tomber sur un Hash commençant par les zéros requis,
- *      puis le Wagon #2 avance sur les rails (9.35 -> 7.60) et s'attelle au Wagon #1.
+ *      grande vitesse jusqu'à tomber sur un Hash commençant par les zéros requis,
+ *      puis le Wagon #2 avance sur les rails (8.55 -> 7.60) et s'attelle au Wagon #1.
  *   3) S'il souhaite recommencer une fois le wagon attelé, le wagon attaché disparaît
- *      et un nouveau wagon candidat apparaît directement à distance (jamais de marche arrière).
+ *      et un nouveau wagon candidat apparaît directement à distance.
  */
 export const step5 = {
   id: 5,
@@ -24,8 +24,6 @@ export const step5 = {
 
   rafId: null,
   fxGroup: null,
-  sparks: [],
-  wheelLight: null,
   couplerFlashRing: null,
   couplerFlashAlpha: 0,
 
@@ -48,7 +46,6 @@ export const step5 = {
   currentWagon2Scale: 1.0,
   targetWheelAngle: 0,
   currentWheelAngle: 0,
-  manualSparkTimer: 0,
 
   difficulty: 1, // 1 ("0"), 2 ("00") ou 3 ("000") zéros requis
   isMining: false,
@@ -65,7 +62,7 @@ export const step5 = {
   foundNonce: 0,
   foundHash: '',
   animFramesDone: 0,
-  animTotalFrames: 45,
+  animTotalFrames: 110,
 
   init(context) {
     this.ctx = context;
@@ -87,7 +84,6 @@ export const step5 = {
     this.foundHash = '';
     this.targetWheelAngle = 0;
     this.currentWheelAngle = 0;
-    this.manualSparkTimer = 0;
     this.couplerFlashAlpha = 0;
 
     if (cameraController) {
@@ -110,7 +106,7 @@ export const step5 = {
     }
 
     this.prepareConvoyForDifficulty(false);
-    this.buildWheelEffects();
+    this.buildCouplerEffect();
     this.setupTooltipsLayer();
     this.createMiningTooltips();
     this.setupWheelPointerEvents();
@@ -153,8 +149,6 @@ export const step5 = {
       this.fxGroup = null;
     }
 
-    this.sparks = [];
-    this.wheelLight = null;
     this.couplerFlashRing = null;
 
     const panel = document.getElementById('step-panel-left');
@@ -222,9 +216,9 @@ export const step5 = {
   },
 
   /**
-   * Crée les étincelles de la molette du Nonce et l'anneau lumineux de verrouillage d'attelage.
+   * Crée uniquement l'anneau lumineux de verrouillage d'attelage (sans flammes ni étincelles sur la molette).
    */
-  buildWheelEffects() {
+  buildCouplerEffect() {
     const { scene } = this.ctx;
     if (!scene) return;
 
@@ -233,34 +227,7 @@ export const step5 = {
     }
 
     this.fxGroup = new THREE.Group();
-    this.sparks = [];
 
-    // Lumière ambrée sur la molette pendant sa rotation
-    this.wheelLight = new THREE.PointLight(0xf59e0b, 0, 3.5);
-    this.fxGroup.add(this.wheelLight);
-
-    // Étincelles jaillissant des crans de la molette du Nonce
-    const sparkGeo = new THREE.BoxGeometry(0.045, 0.045, 0.045);
-    for (let i = 0; i < 24; i++) {
-      const sparkMat = new THREE.MeshBasicMaterial({
-        color: i % 2 === 0 ? 0xfacc15 : 0xf97316,
-        transparent: true,
-        opacity: 0
-      });
-      const spark = new THREE.Mesh(sparkGeo, sparkMat);
-      spark.visible = false;
-      spark.userData = {
-        vx: (Math.random() - 0.5) * 2.2,
-        vy: 0.6 + Math.random() * 1.8,
-        vz: 0.3 + Math.random() * 1.4,
-        age: Math.random() * 0.35,
-        lifetime: 0.28 + Math.random() * 0.25
-      };
-      this.fxGroup.add(spark);
-      this.sparks.push(spark);
-    }
-
-    // Anneau flash vert au point d'attelage entre Wagon #1 et Wagon #2 lors de la validation
     const ringGeo = new THREE.TorusGeometry(0.24, 0.035, 12, 32);
     ringGeo.rotateY(Math.PI / 2);
     const ringMat = new THREE.MeshBasicMaterial({
@@ -364,7 +331,6 @@ export const step5 = {
     this.attemptsDone += 1;
     this.currentNonce += 1;
     this.targetWheelAngle += Math.PI / 4; // 1 cran = 45° (8 crans sur la molette)
-    this.manualSparkTimer = 0.32;
 
     const targetPrefix = '0'.repeat(this.difficulty);
     block2.nonce = this.currentNonce;
@@ -517,7 +483,7 @@ export const step5 = {
   },
 
   /**
-   * Lance la recherche automatique à haute vitesse du Nonce sur le Wagon #2.
+   * Lance la recherche automatique du Nonce sur le Wagon #2.
    */
   startMining() {
     if (this.isMining) return;
@@ -538,9 +504,10 @@ export const step5 = {
     this.currentNonce = 0;
     this.animFramesDone = 0;
 
-    if (this.difficulty === 1) this.animTotalFrames = 38;
-    else if (this.difficulty === 2) this.animTotalFrames = 62;
-    else this.animTotalFrames = 90;
+    // Durée allongée pour bien voir défiler les tentatives aléatoires selon la difficulté
+    if (this.difficulty === 1) this.animTotalFrames = 110;
+    else if (this.difficulty === 2) this.animTotalFrames = 195;
+    else this.animTotalFrames = 290;
 
     this.renderLeftPanel();
   },
@@ -599,10 +566,10 @@ export const step5 = {
         if (progress < 1.0) {
           this.attemptsDone = Math.max(1, Math.floor(this.realAttempts * progress));
           this.currentNonce = this.attemptsDone;
-          this.currentHash = this.generateRandomHex(24);
-          this.targetWheelAngle += 0.62;
+          this.targetWheelAngle += 0.36;
 
-          if (wagon2 && block2 && this.animFramesDone % 3 === 0) {
+          if (wagon2 && block2 && this.animFramesDone % 4 === 0) {
+            this.currentHash = this.generateRandomHex(24);
             block2.nonce = this.currentNonce;
             block2.hash = this.currentHash;
             wagon2.colorHash.set(hashToColorHex(this.currentHash));
@@ -633,8 +600,8 @@ export const step5 = {
       }
 
       // 2. Position et échelle du Wagon #2 :
-      //    - Apparition à distance (10.65 -> 9.35)
-      //    - Une fois miné, avance vers la gauche (9.35 -> 7.60) pour s'atteler au Wagon #1
+      //    - Apparition à distance (9.45 -> 8.55)
+      //    - Une fois miné, avance vers la gauche (8.55 -> 7.60) pour s'atteler au Wagon #1
       if (wagon2) {
         const targetX = this.isMined ? this.minedWagon2X : this.unminedWagon2X;
         this.currentWagon2X = THREE.MathUtils.lerp(this.currentWagon2X, targetX, Math.min(1, dt * 6.5));
@@ -652,11 +619,7 @@ export const step5 = {
           wagon2.nonceWheel.rotation.set(Math.PI / 2, this.currentWheelAngle, 0);
           const wheelMat = wagon2.nonceWheel.material;
           if (wheelMat) {
-            wheelMat.emissiveIntensity = this.isMining
-              ? 1.1
-              : this.isHoveringWheel
-                ? 0.75
-                : 0.25;
+            wheelMat.emissiveIntensity = this.isHoveringWheel ? 0.65 : 0.25;
           }
         }
 
@@ -676,7 +639,7 @@ export const step5 = {
           if (this.isMining) {
             wagon2.beaconMaterial.color.setHex(0xf97316);
             wagon2.beaconMaterial.emissive.setHex(0xea580c);
-            wagon2.beaconMaterial.emissiveIntensity = 2.2;
+            wagon2.beaconMaterial.emissiveIntensity = 2.0;
           } else if (this.isMined) {
             wagon2.beaconMaterial.color.setHex(0x10b981);
             wagon2.beaconMaterial.emissive.setHex(0x059669);
@@ -694,40 +657,7 @@ export const step5 = {
         }
       }
 
-      // 3. Étincelles sur la molette (pendant le minage auto ou lors d'un clic manuel +1 cran)
-      if (this.manualSparkTimer > 0) {
-        this.manualSparkTimer = Math.max(0, this.manualSparkTimer - dt);
-      }
-      const emitSparks = this.isMining || this.manualSparkTimer > 0;
-
-      if (this.wheelLight) {
-        this.wheelLight.position.set(this.currentWagon2X, 0.25, 0.95);
-        this.wheelLight.intensity = emitSparks ? 2.4 : this.isHoveringWheel ? 0.9 : 0;
-      }
-
-      this.sparks.forEach((spark) => {
-        if (emitSparks) {
-          spark.visible = true;
-          spark.userData.age += dt;
-          if (spark.userData.age >= spark.userData.lifetime) {
-            spark.userData.age = 0;
-            spark.position.set(
-              this.currentWagon2X + (Math.random() - 0.5) * 0.28,
-              0.2 + (Math.random() - 0.5) * 0.24,
-              0.7 + (Math.random() - 0.5) * 0.1
-            );
-          } else {
-            spark.position.x += spark.userData.vx * dt;
-            spark.position.y += spark.userData.vy * dt;
-            spark.position.z += spark.userData.vz * dt;
-            spark.material.opacity = 1 - spark.userData.age / spark.userData.lifetime;
-          }
-        } else {
-          spark.visible = false;
-        }
-      });
-
-      // 4. Flash d'attelage vert quand le Wagon #2 vient s'encastrer dans le Wagon #1
+      // 3. Flash d'attelage vert quand le Wagon #2 vient s'encastrer dans le Wagon #1
       if (this.couplerFlashRing) {
         if (this.couplerFlashAlpha > 0.01) {
           this.couplerFlashAlpha = Math.max(0, this.couplerFlashAlpha - dt * 1.4);
@@ -740,7 +670,7 @@ export const step5 = {
         }
       }
 
-      // 5. Projection 2D des 3 infobulles SVG
+      // 4. Projection 2D des 3 infobulles SVG
       if (this.tooltipLayer && camera && wagon1 && wagon2) {
         const width = window.innerWidth;
         const height = window.innerHeight;
@@ -836,7 +766,7 @@ export const step5 = {
     }
     if (statusEl) {
       statusEl.textContent = this.isMining
-        ? 'Recherche rapide du Nonce en cours...'
+        ? 'Recherche du Nonce en cours...'
         : this.isMined
           ? `Validé (débute par "${targetPrefix}") · Wagon attelé`
           : `Refusé (ne débute pas par "${targetPrefix}") · Wagon à l'écart`;
@@ -909,19 +839,24 @@ export const step5 = {
 
       <div class="step-panel-scroll">
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">La condition pour rejoindre le train</h3>
+          <h3 class="card-title">Pourquoi tourner la molette du Nonce ?</h3>
           <p>
-            Regardez les wagons déjà attelés à gauche (Locomotive #0 et Wagon #1) : leurs Hashs commencent tous par <strong>"${targetPrefix}"</strong>.
+            Tous les wagons du train doivent avoir un Hash qui commence par <strong>"${targetPrefix}"</strong>. Le <strong>Wagon #2</strong> à droite est bloqué car le sien commence par <code>${this.currentHash.substring(0, 4)}...</code>.
           </p>
-          <p>
-            À droite, le nouveau <strong>Wagon #2</strong> est maintenu à l'écart car son Hash actuel (<code>${this.currentHash.substring(0, 6)}...</code>) ne commence pas par <strong>"${targetPrefix}"</strong>. Pour trouver un Hash valide sans modifier les transactions, il faut tourner la <strong>molette du Nonce</strong>.
-          </p>
+          <div class="block-formula-box">
+            <div class="formula-func">
+              <strong>SHA-256</strong>( PreviousHash + Transactions + <span style="color: #f59e0b; font-weight: 700;">Nonce</span> ) = <strong>Hash</strong>
+            </div>
+            <div class="formula-example">
+              Comme le <code>PreviousHash</code> et les <code>Transactions</code> ne peuvent pas être modifiés, seul le <strong style="color: #f59e0b;">Nonce</strong> peut changer pour tenter d'obtenir <code>${targetPrefix}...</code>.
+            </div>
+          </div>
         </article>
 
         <article class="step-card action-card animate-fade">
           <h3 class="card-title">Preuve de Travail (Proof of Work)</h3>
           <p class="card-instruction">
-            Cliquez directement sur la <strong>molette du Nonce en 3D</strong> pour tester 1 cran à la main, ou lancez le <strong>minage automatique</strong> :
+            Cliquez sur la <strong>molette en 3D</strong> pour tester 1 cran à la main, ou lancez le <strong>minage automatique</strong> :
           </p>
 
           <div class="difficulty-selector-row">
@@ -937,7 +872,7 @@ export const step5 = {
           </div>
 
           <button id="btn-step5-mine" class="btn-panel-primary" ${this.isMining ? 'disabled' : ''}>
-            <span>${this.isMining ? 'Rotation rapide de la molette...' : (this.isMined ? 'Recommencer avec un nouveau wagon' : 'Lancer le minage automatique')}</span>
+            <span>${this.isMining ? 'Recherche du bon Nonce...' : (this.isMined ? 'Recommencer avec un nouveau wagon' : 'Lancer le minage automatique')}</span>
           </button>
 
           <div class="action-feedback-box ${this.isMined ? 'success' : (this.isMining || this.attemptsDone > 0 ? 'error' : '')}">
@@ -956,7 +891,7 @@ export const step5 = {
             <div class="feedback-row">
               <span class="feedback-label">Statut Wagon #2 :</span>
               <span id="step5-status-val" class="feedback-val ${this.isMined ? 'success-val' : (this.isMining || this.attemptsDone > 0 ? 'error-val' : '')}">
-                ${this.isMining ? 'Recherche rapide du Nonce en cours...' : (this.isMined ? `Validé (débute par "${targetPrefix}") · Wagon attelé` : `Refusé (ne débute pas par "${targetPrefix}") · Wagon à l'écart`)}
+                ${this.isMining ? 'Recherche du Nonce en cours...' : (this.isMined ? `Validé (débute par "${targetPrefix}") · Wagon attelé` : `Refusé (ne débute pas par "${targetPrefix}") · Wagon à l'écart`)}
               </span>
             </div>
           </div>
@@ -964,9 +899,9 @@ export const step5 = {
 
         ${this.hasEverMined ? `
           <article class="step-card keypoint-card animate-fade">
-            <h4 class="card-title keypoint-title">Point clé : Pourquoi imposer cette loterie ?</h4>
+            <h4 class="card-title keypoint-title">Point clé : En réalité, c'est beaucoup plus long</h4>
             <p class="keypoint-text">
-              Obtenir un Hash commençant par "${targetPrefix}" oblige un mineur à tester en moyenne <strong>${avgLabel} crans de Nonce</strong> par force brute avant de pouvoir atteler le wagon. C'est ce coût de calcul qui empêche un pirate de réécrire les wagons passés en un clin d'œil.
+              Ici, le calcul est volontairement simplifié (1 à 3 zéros, soit ~${avgLabel} essais) pour ne durer que quelques secondes. Sur une vraie blockchain comme Bitcoin, le réseau exige environ <strong>19 zéros d'affilée</strong> : même avec des milliers d'ordinateurs spécialisés, il faut en moyenne <strong>10 minutes</strong> pour valider un seul bloc.
             </p>
           </article>
         ` : ''}
@@ -1003,7 +938,6 @@ export const step5 = {
     document.getElementById('btn-step5-mine')?.addEventListener('click', () => {
       if (this.isMining) return;
       if (this.isMined) {
-        // Le wagon attaché disparaît et un nouveau wagon candidat apparaît à distance
         this.prepareConvoyForDifficulty(true);
         this.createMiningTooltips();
         this.updateLiveMiningDOM();
