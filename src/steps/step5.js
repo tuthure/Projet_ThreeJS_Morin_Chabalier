@@ -745,9 +745,11 @@ export const step5 = {
         const width = window.innerWidth;
         const height = window.innerHeight;
 
-        const pW1Plate = wagon1.localToWorld(new THREE.Vector3(0.0, 0.62, 0.605));
-        const pHashPlate = wagon2.localToWorld(new THREE.Vector3(0.0, 0.62, 0.605));
-        const pNonce = wagon2.localToWorld(new THREE.Vector3(0.0, 0.2, 0.71));
+        // Ancrages sur le bord supérieur des plaques (y = 0.89) et sous le bord inférieur de la molette (y = 0.04)
+        // afin qu'aucune infobulle ni aucun point SVG ne masque les numéros inscrits sur le wagon
+        const pW1Plate = wagon1.localToWorld(new THREE.Vector3(0.0, 0.89, 0.605));
+        const pHashPlate = wagon2.localToWorld(new THREE.Vector3(0.0, 0.89, 0.605));
+        const pNonce = wagon2.localToWorld(new THREE.Vector3(0.0, 0.04, 0.71));
 
         const prW1 = pW1Plate.project(camera);
         const prHash = pHashPlate.project(camera);
@@ -771,14 +773,14 @@ export const step5 = {
           this.tooltipLayer.style.opacity = isCovered ? '0' : '1';
           this.tooltipLayer.style.visibility = isCovered ? 'hidden' : 'visible';
 
-          const pillW1X = Math.max(430, Math.min(w1x, hx - 220));
-          const pillW1Y = w1y - 72;
+          const pillW1X = Math.max(430, Math.min(w1x, hx - 230));
+          const pillW1Y = w1y - 82;
 
-          const pillHashX = Math.max(pillW1X + 220, hx);
-          const pillHashY = hy - 72;
+          const pillHashX = Math.max(pillW1X + 230, hx);
+          const pillHashY = hy - 82;
 
           const pillNonceX = Math.max(450, nx);
-          const pillNonceY = ny + 68;
+          const pillNonceY = ny + 74;
 
           const elW1 = document.getElementById('tooltip-s5-w1');
           const elHash = document.getElementById('tooltip-s5-hash');
