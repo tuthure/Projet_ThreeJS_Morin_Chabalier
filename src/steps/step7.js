@@ -663,23 +663,20 @@ export const step7 = {
 
     let offColor = '#38bdf8';
     let pirColor = '#ef4444';
-    let offHTML = `<strong>Branche honnête (${honestShare})</strong> · ${hWords} (en attente)`;
-    let pirHTML = `<strong>Branche pirate (${pirateShare})</strong> · ${pWords} (en attente)`;
+    let offHTML = `<strong>Gares honnêtes (${honestShare})</strong> · ${hWords}`;
+    let pirHTML = `<strong>Pirate (${pirateShare})</strong> · ${pWords}`;
 
-    if (this.raceState === 'running') {
-      offHTML = `<strong>Branche honnête (${honestShare})</strong> · ${hWords}`;
-      pirHTML = `<strong>Branche pirate (${pirateShare})</strong> · ${pWords}`;
-    } else if (this.raceState === 'done') {
+    if (this.raceState === 'done') {
       if (isNormal) {
         offColor = '#10b981';
         pirColor = '#64748b';
-        offHTML = `<strong>Branche honnête (${honestShare})</strong> · +3 wagons (Attachée au Wagon #1 !)`;
-        pirHTML = `<strong>Branche pirate (${pirateShare})</strong> · +1 wagon (Trop courte — isolée)`;
+        offHTML = `<strong>Gares honnêtes</strong> · +3 wagons (Attachée)`;
+        pirHTML = `<strong>Pirate</strong> · +1 wagon (Rejetée)`;
       } else {
         offColor = '#64748b';
         pirColor = '#ef4444';
-        offHTML = `<strong>Branche honnête (${honestShare})</strong> · +1 wagon (Trop courte — isolée)`;
-        pirHTML = `<strong>Branche pirate (${pirateShare})</strong> · +3 wagons (Attachée au Wagon #1 !)`;
+        offHTML = `<strong>Gares honnêtes</strong> · +1 wagon (Rejetée)`;
+        pirHTML = `<strong>Pirate</strong> · +3 wagons (Attachée)`;
       }
     }
 
@@ -968,20 +965,20 @@ export const step7 = {
     const isDone = this.raceState === 'done';
 
     const buttonLabel = isRunning
-      ? 'Course des 2 branches en cours...'
+      ? 'Course en cours...'
       : isDone
         ? 'Relancer la course'
-        : 'Lancer la course des 2 branches';
+        : 'Lancer la course';
 
     const modeBannerHTML = isNormal
       ? `
         <div class="share-meaning-banner">
-          <strong>Cas réel (80 % contre 20 %) :</strong> les gares honnêtes réunies possèdent 80 % de la puissance du réseau, contre 20 % pour le pirate seul.
+          <strong>80 % contre 20 % :</strong> les gares honnêtes sont 4 fois plus rapides que le pirate seul.
         </div>
       `
       : `
         <div class="share-meaning-banner" style="border-left-color: #ef4444;">
-          <strong>Hypothèse d'attaque (> 51 %) :</strong> imaginez que le pirate contrôle à lui seul <strong>60 % des machines du réseau</strong> contre 40 % pour les gares honnêtes.
+          <strong>40 % contre 60 % :</strong> le pirate possède plus de la moitié des machines du réseau.
         </div>
       `;
 
@@ -989,12 +986,12 @@ export const step7 = {
       ? isNormal
         ? `
           <p style="margin: 10px 0 0 0;">
-            La branche honnête est plus longue (<strong>+3 wagons contre +1</strong>) : c'est elle qui vient <strong>s'attacher au Wagon #1</strong> sur le rail central, tandis que le wagon pirate reste isolé.
+            Les gares honnêtes gagnent (<strong>+3 wagons contre +1</strong>) et s'attachent au Wagon #1.
           </p>
         `
         : `
           <p style="margin: 10px 0 0 0;">
-            Avec 60 % de la puissance, la branche pirate est devenue plus longue (<strong>+3 wagons contre +1</strong>) : c'est donc la <strong>branche pirate qui s'attache au Wagon #1</strong> sur le rail central !
+            Le pirate gagne (<strong>+3 wagons contre +1</strong>) et attache sa file au Wagon #1 !
           </p>
         `
       : '';
@@ -1006,22 +1003,19 @@ export const step7 = {
 
       <div class="step-panel-scroll">
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Deux suites possibles après le Wagon #1</h3>
+          <h3 class="card-title">La chaîne la plus longue gagne</h3>
           <p>
-            La Locomotive (<code>#0</code>) et le <strong>Wagon #1</strong> sont déjà sur les rails. Juste derrière le Wagon #1, un pirate crée un <strong>aiguillage</strong> pour tenter d'attacher sa propre file de wagons à la place de la suite honnête.
-          </p>
-          <p>
-            Règle automatique du réseau : <strong>seule la file qui compte le plus de wagons a le droit de s'attacher au Wagon #1</strong>.
+            Derrière le <strong>Wagon #1</strong>, un pirate tente d'attacher sa propre file de wagons. Règle du réseau : <strong>seule la file qui assemble le plus de wagons s'attache au train</strong>.
           </p>
         </article>
 
         <article class="step-card action-card animate-fade">
           <div class="difficulty-selector-row" role="tablist" aria-label="Choix du scénario">
             <button id="btn-tab-normal" class="btn-diff-option ${isNormal ? 'active' : ''}" role="tab" aria-selected="${isNormal}" ${isRunning ? 'disabled' : ''}>
-              <span>Cas normal (Pirate 20 %)</span>
+              <span>Cas normal (20 %)</span>
             </button>
             <button id="btn-tab-attack51" class="btn-diff-option ${!isNormal ? 'active' : ''}" role="tab" aria-selected="${!isNormal}" ${isRunning ? 'disabled' : ''}>
-              <span>Attaque 51 % (Pirate 60 %)</span>
+              <span>Attaque 51 % (60 %)</span>
             </button>
           </div>
 
@@ -1036,9 +1030,9 @@ export const step7 = {
 
         ${(this.hasTestedNormal || this.hasTestedAttack51) ? `
           <article class="step-card keypoint-card animate-fade">
-            <h4 class="card-title keypoint-title">Point clé : Pourquoi l'attaque des 51 % est quasi impossible</h4>
+            <h4 class="card-title keypoint-title">Point clé : L'attaque des 51 %</h4>
             <p class="keypoint-text">
-              Pour que sa branche dépasse la branche honnête et s'attache au train, un tricheur doit fabriquer des wagons plus vite que tout le reste du monde réuni (posséder <strong>plus de 51 %</strong> des machines en PoW ou de la caution en PoS).
+              Pour dépasser le réseau honnête, un pirate devrait contrôler plus de <strong>51 %</strong> des machines (PoW) ou de la caution (PoS) du monde entier.
             </p>
           </article>
         ` : ''}
