@@ -1206,7 +1206,7 @@ export const step6 = {
       ? isPoW
         ? `
           <p style="margin: 10px 0 0 0;">
-            La <strong>${winner.name}</strong> a trouvé le <strong>Nonce #${this.winningNonce}</strong> en premier et attelle le Wagon #2. Les 2 autres gares ont gaspillé de l'énergie en tournant pour rien...
+            La <strong>${winner.name}</strong> a trouvé le <strong>Nonce #${this.winningNonce}</strong> en premier et attelle le Wagon #2, alors que les 2 autres gares ont gaspillé de l'énergie en tournant pour rien...
           </p>
         `
         : `
