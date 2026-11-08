@@ -149,15 +149,15 @@ export const step0 = {
     } else if (this.subStep === 1) {
       subStepContentHTML = `
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Une locomotive sans conducteur (Bloc #0)</h3>
+          <h3 class="card-title">La tête du convoi : le Bloc #0 (Genesis)</h3>
           <p>
-            La locomotive est le tout premier élément du convoi : le <strong>Bloc Genesis</strong>. Sa cabine est vide : il n'y a pas de conducteur. Elle avance toute seule en obéissant aux règles du protocole.
+            En tête du train se trouve le tout premier bloc de l'histoire : le <strong>Bloc #0 (Genesis)</strong>. C'est le point de départ d'origine auquel le premier wagon est venu s'accrocher.
           </p>
           <p>
-            Regardez maintenant ce qu'elle tire directement derrière elle : des wagons de marchandises aux parois entièrement vitrées.
+            Aucun chef unique ne conduit ce train : ce sont les gares du réseau qui vérifient et accrochent chaque nouveau wagon en suivant les mêmes règles mathématiques.
           </p>
           <p>
-            Déplacez-vous vers les wagons pour voir ce qu'ils transportent à l'intérieur.
+            Déplacez-vous maintenant vers les wagons vitrés qu'elle tire derrière elle.
           </p>
         </article>
 
