@@ -1205,22 +1205,14 @@ export const step6 = {
     const resultHTML = isDone
       ? isPoW
         ? `
-          <div class="action-feedback-box error">
-            <div class="feedback-row">
-              <span class="feedback-val">
-                La <strong>${winner.name}</strong> a trouvé le <strong>Nonce #${this.winningNonce}</strong> en premier et attelle le Wagon #2. Les 2 autres gares ont tourné pour rien (énergie perdue).
-              </span>
-            </div>
-          </div>
+          <p style="margin: 10px 0 0 0;">
+            La <strong>${winner.name}</strong> a trouvé le <strong>Nonce #${this.winningNonce}</strong> en premier et attelle le Wagon #2. Les 2 autres gares ont gaspillé de l'énergie en tournant pour rien...
+          </p>
         `
         : `
-          <div class="action-feedback-box success">
-            <div class="feedback-row">
-              <span class="feedback-val">
-                La <strong>${winner.name}</strong> a été tirée au sort : seule sa molette a tourné jusqu'au <strong>Nonce #${this.winningNonce}</strong>. Les 2 autres sont restées au repos (0 énergie perdue).
-              </span>
-            </div>
-          </div>
+          <p style="margin: 10px 0 0 0;">
+            La <strong>${winner.name}</strong> a été tirée au sort : seule sa molette a tourné jusqu'au <strong>Nonce #${this.winningNonce}</strong>. Contrairement au système PoW, les 2 autres gares sont restées au repos sans gaspiller d'énergie.
+          </p>
         `
       : '';
 
