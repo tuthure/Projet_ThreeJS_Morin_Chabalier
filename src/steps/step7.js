@@ -1,32 +1,40 @@
 import * as THREE from 'three';
 
 /**
- * Étape 7 : Attaque et règle de la chaîne la plus longue (51 %).
- * Scénario concret :
- * 1. Arthur paie 20 MMI-Coin à un vendeur dans le train officiel (Voie principale, 3 blocs).
- * 2. En cachette, il tente de lancer un train pirate sur une voie bis (Fork, 2 blocs)
- *    dans lequel il garde ses 20 MMI-Coin pour lui-même (tentative de double dépense).
- * 3. Le réseau applique la règle de la chaîne la plus longue : toutes les gares honnêtes
- *    continuent d'allonger le train officiel (qui passe à 5 blocs), tandis que l'attaquant
- *    seul reste bloqué à 2 blocs. La voie pirate est abandonnée.
+ * Étape 7 : Attaque des 51 % et règle de la chaîne la plus longue.
+ * Liens logiques avec les étapes précédentes :
+ * 1. Pourquoi créer une voie bis (Fork) ? À l'étape 3, on a vu qu'on ne peut pas modifier
+ *    un wagon déjà accroché. Pour annuler un paiement du Wagon #1, le pirate place donc un
+ *    aiguillage juste après la Locomotive (#0) pour construire sa propre file de wagons sur une voie bis.
+ * 2. Comment le réseau choisit-il entre les deux trains ? Il garde toujours le train qui a
+ *    le plus de wagons (la chaîne la plus longue).
+ * 3. Deux cas à comparer :
+ *    - Cas normal (Gares honnêtes 80 % vs Pirate 20 %) : les gares honnêtes assemblent 4 wagons
+ *      pendant que le pirate n'en assemble que 2 -> la voie pirate est abandonnée.
+ *    - Attaque des 51 % (Pirate 60 % vs Gares honnêtes 40 %) : le pirate possède plus de la moitié
+ *      de la puissance du réseau, assemble 4 wagons contre 2, et impose son train pirate.
  */
 export const step7 = {
   id: 7,
-  title: 'Attaque et chaîne la plus longue',
+  title: 'Attaque des 51 % et chaîne la plus longue',
   ctx: null,
 
   rafId: null,
-  attackState: 'idle', // 'idle' | 'fork' | 'resolved'
-  resolveProgress: 0,
+  mode: 'normal', // 'normal' (Pirate 20 % vs 80 %) | 'attack51' (Pirate 60 % vs 40 %)
+  raceState: 'idle', // 'idle' | 'running' | 'done'
+  raceTimer: 0,
+  raceDuration: 2.8,
+  hasTestedNormal: false,
+  hasTestedAttack51: false,
+
+  honestCount: 1,
+  pirateCount: 1,
 
   attackGroup: null,
-  pirateTrainGroup: null,
-  pirateMaterials: [],
-  pirateLight: null,
+  pirateWagons: [],
+  honestWheelObj: null,
+  pirateWheelObj: null,
   tooltipLayer: null,
-
-  // Animation d'arrivée des nouveaux wagons officiels (#3 et #4) lors de la résolution
-  newWagonsAnimProgress: 1.0,
 
   init(context) {
     this.ctx = context;
@@ -35,37 +43,44 @@ export const step7 = {
   enter() {
     const { trainConvoy, cameraController, environment } = this.ctx;
 
-    this.attackState = 'idle';
-    this.resolveProgress = 0;
-    this.newWagonsAnimProgress = 1.0;
+    this.mode = 'normal';
+    this.raceState = 'idle';
+    this.raceTimer = 0;
+    this.hasTestedNormal = false;
+    this.hasTestedAttack51 = false;
+    this.honestCount = 1;
+    this.pirateCount = 1;
 
     if (cameraController) {
       cameraController.setViewOffset(210);
     }
 
-    // Le décor reste fixe pour observer clairement l'aiguillage et les deux voies parallèles
     if (environment) {
       environment.setSpeed(0);
     }
 
+    // Crée la Locomotive (#0) et 4 wagons sur la voie officielle (seul le Wagon #1 est visible au départ)
     if (trainConvoy) {
       trainConvoy.resetConvoy([
         { emetteur: 'Arthur', destinataire: 'Vendeur', montant: 20, unite: 'MMI-Coin' },
-        { emetteur: 'Alban', destinataire: 'Equipe-R507', montant: 30, unite: 'MMI-Coin' }
+        { emetteur: 'Alban', destinataire: 'Equipe-R507', montant: 30, unite: 'MMI-Coin' },
+        { emetteur: 'Gare-A', destinataire: 'Confirmation-1', montant: 15, unite: 'MMI-Coin' },
+        { emetteur: 'Gare-B', destinataire: 'Confirmation-2', montant: 25, unite: 'MMI-Coin' }
       ]);
       if (cameraController) {
         cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
       }
     }
 
-    this.buildParallelTrackAndPirateTrain();
+    this.buildParallelRaceScene();
+    this.resetWagonsToStart();
     this.setupTooltipsLayer();
-    this.createForkTooltips();
+    this.createRaceTooltips();
 
     if (cameraController) {
       cameraController.moveTo(
-        new THREE.Vector3(4.2, 4.8, 11.2),
-        new THREE.Vector3(4.0, 0.3, 1.4),
+        new THREE.Vector3(7.4, 5.2, 14.2),
+        new THREE.Vector3(7.2, 0.3, 1.4),
         1.15
       );
     }
@@ -77,6 +92,20 @@ export const step7 = {
   exit() {
     this.stopAnimationLoop();
 
+    // Restaure la visibilité et la position nominale des wagons officiels avant de quitter
+    const { trainConvoy } = this.ctx || {};
+    if (trainConvoy) {
+      for (let i = 1; i <= 4; i++) {
+        const w = trainConvoy.getWagon(i);
+        if (w) {
+          w.visible = true;
+          w.position.x = i * 3.8;
+          w.scale.setScalar(1);
+          w.updateStatus(true);
+        }
+      }
+    }
+
     if (this.tooltipLayer) {
       this.tooltipLayer.remove();
       this.tooltipLayer = null;
@@ -86,9 +115,10 @@ export const step7 = {
       this.ctx.scene.remove(this.attackGroup);
       this.attackGroup = null;
     }
-    this.pirateTrainGroup = null;
-    this.pirateMaterials = [];
-    this.pirateLight = null;
+
+    this.pirateWagons = [];
+    this.honestWheelObj = null;
+    this.pirateWheelObj = null;
 
     const panel = document.getElementById('step-panel-left');
     if (panel) {
@@ -98,9 +128,249 @@ export const step7 = {
   },
 
   /**
-   * Construit la voie ferrée de dérivation parallèle (z = 3.2) et le train pirate (2 blocs).
+   * Dessine le cadran d'une molette 3D (Gares honnêtes ou Pirate).
    */
-  buildParallelTrackAndPirateTrain() {
+  renderWheelDial(canvas, texture, cranCount, borderColor) {
+    if (!canvas || !texture) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.arc(128, 128, 120, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.arc(128, 128, 114, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = borderColor;
+    ctx.font = 'bold 26px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('NONCE', 128, 74);
+
+    ctx.fillStyle = '#fef08a';
+    ctx.font = 'bold 68px monospace';
+    ctx.fillText(String(cranCount), 128, 144);
+
+    texture.needsUpdate = true;
+  },
+
+  /**
+   * Crée un socle avec une molette Nonce 3D à 8 crans (pour les gares honnêtes ou pour le pirate).
+   */
+  createStationWheelNode(x, z, mainColorHex, borderHexStr) {
+    const group = new THREE.Group();
+    group.position.set(x, -0.4, z);
+
+    const platform = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.88, 1.0, 0.18, 24),
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.65, metalness: 0.3 })
+    );
+    group.add(platform);
+
+    const ringMat = new THREE.MeshBasicMaterial({ color: mainColorHex, side: THREE.DoubleSide });
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.91, 1.06, 32), ringMat);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.1;
+    group.add(ring);
+
+    const stand = new THREE.Mesh(
+      new THREE.BoxGeometry(0.34, 0.68, 0.18),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.85, roughness: 0.3 })
+    );
+    stand.position.set(0, 0.4, -0.05);
+    group.add(stand);
+
+    const wheelMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.38, 0.38, 0.12, 24),
+      new THREE.MeshStandardMaterial({
+        color: 0x78350f,
+        metalness: 0.8,
+        roughness: 0.35,
+        emissive: 0x451a03,
+        emissiveIntensity: 0.25
+      })
+    );
+    wheelMesh.rotation.x = Math.PI / 2;
+    wheelMesh.position.set(0, 0.62, 0.08);
+    group.add(wheelMesh);
+
+    const toothGeo = new THREE.BoxGeometry(0.08, 0.12, 0.1);
+    const toothMat = new THREE.MeshStandardMaterial({
+      color: mainColorHex,
+      metalness: 0.85,
+      roughness: 0.25,
+      emissive: mainColorHex,
+      emissiveIntensity: 0.25
+    });
+    for (let i = 0; i < 8; i++) {
+      const angle = (i * Math.PI) / 4;
+      const tooth = new THREE.Mesh(toothGeo, toothMat);
+      tooth.position.set(Math.cos(angle) * 0.4, 0, Math.sin(angle) * 0.4);
+      tooth.rotation.y = -angle + Math.PI / 2;
+      wheelMesh.add(tooth);
+    }
+
+    const dialCanvas = document.createElement('canvas');
+    dialCanvas.width = 256;
+    dialCanvas.height = 256;
+    const dialTex = new THREE.CanvasTexture(dialCanvas);
+    this.renderWheelDial(dialCanvas, dialTex, 0, borderHexStr);
+
+    const dialMesh = new THREE.Mesh(
+      new THREE.CircleGeometry(0.34, 32),
+      new THREE.MeshBasicMaterial({ map: dialTex, transparent: true })
+    );
+    dialMesh.position.set(0, 0.62, 0.145);
+    group.add(dialMesh);
+
+    return {
+      group,
+      wheelMesh,
+      ringMat,
+      dialCanvas,
+      dialTex,
+      currentCrans: 0,
+      currentAngle: 0
+    };
+  },
+
+  /**
+   * Construit un wagon pirate 3D à la position cible donnée sur la voie bis (z = 3.1).
+   */
+  createPirateWagonMesh(index, targetX) {
+    const wGroup = new THREE.Group();
+    const materials = [];
+
+    const regMat = (mat, baseOpacity = 1.0) => {
+      mat.transparent = true;
+      mat.opacity = baseOpacity;
+      mat.userData = { baseOpacity };
+      materials.push(mat);
+      return mat;
+    };
+
+    const chassisMat = regMat(
+      new THREE.MeshStandardMaterial({
+        color: 0x2b0909,
+        metalness: 0.8,
+        roughness: 0.35
+      }),
+      1.0
+    );
+    const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.55, 0.22, 1.24), chassisMat);
+    wGroup.add(chassis);
+
+    // 4 roues
+    const wheelGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.14, 18);
+    const wheelMat = regMat(
+      new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.85, roughness: 0.3 }),
+      1.0
+    );
+    [
+      [-0.78, -0.18, 0.64],
+      [-0.78, -0.18, -0.64],
+      [0.78, -0.18, 0.64],
+      [0.78, -0.18, -0.64]
+    ].forEach(([wx, wy, wz]) => {
+      const w = new THREE.Mesh(wheelGeo, wheelMat);
+      w.rotation.x = Math.PI / 2;
+      w.position.set(wx, wy, wz);
+      wGroup.add(w);
+    });
+
+    // Verrière rouge translucide
+    const glassMat = regMat(
+      new THREE.MeshStandardMaterial({
+        color: 0xef4444,
+        emissive: 0x991b1b,
+        emissiveIntensity: 0.3,
+        depthWrite: false
+      }),
+      0.32
+    );
+    const canopy = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.92, 1.15), glassMat);
+    canopy.position.y = 0.58;
+    wGroup.add(canopy);
+
+    // Cargaison pirate à l'intérieur
+    const cargoMat = regMat(
+      new THREE.MeshStandardMaterial({
+        color: 0xdc2626,
+        emissive: 0x7f1d1d,
+        emissiveIntensity: 0.45,
+        metalness: 0.5,
+        roughness: 0.3
+      }),
+      1.0
+    );
+    const cargo = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.52, 0.72), cargoMat);
+    cargo.position.y = 0.44;
+    wGroup.add(cargo);
+
+    // Plaque latérale indiquant "BLOC PIRATE #X"
+    const pCanvas = document.createElement('canvas');
+    pCanvas.width = 256;
+    pCanvas.height = 128;
+    const pCtx = pCanvas.getContext('2d');
+    pCtx.fillStyle = '#1f0606';
+    pCtx.fillRect(0, 0, 256, 128);
+    pCtx.strokeStyle = '#ef4444';
+    pCtx.lineWidth = 6;
+    pCtx.strokeRect(3, 3, 250, 122);
+    pCtx.fillStyle = '#fca5a5';
+    pCtx.font = 'bold 26px monospace';
+    pCtx.fillText(`PIRATE #${index}`, 22, 48);
+    pCtx.fillStyle = '#ef4444';
+    pCtx.font = '18px monospace';
+    pCtx.fillText(index === 1 ? 'Triche : garde 20' : 'Bloc pirate suivant', 22, 90);
+    const pTex = new THREE.CanvasTexture(pCanvas);
+    const plateMat = regMat(new THREE.MeshBasicMaterial({ map: pTex }), 1.0);
+    const plate = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.54), plateMat);
+    plate.position.set(0, 0.6, 0.585);
+    wGroup.add(plate);
+
+    // Bras d'attelage avant
+    const couplerMat = regMat(
+      new THREE.MeshStandardMaterial({
+        color: 0xef4444,
+        emissive: 0xdc2626,
+        emissiveIntensity: 1.2
+      }),
+      1.0
+    );
+    if (index === 1) {
+      // Le 1er wagon pirate est relié en biais à la Locomotive #0 (aiguillage)
+      const diagBeam = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 3.6, 12), couplerMat);
+      diagBeam.rotation.z = Math.PI / 2;
+      diagBeam.rotation.y = 0.92;
+      diagBeam.position.set(-1.95, 0.02, -1.45);
+      wGroup.add(diagBeam);
+    } else {
+      const straightBeam = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.25, 12), couplerMat);
+      straightBeam.rotation.z = Math.PI / 2;
+      straightBeam.position.set(-1.9, 0.02, 0);
+      wGroup.add(straightBeam);
+    }
+
+    return {
+      index,
+      group: wGroup,
+      materials,
+      targetX,
+      currentX: targetX
+    };
+  },
+
+  /**
+   * Construit l'aiguillage, la voie bis parallèle (z = 3.1), les 4 wagons pirates
+   * et les 2 molettes de minage (Gares honnêtes en haut, Pirate en bas).
+   */
+  buildParallelRaceScene() {
     const { scene } = this.ctx;
     if (!scene) return;
 
@@ -109,141 +379,150 @@ export const step7 = {
     }
 
     this.attackGroup = new THREE.Group();
-    this.pirateMaterials = [];
+    this.pirateWagons = [];
 
-    const parallelZ = 3.2;
+    const parallelZ = 3.1;
 
-    // 1. Ballast et rails de la voie bis parallèle
-    const ballastGeo = new THREE.BoxGeometry(36, 0.14, 2.4);
+    // 1. Ballast et rails de la voie bis pirate (partant après la Locomotive #0)
+    const ballastGeo = new THREE.BoxGeometry(22, 0.14, 2.3);
     const ballastMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.9 });
     const ballast = new THREE.Mesh(ballastGeo, ballastMat);
-    ballast.position.set(4.0, -0.46, parallelZ);
+    ballast.position.set(10.5, -0.46, parallelZ);
     this.attackGroup.add(ballast);
 
-    const railGeo = new THREE.BoxGeometry(36, 0.1, 0.07);
+    const railGeo = new THREE.BoxGeometry(22, 0.1, 0.07);
     const railMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.85, roughness: 0.25 });
 
     const railL = new THREE.Mesh(railGeo, railMat);
-    railL.position.set(4.0, -0.34, parallelZ - 0.66);
+    railL.position.set(10.5, -0.34, parallelZ - 0.66);
     this.attackGroup.add(railL);
 
     const railR = new THREE.Mesh(railGeo, railMat);
-    railR.position.set(4.0, -0.34, parallelZ + 0.66);
+    railR.position.set(10.5, -0.34, parallelZ + 0.66);
     this.attackGroup.add(railR);
 
-    // Traverses de la voie parallèle
-    const sleeperGeo = new THREE.BoxGeometry(0.28, 0.08, 1.9);
+    const sleeperGeo = new THREE.BoxGeometry(0.28, 0.08, 1.85);
     const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x3b1d0e, roughness: 0.9 });
-    for (let x = -12; x <= 20; x += 1.2) {
+    for (let x = 1.6; x <= 19.5; x += 1.2) {
       const sleeper = new THREE.Mesh(sleeperGeo, sleeperMat);
       sleeper.position.set(x, -0.42, parallelZ);
       this.attackGroup.add(sleeper);
     }
 
-    // Rails d'aiguillage obliques reliant la voie principale (z = 0) à la voie bis (z = 3.2)
-    const switchGeo = new THREE.BoxGeometry(5.5, 0.09, 0.07);
+    // Rails d'aiguillage obliques juste après la Locomotive #0 (x = 0.8 .. 3.0)
+    const switchGeo = new THREE.BoxGeometry(3.8, 0.09, 0.07);
     [-0.66, 0.66].forEach((offsetZ) => {
       const swRail = new THREE.Mesh(switchGeo, railMat);
-      swRail.position.set(-2.2, -0.33, parallelZ / 2 + offsetZ);
-      swRail.rotation.y = -0.54;
+      swRail.position.set(1.85, -0.33, parallelZ / 2 + offsetZ);
+      swRail.rotation.y = -0.82;
       this.attackGroup.add(swRail);
     });
 
-    // 2. Train Pirate (2 blocs seulement : Locomotive + 1 wagon de double dépense)
-    this.pirateTrainGroup = new THREE.Group();
-    this.pirateTrainGroup.position.set(-4.5, 0, parallelZ);
-    this.pirateTrainGroup.visible = false;
+    // 2. Les 4 wagons pirates sur la voie bis (z = 3.1)
+    for (let i = 1; i <= 4; i++) {
+      const targetX = i * 3.8;
+      const pw = this.createPirateWagonMesh(i, targetX);
+      pw.group.position.set(targetX, 0, parallelZ);
+      this.attackGroup.add(pw.group);
+      this.pirateWagons.push(pw);
+    }
 
-    const addPirateMat = (params, baseOpacity = 1.0) => {
-      const mat = new THREE.MeshStandardMaterial({
-        ...params,
-        transparent: true,
-        opacity: baseOpacity
-      });
-      mat.userData = { baseOpacity };
-      this.pirateMaterials.push(mat);
-      return mat;
-    };
+    // 3. Molette des Gares honnêtes (derrière la voie officielle, z = -2.35)
+    //    et Molette du Pirate (devant la voie bis, z = 5.25)
+    this.honestWheelObj = this.createStationWheelNode(5.7, -2.35, 0x38bdf8, '#38bdf8');
+    this.pirateWheelObj = this.createStationWheelNode(5.7, 5.25, 0xef4444, '#ef4444');
+    this.attackGroup.add(this.honestWheelObj.group);
+    this.attackGroup.add(this.pirateWheelObj.group);
 
-    const bodyMat = addPirateMat({
-      color: 0x2b0909,
-      emissive: 0x7f1d1d,
-      emissiveIntensity: 0.4,
-      metalness: 0.8,
-      roughness: 0.3
-    }, 1.0);
-
-    const accentMat = addPirateMat({
-      color: 0xef4444,
-      emissive: 0xdc2626,
-      emissiveIntensity: 1.3,
-      metalness: 0.5,
-      roughness: 0.2
-    }, 1.0);
-
-    // Locomotive pirate (x = 0)
-    const locoGroup = new THREE.Group();
-    const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.22, 1.24), bodyMat);
-    locoGroup.add(chassis);
-
-    const boiler = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 1.4, 16), bodyMat);
-    boiler.rotation.z = Math.PI / 2;
-    boiler.position.set(-0.4, 0.55, 0);
-    locoGroup.add(boiler);
-
-    const cab = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.0, 1.22), bodyMat);
-    cab.position.set(0.7, 0.65, 0);
-    locoGroup.add(cab);
-
-    const stack = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.09, 0.42, 12), accentMat);
-    stack.position.set(-0.85, 1.1, 0);
-    locoGroup.add(stack);
-
-    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 12), accentMat);
-    beacon.position.set(0.7, 1.24, 0);
-    locoGroup.add(beacon);
-
-    this.pirateTrainGroup.add(locoGroup);
-
-    // Wagon pirate #1 (x = 3.8) : Contient la transaction contradictoire (Arthur garde ses 20 MMI-Coin)
-    const wagonGroup = new THREE.Group();
-    wagonGroup.position.set(3.8, 0, 0);
-
-    const wBase = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.2, 1.24), bodyMat);
-    wagonGroup.add(wBase);
-
-    const glassMat = addPirateMat({
-      color: 0xef4444,
-      emissive: 0x991b1b,
-      emissiveIntensity: 0.35
-    }, 0.35);
-    const wBox = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.95, 1.14), glassMat);
-    wBox.position.y = 0.6;
-    wagonGroup.add(wBox);
-
-    const cargo = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.5, 0.7), accentMat);
-    cargo.position.y = 0.45;
-    wagonGroup.add(cargo);
-
-    // Faisceau d'attelage pirate rouge
-    const coupler = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.2, 10), accentMat);
-    coupler.rotation.z = Math.PI / 2;
-    coupler.position.set(-1.9, 0.1, 0);
-    wagonGroup.add(coupler);
-
-    this.pirateTrainGroup.add(wagonGroup);
-
-    // Halo lumineux discret au-dessus du train pirate
-    this.pirateLight = new THREE.PointLight(0xef4444, 0, 6.0);
-    this.pirateLight.position.set(1.9, 1.6, 0);
-    this.pirateTrainGroup.add(this.pirateLight);
-
-    this.attackGroup.add(this.pirateTrainGroup);
     scene.add(this.attackGroup);
   },
 
   /**
-   * Initialise le conteneur DOM pour les infobulles 3D comparant les deux trains.
+   * Place les deux voies à leur état de départ :
+   * - Voie officielle : Locomotive #0 + Wagon #1 (les wagons #2, #3, #4 sont cachés)
+   * - Voie bis pirate : Wagon pirate #1 (les wagons pirates #2, #3, #4 sont cachés)
+   */
+  resetWagonsToStart() {
+    const { trainConvoy } = this.ctx;
+    this.honestCount = 1;
+    this.pirateCount = 1;
+
+    if (trainConvoy) {
+      for (let i = 1; i <= 4; i++) {
+        const w = trainConvoy.getWagon(i);
+        if (!w) continue;
+        w.updateStatus(true);
+        if (i === 1) {
+          w.visible = true;
+          w.position.x = 3.8;
+          w.scale.setScalar(1.0);
+        } else {
+          w.visible = false;
+          w.position.x = i * 3.8 + 1.4;
+          w.scale.setScalar(0.01);
+        }
+      }
+    }
+
+    this.pirateWagons.forEach((pw, idx) => {
+      pw.materials.forEach((m) => {
+        m.opacity = m.userData.baseOpacity;
+      });
+      if (idx === 0) {
+        pw.group.visible = true;
+        pw.currentX = pw.targetX;
+        pw.group.position.x = pw.targetX;
+        pw.group.scale.setScalar(1.0);
+      } else {
+        pw.group.visible = false;
+        pw.currentX = pw.targetX + 1.4;
+        pw.group.position.x = pw.currentX;
+        pw.group.scale.setScalar(0.01);
+      }
+    });
+
+    if (this.honestWheelObj) {
+      this.honestWheelObj.currentCrans = 0;
+      this.honestWheelObj.currentAngle = 0;
+      this.honestWheelObj.wheelMesh.rotation.set(Math.PI / 2, 0, 0);
+      this.renderWheelDial(this.honestWheelObj.dialCanvas, this.honestWheelObj.dialTex, 0, '#38bdf8');
+    }
+
+    if (this.pirateWheelObj) {
+      this.pirateWheelObj.currentCrans = 0;
+      this.pirateWheelObj.currentAngle = 0;
+      this.pirateWheelObj.wheelMesh.rotation.set(Math.PI / 2, 0, 0);
+      this.renderWheelDial(this.pirateWheelObj.dialCanvas, this.pirateWheelObj.dialTex, 0, '#ef4444');
+    }
+  },
+
+  /**
+   * Bascule entre le Cas normal (Pirate 20 %) et l'Attaque des 51 % (Pirate 60 %).
+   */
+  setMode(targetMode) {
+    if (this.mode === targetMode || this.raceState === 'running') return;
+    this.mode = targetMode;
+    this.raceState = 'idle';
+    this.raceTimer = 0;
+    this.resetWagonsToStart();
+    this.updateTooltipsDOM();
+    this.renderLeftPanel();
+  },
+
+  /**
+   * Lance la course d'assemblage des wagons sur les deux voies parallèles.
+   */
+  startRace() {
+    if (this.raceState === 'running') return;
+    this.resetWagonsToStart();
+    this.raceState = 'running';
+    this.raceTimer = 0;
+    this.updateTooltipsDOM();
+    this.renderLeftPanel();
+  },
+
+  /**
+   * Initialise le conteneur DOM pour les infobulles 3D.
    */
   setupTooltipsLayer() {
     const hud = document.getElementById('hud');
@@ -259,9 +538,9 @@ export const step7 = {
   },
 
   /**
-   * Crée 2 infobulles SVG : l'une sur le train officiel (z = 0), l'autre sur le train pirate (z = 3.2).
+   * Crée les 2 infobulles SVG pointant sur la Voie officielle et la Voie bis pirate.
    */
-  createForkTooltips() {
+  createRaceTooltips() {
     if (!this.tooltipLayer) return;
 
     this.tooltipLayer.innerHTML = `
@@ -270,26 +549,22 @@ export const step7 = {
         <circle id="s7-dot-out-official" r="6.5" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity="0.8" />
         <circle id="s7-dot-in-official" r="3" fill="#38bdf8" />
 
-        <line id="s7-line-pirate" stroke="#ef4444" stroke-width="2" stroke-linecap="round" opacity="0" />
-        <circle id="s7-dot-out-pirate" r="6.5" fill="none" stroke="#ef4444" stroke-width="1.5" opacity="0" />
-        <circle id="s7-dot-in-pirate" r="3" fill="#ef4444" opacity="0" />
+        <line id="s7-line-pirate" stroke="#ef4444" stroke-width="2" stroke-linecap="round" opacity="0.85" />
+        <circle id="s7-dot-out-pirate" r="6.5" fill="none" stroke="#ef4444" stroke-width="1.5" opacity="0.8" />
+        <circle id="s7-dot-in-pirate" r="3" fill="#ef4444" />
       </svg>
 
       <div id="tooltip-s7-official" class="scene-tooltip" style="--spot-color: #38bdf8; z-index: 12;">
         <button type="button" class="scene-tooltip-pill">
           <span class="scene-tooltip-dot"></span>
-          <span class="scene-tooltip-label" id="s7-label-official">
-            <strong>Train officiel</strong> · 3 wagons (Arthur paie le vendeur)
-          </span>
+          <span class="scene-tooltip-label" id="s7-label-official"></span>
         </button>
       </div>
 
-      <div id="tooltip-s7-pirate" class="scene-tooltip" style="--spot-color: #ef4444; z-index: 12; opacity: 0; visibility: hidden;">
+      <div id="tooltip-s7-pirate" class="scene-tooltip" style="--spot-color: #ef4444; z-index: 12;">
         <button type="button" class="scene-tooltip-pill">
           <span class="scene-tooltip-dot"></span>
-          <span class="scene-tooltip-label" id="s7-label-pirate">
-            <strong>Train pirate (Fork)</strong> · 2 wagons (Arthur garde ses jetons)
-          </span>
+          <span class="scene-tooltip-label" id="s7-label-pirate"></span>
         </button>
       </div>
     `;
@@ -302,9 +577,13 @@ export const step7 = {
   },
 
   /**
-   * Met à jour le texte et la couleur des 2 infobulles 3D selon l'état ('idle' | 'fork' | 'resolved').
+   * Met à jour les 2 infobulles 3D selon le mode et le nombre de wagons assemblés.
    */
   updateTooltipsDOM() {
+    const isNormal = this.mode === 'normal';
+    const honestShare = isNormal ? '80 %' : '40 %';
+    const pirateShare = isNormal ? '20 %' : '60 %';
+
     const offWrap = document.getElementById('tooltip-s7-official');
     const offLabel = document.getElementById('s7-label-official');
     const offLine = document.getElementById('s7-line-official');
@@ -317,139 +596,39 @@ export const step7 = {
     const pirDotIn = document.getElementById('s7-dot-in-pirate');
     const pirDotOut = document.getElementById('s7-dot-out-pirate');
 
-    if (this.attackState === 'idle') {
-      const offColor = '#38bdf8';
-      offWrap?.style.setProperty('--spot-color', offColor);
-      if (offLabel) offLabel.innerHTML = '<strong>Train officiel</strong> · 3 wagons (Arthur paie le vendeur)';
-      offLine?.setAttribute('stroke', offColor);
-      offDotIn?.setAttribute('fill', offColor);
-      offDotOut?.setAttribute('stroke', offColor);
+    const hWords = `${this.honestCount} wagon${this.honestCount > 1 ? 's' : ''}`;
+    const pWords = `${this.pirateCount} wagon${this.pirateCount > 1 ? 's' : ''}`;
 
-      if (pirWrap) {
-        pirWrap.style.opacity = '0';
-        pirWrap.style.visibility = 'hidden';
-      }
-      pirLine?.setAttribute('opacity', '0');
-      pirDotIn?.setAttribute('opacity', '0');
-      pirDotOut?.setAttribute('opacity', '0');
-    } else if (this.attackState === 'fork') {
-      const offColor = '#38bdf8';
-      offWrap?.style.setProperty('--spot-color', offColor);
-      if (offLabel) offLabel.innerHTML = '<strong>Train officiel (Gares honnêtes)</strong> · 3 wagons';
-      offLine?.setAttribute('stroke', offColor);
-      offDotIn?.setAttribute('fill', offColor);
-      offDotOut?.setAttribute('stroke', offColor);
+    let offColor = '#38bdf8';
+    let pirColor = '#ef4444';
+    let offHTML = `<strong>Voie officielle (${honestShare})</strong> · ${hWords}`;
+    let pirHTML = `<strong>Voie bis pirate (${pirateShare})</strong> · ${pWords}`;
 
-      const pirColor = '#ef4444';
-      if (pirWrap) {
-        pirWrap.style.setProperty('--spot-color', pirColor);
-        pirWrap.style.opacity = '1';
-        pirWrap.style.visibility = 'visible';
-      }
-      if (pirLabel) pirLabel.innerHTML = '<strong>Train pirate (Attaquant seul)</strong> · 2 wagons';
-      pirLine?.setAttribute('stroke', pirColor);
-      pirLine?.setAttribute('opacity', '0.85');
-      pirDotIn?.setAttribute('fill', pirColor);
-      pirDotIn?.setAttribute('opacity', '1');
-      pirDotOut?.setAttribute('stroke', pirColor);
-      pirDotOut?.setAttribute('opacity', '0.8');
-    } else {
-      const offColor = '#10b981';
-      offWrap?.style.setProperty('--spot-color', offColor);
-      if (offLabel) offLabel.innerHTML = '<strong>Train officiel · 5 wagons</strong> (Chaîne la plus longue — conservée)';
-      offLine?.setAttribute('stroke', offColor);
-      offDotIn?.setAttribute('fill', offColor);
-      offDotOut?.setAttribute('stroke', offColor);
-
-      const pirColor = '#64748b';
-      if (pirWrap) {
-        pirWrap.style.setProperty('--spot-color', pirColor);
-        pirWrap.style.opacity = '1';
-        pirWrap.style.visibility = 'visible';
-      }
-      if (pirLabel) pirLabel.innerHTML = '<strong>Train pirate · 2 wagons</strong> (Trop court — abandonné)';
-      pirLine?.setAttribute('stroke', pirColor);
-      pirLine?.setAttribute('opacity', '0.55');
-      pirDotIn?.setAttribute('fill', pirColor);
-      pirDotIn?.setAttribute('opacity', '0.7');
-      pirDotOut?.setAttribute('stroke', pirColor);
-      pirDotOut?.setAttribute('opacity', '0.6');
-    }
-  },
-
-  /**
-   * Phase 1 : Fait arriver le train pirate sur la voie bis parallèle (tentative de double dépense).
-   */
-  triggerForkAttack() {
-    this.attackState = 'fork';
-    this.resolveProgress = 0;
-
-    if (this.pirateTrainGroup) {
-      this.pirateTrainGroup.visible = true;
-      this.pirateTrainGroup.position.set(-4.5, 0, 3.2);
-    }
-
-    this.pirateMaterials.forEach((mat) => {
-      mat.opacity = mat.userData.baseOpacity;
-    });
-
-    if (this.pirateLight) {
-      this.pirateLight.intensity = 2.8;
-    }
-
-    this.updateTooltipsDOM();
-    this.renderLeftPanel();
-  },
-
-  /**
-   * Phase 2 : Applique la règle de la chaîne la plus longue.
-   * Les gares honnêtes ajoutent 2 nouveaux wagons au train officiel (qui passe à 5 wagons),
-   * tandis que le train pirate (bloqué à 2 wagons) est abandonné et s'éteint.
-   */
-  resolveLongestChain() {
-    if (this.attackState !== 'fork') return;
-
-    this.attackState = 'resolved';
-    this.resolveProgress = 0;
-    this.newWagonsAnimProgress = 0;
-
-    const { trainConvoy, cameraController } = this.ctx;
-    if (trainConvoy && trainConvoy.blockchain.chain.length < 5) {
-      trainConvoy.addBlock({
-        emetteur: 'Gare-A',
-        destinataire: 'Confirmation-1',
-        montant: 40,
-        unite: 'MMI-Coin'
-      });
-      trainConvoy.addBlock({
-        emetteur: 'Gare-B',
-        destinataire: 'Confirmation-2',
-        montant: 25,
-        unite: 'MMI-Coin'
-      });
-
-      if (cameraController) {
-        cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
+    if (this.raceState === 'done') {
+      if (isNormal) {
+        offColor = '#10b981';
+        pirColor = '#64748b';
+        offHTML = `<strong>Voie officielle (${honestShare})</strong> · 4 wagons (La plus longue — conservée)`;
+        pirHTML = `<strong>Voie bis pirate (${pirateShare})</strong> · 2 wagons (Trop courte — rejetée)`;
+      } else {
+        offColor = '#64748b';
+        pirColor = '#ef4444';
+        offHTML = `<strong>Voie officielle (${honestShare})</strong> · 2 wagons (Dépassée — annulée)`;
+        pirHTML = `<strong>Voie bis pirate (${pirateShare})</strong> · 4 wagons (La plus longue — gagne !)`;
       }
     }
 
-    if (cameraController) {
-      cameraController.moveTo(
-        new THREE.Vector3(6.8, 5.2, 13.2),
-        new THREE.Vector3(6.4, 0.3, 1.2),
-        1.15
-      );
-    }
+    offWrap?.style.setProperty('--spot-color', offColor);
+    if (offLabel) offLabel.innerHTML = offHTML;
+    offLine?.setAttribute('stroke', offColor);
+    offDotIn?.setAttribute('fill', offColor);
+    offDotOut?.setAttribute('stroke', offColor);
 
-    this.updateTooltipsDOM();
-    this.renderLeftPanel();
-  },
-
-  /**
-   * Réinitialise le scénario à l'état initial.
-   */
-  resetSimulation() {
-    this.enter();
+    pirWrap?.style.setProperty('--spot-color', pirColor);
+    if (pirLabel) pirLabel.innerHTML = pirHTML;
+    pirLine?.setAttribute('stroke', pirColor);
+    pirDotIn?.setAttribute('fill', pirColor);
+    pirDotOut?.setAttribute('stroke', pirColor);
   },
 
   startAnimationLoop() {
@@ -481,81 +660,157 @@ export const step7 = {
       lastTime = now;
 
       const { trainConvoy, camera } = this.ctx;
+      const isNormal = this.mode === 'normal';
 
-      // 1. Animation du train pirate et de l'allongement du train officiel
-      if (this.attackState === 'fork' && this.pirateTrainGroup) {
-        this.pirateTrainGroup.position.x = THREE.MathUtils.lerp(this.pirateTrainGroup.position.x, 0.0, Math.min(1, dt * 4.5));
-        if (this.pirateLight) {
-          this.pirateLight.intensity = 2.4 + Math.sin(now * 0.008) * 0.8;
+      // 1. Progression de la course entre les 2 trains
+      if (this.raceState === 'running') {
+        this.raceTimer += dt;
+        const p = Math.min(this.raceTimer / this.raceDuration, 1.0);
+
+        // Rotation des 2 molettes selon leur part de puissance (80/20 ou 40/60)
+        const honestMaxCrans = isNormal ? 32 : 14;
+        const pirateMaxCrans = isNormal ? 10 : 28;
+
+        if (this.honestWheelObj) {
+          const hCrans = Math.max(1, Math.floor(honestMaxCrans * p));
+          if (hCrans !== this.honestWheelObj.currentCrans) {
+            this.honestWheelObj.currentCrans = hCrans;
+            this.renderWheelDial(this.honestWheelObj.dialCanvas, this.honestWheelObj.dialTex, hCrans, '#38bdf8');
+          }
+          this.honestWheelObj.currentAngle = THREE.MathUtils.lerp(
+            this.honestWheelObj.currentAngle,
+            hCrans * (Math.PI / 4),
+            Math.min(1, dt * 18)
+          );
+          this.honestWheelObj.wheelMesh.rotation.set(Math.PI / 2, this.honestWheelObj.currentAngle, 0);
         }
-      } else if (this.attackState === 'resolved') {
-        // Les wagons #3 et #4 arrivent de la droite et s'attellent au train officiel
-        if (this.newWagonsAnimProgress < 1.0 && trainConvoy) {
-          this.newWagonsAnimProgress = Math.min(1.0, this.newWagonsAnimProgress + dt * 1.6);
-          const ease = 1 - Math.pow(1 - this.newWagonsAnimProgress, 3);
-          const w3 = trainConvoy.getWagon(3);
-          const w4 = trainConvoy.getWagon(4);
-          if (w3) w3.position.x = THREE.MathUtils.lerp(13.2, 11.4, ease);
-          if (w4) w4.position.x = THREE.MathUtils.lerp(17.4, 15.2, ease);
+
+        if (this.pirateWheelObj) {
+          const pCrans = Math.max(1, Math.floor(pirateMaxCrans * p));
+          if (pCrans !== this.pirateWheelObj.currentCrans) {
+            this.pirateWheelObj.currentCrans = pCrans;
+            this.renderWheelDial(this.pirateWheelObj.dialCanvas, this.pirateWheelObj.dialTex, pCrans, '#ef4444');
+          }
+          this.pirateWheelObj.currentAngle = THREE.MathUtils.lerp(
+            this.pirateWheelObj.currentAngle,
+            pCrans * (Math.PI / 4),
+            Math.min(1, dt * 18)
+          );
+          this.pirateWheelObj.wheelMesh.rotation.set(Math.PI / 2, this.pirateWheelObj.currentAngle, 0);
         }
 
-        // Le train pirate s'éteint et devient fantomatique sur sa voie de garage
-        if (this.pirateTrainGroup && this.resolveProgress < 1.0) {
-          this.resolveProgress = Math.min(1.0, this.resolveProgress + dt * 1.2);
-          const p = this.resolveProgress;
+        // Déblocage progressif des wagons selon la vitesse de chaque voie
+        const newHonestCount = isNormal
+          ? p >= 0.82 ? 4 : p >= 0.54 ? 3 : p >= 0.26 ? 2 : 1
+          : p >= 0.56 ? 2 : 1;
 
-          this.pirateMaterials.forEach((mat) => {
-            mat.opacity = THREE.MathUtils.lerp(mat.userData.baseOpacity, mat.userData.baseOpacity * 0.25, p);
-          });
+        const newPirateCount = isNormal
+          ? p >= 0.58 ? 2 : 1
+          : p >= 0.82 ? 4 : p >= 0.54 ? 3 : p >= 0.26 ? 2 : 1;
 
-          if (this.pirateLight) {
-            this.pirateLight.intensity = Math.max(0, (1 - p) * 2.4);
+        if (newHonestCount !== this.honestCount || newPirateCount !== this.pirateCount) {
+          this.honestCount = newHonestCount;
+          this.pirateCount = newPirateCount;
+          this.updateTooltipsDOM();
+        }
+
+        if (p >= 1.0) {
+          this.raceState = 'done';
+          if (isNormal) this.hasTestedNormal = true;
+          else this.hasTestedAttack51 = true;
+
+          // En cas d'attaque 51% réussie, la voie officielle plus courte passe au rouge (abandonnée)
+          if (!isNormal && trainConvoy) {
+            for (let i = 1; i <= 2; i++) {
+              const w = trainConvoy.getWagon(i);
+              if (w && w.beaconMaterial) {
+                w.beaconMaterial.color.setHex(0xef4444);
+                w.beaconMaterial.emissive.setHex(0xdc2626);
+              }
+            }
+          }
+
+          this.updateTooltipsDOM();
+          this.renderLeftPanel();
+        }
+      }
+
+      // 2. Animation fluide d'attelage des wagons officiels (#1 à #honestCount)
+      if (trainConvoy) {
+        for (let i = 1; i <= 4; i++) {
+          const w = trainConvoy.getWagon(i);
+          if (!w) continue;
+          const active = i <= this.honestCount;
+          w.visible = active;
+          if (active) {
+            const targetX = i * 3.8;
+            w.position.x = THREE.MathUtils.lerp(w.position.x, targetX, Math.min(1, dt * 8));
+            const nextScale = THREE.MathUtils.lerp(w.scale.x, 1.0, Math.min(1, dt * 10));
+            w.scale.setScalar(nextScale);
           }
         }
       }
 
-      // 2. Projection 2D des 2 infobulles (Train officiel en haut, Train pirate en bas)
+      // 3. Animation fluide d'attelage des wagons pirates (#1 à #pirateCount)
+      this.pirateWagons.forEach((pw, idx) => {
+        const active = idx + 1 <= this.pirateCount;
+        pw.group.visible = active;
+        if (active) {
+          pw.currentX = THREE.MathUtils.lerp(pw.currentX, pw.targetX, Math.min(1, dt * 8));
+          pw.group.position.x = pw.currentX;
+          const nextScale = THREE.MathUtils.lerp(pw.group.scale.x, 1.0, Math.min(1, dt * 10));
+          pw.group.scale.setScalar(nextScale);
+
+          // Si la voie pirate a perdu (mode normal, fin de course), elle s'estompe
+          const isAbandoned = this.raceState === 'done' && isNormal;
+          pw.materials.forEach((m) => {
+            const targetOp = isAbandoned ? m.userData.baseOpacity * 0.28 : m.userData.baseOpacity;
+            m.opacity = THREE.MathUtils.lerp(m.opacity, targetOp, Math.min(1, dt * 5));
+          });
+        }
+      });
+
+      // 4. Projection 2D des 2 infobulles (Voie officielle en haut, Voie bis pirate en bas)
       if (this.tooltipLayer && camera) {
         const width = window.innerWidth;
         const height = window.innerHeight;
         const toX = (v) => (v.x * 0.5 + 0.5) * width;
         const toY = (v) => (-v.y * 0.5 + 0.5) * height;
 
-        const officialAnchorX = this.attackState === 'resolved' ? 7.6 : 3.8;
-        const officialWorld = new THREE.Vector3(officialAnchorX, 1.08, 0).project(camera);
-        const pirateAnchorX = (this.pirateTrainGroup ? this.pirateTrainGroup.position.x : 0) + 2.2;
-        const pirateWorld = new THREE.Vector3(pirateAnchorX, 1.05, 3.2).project(camera);
+        const offAnchorX = Math.min(11.4, this.honestCount * 3.8);
+        const pirAnchorX = Math.min(11.4, this.pirateCount * 3.8);
 
-        if (officialWorld.z > 1 || pirateWorld.z > 1) {
+        const offWorld = new THREE.Vector3(offAnchorX, 1.08, 0).project(camera);
+        const pirWorld = new THREE.Vector3(pirAnchorX, 1.02, 3.1).project(camera);
+
+        if (offWorld.z > 1 || pirWorld.z > 1) {
           this.tooltipLayer.style.opacity = '0';
           this.tooltipLayer.style.visibility = 'hidden';
         } else {
-          const offX = toX(officialWorld);
-          const offY = toY(officialWorld);
-          const pirX = toX(pirateWorld);
-          const pirY = toY(pirateWorld);
+          const offX = toX(offWorld);
+          const offY = toY(offWorld);
+          const pirX = toX(pirWorld);
+          const pirY = toY(pirWorld);
 
           const isCovered = width > 768 && offX < 395;
           this.tooltipLayer.style.opacity = isCovered ? '0' : '1';
           this.tooltipLayer.style.visibility = isCovered ? 'hidden' : 'visible';
 
-          const offPillX = Math.max(460, Math.min(width - 220, offX));
-          const offPillY = Math.max(60, offY - 58);
+          const offPillX = Math.max(465, Math.min(width - 230, offX));
+          const offPillY = Math.max(58, offY - 56);
           const offEl = document.getElementById('tooltip-s7-official');
           if (offEl) {
             offEl.style.transform = `translate3d(${offPillX.toFixed(1)}px, ${offPillY.toFixed(1)}px, 0) translate(-50%, -50%)`;
           }
           setLineAndDot('s7-line-official', 's7-dot-in-official', 's7-dot-out-official', offPillX, offPillY + 14, offX, offY);
 
-          if (this.attackState !== 'idle') {
-            const pirPillX = Math.max(460, Math.min(width - 220, pirX));
-            const pirPillY = Math.min(height - 50, pirY + 64);
-            const pirEl = document.getElementById('tooltip-s7-pirate');
-            if (pirEl) {
-              pirEl.style.transform = `translate3d(${pirPillX.toFixed(1)}px, ${pirPillY.toFixed(1)}px, 0) translate(-50%, -50%)`;
-            }
-            setLineAndDot('s7-line-pirate', 's7-dot-in-pirate', 's7-dot-out-pirate', pirPillX, pirPillY - 14, pirX, pirY);
+          const pirPillX = Math.max(465, Math.min(width - 230, pirX));
+          const pirPillY = Math.min(height - 48, pirY + 58);
+          const pirEl = document.getElementById('tooltip-s7-pirate');
+          if (pirEl) {
+            pirEl.style.transform = `translate3d(${pirPillX.toFixed(1)}px, ${pirPillY.toFixed(1)}px, 0) translate(-50%, -50%)`;
           }
+          setLineAndDot('s7-line-pirate', 's7-dot-in-pirate', 's7-dot-out-pirate', pirPillX, pirPillY - 14, pirX, pirY);
         }
       }
 
@@ -584,60 +839,82 @@ export const step7 = {
     const inner = document.createElement('div');
     inner.className = 'step-panel-inner';
 
-    const isIdle = this.attackState === 'idle';
-    const isFork = this.attackState === 'fork';
-    const isResolved = this.attackState === 'resolved';
+    const isNormal = this.mode === 'normal';
+    const isRunning = this.raceState === 'running';
+    const isDone = this.raceState === 'done';
 
-    const stateExplanationHTML = isIdle
+    const buttonLabel = isRunning
+      ? 'Course des 2 trains en cours...'
+      : isDone
+        ? 'Relancer la course des 2 trains'
+        : 'Lancer la course des 2 trains';
+
+    const modeBannerHTML = isNormal
       ? `
-        <p>
-          Cliquez ci-dessous pour faire surgir le <strong>train pirate</strong> d'Arthur sur la voie de dérivation et créer un conflit entre deux versions de l'histoire (<strong>Fork</strong>) :
-        </p>
-        <button id="btn-step7-fork" class="btn-panel-danger">
-          <span>1. Lancer le train pirate (Voie bis)</span>
-        </button>
+        <div class="share-meaning-banner">
+          <strong>Cas réel (80 % contre 20 %) :</strong> les gares honnêtes réunies possèdent 80 % de la puissance du réseau. Le pirate est seul sur sa voie bis avec 20 %.
+        </div>
       `
-      : isFork
+      : `
+        <div class="share-meaning-banner" style="border-left-color: #ef4444;">
+          <strong>Hypothèse d'attaque (> 51 %) :</strong> imaginez que le pirate contrôle à lui seul <strong>60 % des machines du monde</strong> contre 40 % pour les gares honnêtes.
+        </div>
+      `;
+
+    const resultHTML = isDone
+      ? isNormal
         ? `
-          <p>
-            <strong>Dilemme pour le réseau :</strong> deux trains parallèles se contredisent. Mais l'attaquant est <strong>tout seul</strong> sur sa voie pirate (2 wagons), face à toutes les <strong>gares honnêtes réunies</strong> sur la voie officielle (3 wagons).
+          <p style="margin: 10px 0 0 0;">
+            Les gares honnêtes (80 %) ont assemblé <strong>4 wagons contre 2</strong> pour le pirate. Le réseau garde toujours <strong>le train le plus long</strong> : la voie bis pirate est abandonnée.
           </p>
-          <button id="btn-step7-resolve" class="btn-panel-primary">
-            <span>2. Faire avancer le réseau (Chaîne la plus longue)</span>
-          </button>
         `
         : `
-          <p>
-            Les gares honnêtes ont continué d'accrocher des wagons au <strong>train officiel (5 wagons contre 2)</strong>. Le protocole suit toujours <strong>le train le plus long</strong> : la voie pirate est abandonnée.
+          <p style="margin: 10px 0 0 0;">
+            Avec <strong>60 % de la puissance</strong>, la molette du pirate a tourné plus vite et assemblé <strong>4 wagons contre 2</strong> ! Son train pirate étant devenu le plus long, le réseau le prend pour le vrai train.
           </p>
-          <button id="btn-step7-reset" class="btn-panel-ghost" style="width: 100%;">
-            <span>Rejouer la simulation</span>
-          </button>
-        `;
+        `
+      : '';
 
     inner.innerHTML = `
       <header class="step-panel-header">
-        <h2 class="step-panel-title">Attaque et règle des 51 %</h2>
+        <h2 class="step-panel-title">Attaque des 51 %</h2>
       </header>
 
       <div class="step-panel-scroll">
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Le dilemme des deux trains</h3>
+          <h3 class="card-title">Pourquoi créer une voie bis ?</h3>
           <p>
-            Arthur paie <strong>20 MMI-Coin</strong> à un vendeur dans le <strong>train officiel</strong>. En cachette, il tente de lancer un <strong>train pirate</strong> sur une voie bis dans lequel il garde ses 20 MMI-Coin pour lui (<strong>double dépense</strong>).
+            À l'étape 3, on a vu qu'on <strong>ne peut pas modifier un wagon déjà accroché</strong>. Pour annuler un paiement du Wagon #1, la seule astuce d'un pirate est de créer un <strong>aiguillage (voie bis)</strong> pour construire son propre train concurrent.
+          </p>
+          <p>
+            Face à deux trains parallèles, la règle du réseau est automatique : <strong>il garde uniquement le train qui a le plus de wagons</strong>.
           </p>
         </article>
 
-        <article class="step-card ${isFork ? 'danger-card' : 'action-card'} animate-fade">
-          <h3 class="card-title">Simulation : Voie officielle vs Voie pirate</h3>
-          ${stateExplanationHTML}
+        <article class="step-card action-card animate-fade">
+          <div class="difficulty-selector-row" role="tablist" aria-label="Choix du scénario">
+            <button id="btn-tab-normal" class="btn-diff-option ${isNormal ? 'active' : ''}" role="tab" aria-selected="${isNormal}" ${isRunning ? 'disabled' : ''}>
+              <span>Cas normal (Pirate 20 %)</span>
+            </button>
+            <button id="btn-tab-attack51" class="btn-diff-option ${!isNormal ? 'active' : ''}" role="tab" aria-selected="${!isNormal}" ${isRunning ? 'disabled' : ''}>
+              <span>Attaque 51 % (Pirate 60 %)</span>
+            </button>
+          </div>
+
+          ${modeBannerHTML}
+
+          <button id="btn-step7-run" class="btn-panel-primary" ${isRunning ? 'disabled' : ''}>
+            <span>${buttonLabel}</span>
+          </button>
+
+          ${resultHTML}
         </article>
 
-        ${isResolved ? `
+        ${(this.hasTestedNormal || this.hasTestedAttack51) ? `
           <article class="step-card keypoint-card animate-fade">
-            <h4 class="card-title keypoint-title">Point clé : Pourquoi parle-t-on d'attaque des 51 % ?</h4>
+            <h4 class="card-title keypoint-title">Point clé : Pourquoi l'attaque des 51 % est quasi impossible</h4>
             <p class="keypoint-text">
-              Le réseau choisit toujours <strong>le train qui a le plus de wagons</strong>. Pour que son train pirate dépasse le train officiel, un attaquant devrait fabriquer des wagons plus vite que toutes les autres gares réunies : il lui faudrait contrôler plus de <strong>51 % du réseau</strong>, ce qui est quasi impossible à l'échelle mondiale.
+              Pour que son train pirate dépasse le train officiel, un tricheur doit fabriquer des wagons plus vite que tout le reste de la planète réuni (posséder <strong>plus de 51 %</strong> des machines en PoW ou de la caution en PoS), ce qui coûterait des milliards d'euros.
             </p>
           </article>
         ` : ''}
@@ -660,16 +937,16 @@ export const step7 = {
   },
 
   setupEvents() {
-    document.getElementById('btn-step7-fork')?.addEventListener('click', () => {
-      this.triggerForkAttack();
+    document.getElementById('btn-tab-normal')?.addEventListener('click', () => {
+      this.setMode('normal');
     });
 
-    document.getElementById('btn-step7-resolve')?.addEventListener('click', () => {
-      this.resolveLongestChain();
+    document.getElementById('btn-tab-attack51')?.addEventListener('click', () => {
+      this.setMode('attack51');
     });
 
-    document.getElementById('btn-step7-reset')?.addEventListener('click', () => {
-      this.resetSimulation();
+    document.getElementById('btn-step7-run')?.addEventListener('click', () => {
+      this.startRace();
     });
 
     document.getElementById('btn-step7-action-prev')?.addEventListener('click', () => {
