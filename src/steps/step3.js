@@ -154,8 +154,8 @@ export const step3 = {
           <span class="scene-tooltip-label">Hash #1 : <code>${hash1Short}...</code></span>
         </button>
         <div class="scene-tooltip-card">
-          <div class="scene-tooltip-card-title">Hash calculé (Wagon #1)</div>
-          <p class="scene-tooltip-card-text">L'étiquette centrale et l'attache arrière arborent cette couleur, recalculée suite à la modification.</p>
+          <div class="scene-tooltip-card-title">Nouveau Hash (Wagon #1)</div>
+          <p class="scene-tooltip-card-text">La plaque centrale et l'anneau arrière ont changé de couleur à cause de la modification.</p>
         </div>
       </div>
 
@@ -165,8 +165,8 @@ export const step3 = {
           <span class="scene-tooltip-label">PreviousHash : <code>${prev2Short}...</code></span>
         </button>
         <div class="scene-tooltip-card">
-          <div class="scene-tooltip-card-title">Attache aval (Wagon #2)</div>
-          <p class="scene-tooltip-card-text">L'attache et l'étiquette du Wagon #2 attendent cette couleur d'origine. La discordance empêche l'emboîtement.</p>
+          <div class="scene-tooltip-card-title">Attache suivante (Wagon #2)</div>
+          <p class="scene-tooltip-card-text">Le Wagon #2 attend toujours l'ancienne couleur. Comme elles ne correspondent plus, l'attache ne tient pas.</p>
         </div>
       </div>
     `;
@@ -534,8 +534,8 @@ export const step3 = {
     if (statusEl) {
       statusEl.className = 'action-feedback-status visible ' + (wasBroken ? 'status-success' : 'status-info');
       statusEl.textContent = wasBroken
-        ? "Intégrité rétablie : les données sont conformes et les attelages sont reverrouillés."
-        : "Chaîne déjà intègre : les données et attelages sont conformes.";
+        ? "Train réparé : les données sont redevenues exactes et les wagons sont raccrochés."
+        : "Le train est déjà en bon état et bien accroché.";
     }
   },
 
@@ -574,26 +574,26 @@ export const step3 = {
       <div class="step-panel-scroll">
         ${!this.isBroken ? `
           <article class="step-card context-card animate-fade">
-            <h3 class="card-title">L'intégrité d'un bloc scellé</h3>
+            <h3 class="card-title">Que se passe-t-il si on modifie un wagon ?</h3>
             <p>
-              Dans le convoi, chaque wagon transporte des transactions scellées par son empreinte cryptographique (Hash).
+              Chaque wagon transporte des échanges protégés par un code unique (son Hash).
             </p>
             <p>
-              Que se passe-t-il si un fraudeur tente d'altérer les données enregistrées à l'intérieur du <strong>Wagon #1</strong> ?
+              Que se passe-t-il si quelqu'un essaie de tricher en changeant les chiffres à l'intérieur du <strong>Wagon #1</strong> ?
             </p>
           </article>
 
           <div class="substep-action-box animate-fade">
             <button id="btn-corrupt-wagon1" class="btn-panel-danger">
-              <span>Falsifier les transactions du Wagon #1</span>
+              <span>Tricher : modifier le Wagon #1</span>
               <span class="btn-arrow">&rarr;</span>
             </button>
           </div>
         ` : `
           <article class="step-card context-card animate-fade">
-            <h3 class="card-title">Comparaison des empreintes</h3>
+            <h3 class="card-title">Pourquoi l'attache a cassé ?</h3>
             <p>
-              La falsification du Wagon #1 a recalculé son Hash :
+              En modifiant le Wagon #1, son code Hash a changé :
             </p>
 
             <div class="hash-contrast-box">
@@ -608,26 +608,26 @@ export const step3 = {
                 <code class="contrast-code" style="color: ${colorPrev2};">${prev2Short}...</code>
               </div>
               <div class="contrast-status">
-                Discordance de couleur &rarr; Décrochage mécanique
+                Couleurs différentes &rarr; L'attache se décroche
               </div>
             </div>
 
             <p class="contrast-summary">
-              L'attache du Wagon #2 exige l'ancienne couleur. Ne correspondant pas à l'anneau arrière du Wagon #1, la liaison se rompt.
+              Le Wagon #2 attend toujours l'ancienne couleur. Comme elle ne correspond plus au Wagon #1, le lien casse.
             </p>
           </article>
 
           <div class="substep-action-box animate-fade">
             <button id="btn-restore-step3" class="btn-panel-success">
-              <span>Restaurer l'intégrité du convoi</span>
+              <span>Annuler la triche et réparer le train</span>
             </button>
             <div id="step3-restore-status" class="action-feedback-status"></div>
           </div>
 
           <article class="step-card keypoint-card animate-fade">
-            <h4 class="card-title keypoint-title">Point clé : L'effet avalanche</h4>
+            <h4 class="card-title keypoint-title">Point clé : La moindre triche saute aux yeux</h4>
             <p class="keypoint-text">
-              La moindre altération des données recalcule une nouvelle empreinte. Le wagon suivant, conservant l'ancien hash dans son registre, rejette immédiatement la connexion. La fraude est visible immédiatement par l'ensemble du réseau.
+              Si on change un seul chiffre dans un wagon, son code change complètement. Le wagon suivant garde l'ancien code en mémoire et refuse de rester accroché. Tout le réseau voit tout de suite qu'il y a une fraude.
             </p>
           </article>
         `}

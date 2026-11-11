@@ -21,6 +21,7 @@ export const step4 = {
   packets: [],
 
   isPropagating: false,
+  hasBroadcasted: false,
   txCount: 3,
   lastTxLabel: '50 caisses de matériel (Gare A)',
   lastRouteSummary: 'Gare A -> Gares B, C -> Gares D, E -> Gare F',
@@ -73,6 +74,7 @@ export const step4 = {
     const { trainConvoy, cameraController, environment } = this.ctx;
 
     this.isPropagating = false;
+    this.hasBroadcasted = false;
     this.txCount = 3;
     this.lastTxLabel = '50 caisses de matériel (Gare A)';
     this.lastRouteSummary = 'Gare A -> Gares B, C -> Gares D, E -> Gare F';
@@ -276,7 +278,7 @@ export const step4 = {
 
     let borderColor = '#10b981';
     let dotColor = '#10b981';
-    let statusText = `EN LIGNE - ${this.txCount} tx`;
+    let statusText = `COPIE INTEGRALE (${this.txCount})`;
 
     if (!st.online) {
       borderColor = '#ef4444';
@@ -285,7 +287,7 @@ export const step4 = {
     } else if (st.state === 'emitting') {
       borderColor = '#facc15';
       dotColor = '#facc15';
-      statusText = 'EMISSION P2P...';
+      statusText = 'ENVOI AUX VOISINES...';
     } else if (st.state === 'waiting') {
       borderColor = '#38bdf8';
       dotColor = '#38bdf8';
@@ -293,7 +295,7 @@ export const step4 = {
     } else if (st.state === 'synced') {
       borderColor = '#10b981';
       dotColor = '#10b981';
-      statusText = `A JOUR (${this.txCount} tx)`;
+      statusText = `COPIE A JOUR (${this.txCount})`;
     }
 
     // Fond de carte arrondi
@@ -325,7 +327,7 @@ export const step4 = {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 26px "Segoe UI", Arial, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`${st.name} (Noeud ${st.code})`, canvas.width / 2, 40);
+    ctx.fillText(`${st.name} (Copie ${st.code})`, canvas.width / 2, 40);
 
     // Pastille et statut
     ctx.fillStyle = dotColor;
@@ -408,7 +410,7 @@ export const step4 = {
     const signalMastGeo = new THREE.CylinderGeometry(0.035, 0.04, 1.35, 8);
     const signalBoxGeo = new THREE.BoxGeometry(0.18, 0.36, 0.14);
     const beaconGeo = new THREE.SphereGeometry(0.13, 14, 14);
-    const ledgerGeo = new THREE.BoxGeometry(0.38, 0.48, 0.08);
+    const ledgerGeo = new THREE.BoxGeometry(0.46, 0.56, 0.1);
 
     const islandMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.85 });
     const islandTopMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 });
@@ -762,7 +764,7 @@ export const step4 = {
 
     const onlineCount = this.stations.filter((s) => s.online).length;
     if (st.online && onlineCount <= 2) {
-      this.statusFeedbackMessage = 'Gardez au moins 2 gares allumées pour observer un échange pair-à-pair.';
+      this.statusFeedbackMessage = 'Gardez au moins 2 gares allumées pour voir la diffusion entre deux gares.';
       this.renderLeftPanel();
       return;
     }
@@ -776,9 +778,9 @@ export const step4 = {
     });
 
     if (!st.online) {
-      this.statusFeedbackMessage = `${st.name} éteinte (en panne). Émettez une transaction pour observer comment le réseau la contourne.`;
+      this.statusFeedbackMessage = `${st.name} éteinte (en panne). Envoyez une transaction pour voir comment le message passe par une autre voie.`;
     } else {
-      this.statusFeedbackMessage = `${st.name} remise en service et resynchronisée avec le réseau.`;
+      this.statusFeedbackMessage = `${st.name} rallumée : elle met sa copie à jour avec les autres gares.`;
     }
 
     this.refreshNetworkVisuals();
@@ -855,6 +857,7 @@ export const step4 = {
     const { waves } = this.computeGossipWaves(sourceIdx);
 
     this.isPropagating = true;
+    this.hasBroadcasted = true;
     this.txCount += 1;
     this.lastTxLabel = txLabel || `Bon d'expédition #${100 + this.txCount} (${sourceStation.name})`;
 
@@ -868,9 +871,9 @@ export const step4 = {
 
     const offlineNames = this.stations.filter((s) => !s.online).map((s) => s.name);
     if (offlineNames.length > 0) {
-      this.statusFeedbackMessage = `Contournement de ${offlineNames.join(', ')} : propagation de proche en proche par ${this.lastRouteSummary}.`;
+      this.statusFeedbackMessage = `Contournement de ${offlineNames.join(', ')} : chaque gare active reçoit sa copie par ${this.lastRouteSummary}.`;
     } else {
-      this.statusFeedbackMessage = `Propagation séquentielle en cours : ${this.lastRouteSummary}.`;
+      this.statusFeedbackMessage = `Envoi de gare en gare : ${this.lastRouteSummary}.`;
     }
 
     // Réinitialise l'état visuel des gares actives et des câbles
@@ -1171,21 +1174,24 @@ export const step4 = {
       <div class="step-panel-scroll">
         <article class="step-card context-card animate-fade">
           <h3 class="card-title">Un réseau sans chef de gare central</h3>
+          <div class="share-meaning-banner" style="margin-top: 4px; margin-bottom: 10px;">
+            <strong>Il n'y a AUCUN serveur central ou entreprise qui gère le réseau.</strong>
+          </div>
           <p>
-            Chaque gare représente un <strong>nœud</strong> du réseau : un ordinateur autonome qui détient la copie intégrale du registre.
+            Chaque gare représente un ordinateur indépendant : <strong>chaque gare possède sa propre copie intégrale</strong> de tout le train et de toutes les transactions passées (le bloc vert au-dessus d'elle).
           </p>
           <p>
-            Lorsqu'une transaction est émise, elle ne passe pas par un serveur unique : elle se diffuse de proche en proche (protocole <em>Gossip</em>) le long des lignes de communication.
+            Quand une transaction est envoyée, elle ne passe pas par un serveur unique : elle se transmet de gare en gare, d'une voisine à l'autre, par les câbles du réseau.
           </p>
           <div class="panel-hint-row" style="margin-top: 10px;">
-            <strong>Et si une gare tente de tricher ?</strong> Si un nœud émet une transaction invalide, les gares voisines la comparent immédiatement à leur propre registre et refusent de la relayer. L'incohérence est étouffée dès la première étape.
+            <strong>Et si une gare essaie de tricher ?</strong> Les gares voisines comparent aussitôt le message avec <em>leur propre copie</em> et refusent de le transmettre si les données ne collent pas.
           </div>
         </article>
 
         <article class="step-card action-card animate-fade">
-          <h3 class="card-title">Tester la propagation et les pannes</h3>
+          <h3 class="card-title">Tester l'envoi et les pannes</h3>
           <p class="card-instruction">
-            Cliquez sur <strong>Émettre</strong> pour diffuser une transaction. Vous pouvez aussi cliquer sur une gare pour simuler une panne et observer le contournement automatique :
+            Cliquez sur <strong>Envoyer</strong> pour copier une nouvelle transaction dans chaque gare. Vous pouvez aussi cliquer sur une gare (ou son icône en 3D) pour la mettre en panne :
           </p>
 
           <div class="station-nodes-grid" role="group" aria-label="État des 6 gares du réseau">
@@ -1194,7 +1200,7 @@ export const step4 = {
 
           <div class="substep-action-box" style="margin-top: 10px;">
             <button id="btn-step4-broadcast" class="btn-panel-primary" ${this.isPropagating ? 'disabled' : ''}>
-              <span>${this.isPropagating ? 'Propagation P2P en cours...' : 'Émettre une transaction sur le réseau'}</span>
+              <span>${this.isPropagating ? 'Envoi de gare en gare...' : 'Envoyer une transaction sur le réseau'}</span>
               ${!this.isPropagating ? '<span class="btn-arrow">&rarr;</span>' : ''}
             </button>
           </div>
@@ -1206,7 +1212,7 @@ export const step4 = {
 
           <div class="action-feedback-box ${!this.isPropagating ? 'success' : ''}" style="margin-top: 10px;">
             <div class="feedback-row">
-              <span class="feedback-label">Copies distribuées :</span>
+              <span class="feedback-label">Copies dans les gares :</span>
               <span id="step4-sync-val" class="feedback-val ${!this.isPropagating ? 'success-val' : 'hash-val'}">
                 ${syncedStations.length} / ${onlineStations.length} gares à jour${offlineSuffix}
               </span>
@@ -1220,9 +1226,9 @@ export const step4 = {
 
         ${this.hasBroadcasted ? `
           <article class="step-card keypoint-card animate-fade">
-            <h4 class="card-title keypoint-title">Point clé : Absence de point unique de défaillance</h4>
+            <h4 class="card-title keypoint-title">Point clé : Aucune gare n'est indispensable</h4>
             <p class="keypoint-text">
-              Dans une architecture décentralisée, aucune gare n'est indispensable. Même si un ou plusieurs nœuds tombent en panne, les transactions trouvent d'autres chemins et le réseau continue de fonctionner sans interruption.
+              Comme il n'existe aucun ordinateur central et que <strong>chaque gare garde sa propre copie intégrale</strong>, même si des gares tombent en panne, les messages passent par un autre chemin et le réseau ne s'arrête jamais.
             </p>
           </article>
         ` : ''}

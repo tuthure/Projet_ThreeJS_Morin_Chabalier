@@ -154,8 +154,8 @@ export const step1 = {
           <span class="scene-tooltip-label">PreviousHash : <code>${prevShort}...</code></span>
         </button>
         <div class="scene-tooltip-card">
-          <div class="scene-tooltip-card-title">1. Empreinte précédente (PreviousHash)</div>
-          <p class="scene-tooltip-card-text">Recopie l'empreinte de la locomotive (Bloc #0) sur l'étiquette gauche et le crochet avant pour verrouiller l'attelage.</p>
+          <div class="scene-tooltip-card-title">1. Code du wagon d'avant (PreviousHash)</div>
+          <p class="scene-tooltip-card-text">Recopie le code de la locomotive (Bloc #0) sur l'étiquette et le crochet avant pour bien l'accrocher.</p>
         </div>
       </div>
 
@@ -167,7 +167,7 @@ export const step1 = {
         </button>
         <div class="scene-tooltip-card">
           <div class="scene-tooltip-card-title">2. Données / Transactions</div>
-          <p class="scene-tooltip-card-text">Les marchandises placées dans le wagon vitré (ici : 15 MMI-Coin d'Arthur vers Alban), visibles et vérifiables par tous.</p>
+          <p class="scene-tooltip-card-text">Les échanges rangés dans le wagon vitré (ici : 15 MMI-Coin d'Arthur vers Alban), visibles par tout le monde.</p>
         </div>
       </div>
 
@@ -178,8 +178,8 @@ export const step1 = {
           <span class="scene-tooltip-label">Molette Nonce : <code>${nonceVal}</code></span>
         </button>
         <div class="scene-tooltip-card">
-          <div class="scene-tooltip-card-title">3. Compteur mécanique (Nonce)</div>
-          <p class="scene-tooltip-card-text">Nombre ajusté lors de la validation du wagon en gare (étape 5) pour obtenir une empreinte conforme aux règles du réseau.</p>
+          <div class="scene-tooltip-card-title">3. Numéro de réglage (Nonce)</div>
+          <p class="scene-tooltip-card-text">Un compteur que l'on tourne lors de la vérification en gare (étape 5) pour obtenir un code Hash autorisé.</p>
         </div>
       </div>
 
@@ -190,8 +190,8 @@ export const step1 = {
           <span class="scene-tooltip-label">Hash : <code>${hashShort}...</code></span>
         </button>
         <div class="scene-tooltip-card">
-          <div class="scene-tooltip-card-title">4. Empreinte du bloc (Hash SHA-256)</div>
-          <p class="scene-tooltip-card-text">Signature unique calculée à partir des 3 éléments (Transactions + PreviousHash + Nonce). Elle donne sa couleur à l'étiquette centrale et à la prise arrière.</p>
+          <div class="scene-tooltip-card-title">4. Code unique du wagon (Hash SHA-256)</div>
+          <p class="scene-tooltip-card-text">Une empreinte unique fabriquée avec les 3 pièces (Transactions + PreviousHash + Nonce). Elle donne sa couleur à la plaque et à la prise arrière.</p>
         </div>
       </div>
     `;
@@ -325,7 +325,7 @@ export const step1 = {
         // Cibles 3D locales sur le Wagon #1
         const pPrevPlate = wagon1.localToWorld(new THREE.Vector3(-1.185, 0.62, 0.15));
         const pPrevHook = wagon1.localToWorld(new THREE.Vector3(-1.42, 0.0, 0.0));
-        const pCargo = wagon1.localToWorld(new THREE.Vector3(-0.45, 0.72, 0.15));
+        const pCargo = wagon1.localToWorld(new THREE.Vector3(-0.46, 0.68, 0.15));
         const pNonce = wagon1.localToWorld(new THREE.Vector3(0.0, 0.2, 0.71));
         const pHashPlate = wagon1.localToWorld(new THREE.Vector3(0.15, 0.62, 0.605));
         const pHashSocket = wagon1.localToWorld(new THREE.Vector3(1.48, 0.0, 0.0));
@@ -515,24 +515,24 @@ export const step1 = {
 
       <div class="step-panel-scroll">
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Anatomie d'un wagon</h3>
+          <h3 class="card-title">Comment est fait un wagon (un bloc) ?</h3>
           <p>
-            Un bloc est comparable à un wagon aux parois de verre. Tout le réseau peut lire ce qu'il transporte, mais personne ne peut modifier son contenu une fois scellé.
+            Un bloc ressemble à un wagon aux parois vitrées. Tout le monde peut voir ce qu'il transporte, mais personne ne peut changer son contenu une fois fermé.
           </p>
           <p>
-            Cliquez sur une infobulle 3D ou sur un élément ci-dessous pour inspecter les <strong>4 composants</strong> qui forment un bloc :
+            Cliquez sur une bulle en 3D ou dans la liste ci-dessous pour découvrir les <strong>4 pièces</strong> d'un bloc :
           </p>
 
           <div class="anatomy-list">
             <button type="button" class="anatomy-item-btn" data-part="prev" style="--item-color: ${colorPrev};">
               <span class="anatomy-dot"></span>
-              <span class="anatomy-name">1. PreviousHash (Attache avant)</span>
+              <span class="anatomy-name">1. PreviousHash (Lien avant)</span>
               <code class="anatomy-code">${prevShort}...</code>
             </button>
 
             <button type="button" class="anatomy-item-btn" data-part="cargo" style="--item-color: ${colorCargo};">
               <span class="anatomy-dot"></span>
-              <span class="anatomy-name">2. Transactions (Conteneurs)</span>
+              <span class="anatomy-name">2. Transactions (Caisses)</span>
               <code class="anatomy-code">15 MMI-Coin</code>
             </button>
 
@@ -544,7 +544,7 @@ export const step1 = {
 
             <button type="button" class="anatomy-item-btn" data-part="hash" style="--item-color: ${colorHash};">
               <span class="anatomy-dot"></span>
-              <span class="anatomy-name">4. Hash (Sceau actuel)</span>
+              <span class="anatomy-name">4. Hash (Empreinte du wagon)</span>
               <code class="anatomy-code">${hashShort}...</code>
             </button>
 
@@ -556,9 +556,9 @@ export const step1 = {
         </article>
 
         <article class="step-card keypoint-card animate-fade">
-          <h4 class="card-title keypoint-title">Point clé : Une empreinte 100 % déterministe</h4>
+          <h4 class="card-title keypoint-title">Point clé : Un code calculé sans aucun hasard</h4>
           <p class="keypoint-text">
-            Le Hash n'est pas un tirage au sort aléatoire. C'est le résultat d'un calcul mathématique (la fonction de hachage SHA-256) qui prend les 3 ingrédients en entrée :
+            Le Hash n'est pas choisi au hasard. C'est une formule mathématique automatique (appelée SHA-256) qui mélange les 3 éléments :
           </p>
           <div class="block-formula-box">
             <div class="formula-func">
@@ -569,7 +569,7 @@ export const step1 = {
             </div>
           </div>
           <p class="keypoint-subtext">
-            N'importe quel ordinateur ou gare du réseau qui effectue ce calcul obtiendra <strong>exactement la même empreinte</strong>. Si une seule lettre change dans la parenthèse, le résultat en sortie change du tout au tout (effet avalanche).
+            N'importe quel ordinateur qui refait ce calcul trouve <strong>exactement le même code</strong>. Mais si un seul chiffre ou une seule lettre change, tout le Hash et sa couleur changent du tout au tout.
           </p>
         </article>
 

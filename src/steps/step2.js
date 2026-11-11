@@ -170,9 +170,9 @@ export const step2 = {
             <span class="scene-tooltip-label">Liaison ${parentIdx}-${childIdx} : <code>${hashShort}...</code></span>
           </button>
           <div class="scene-tooltip-card">
-            <div class="scene-tooltip-card-title">Attelage ${parentName} &rarr; ${childName}</div>
+            <div class="scene-tooltip-card-title">Attache ${parentName} &rarr; ${childName}</div>
             <p class="scene-tooltip-card-text">
-              La prise arrière de ${parentName} et le crochet avant de ${childName} partagent exactement la même empreinte cryptographique.
+              La prise arrière de ${parentName} et le crochet avant de ${childName} ont exactement la même couleur et le même code.
             </p>
           </div>
         </div>
@@ -415,14 +415,14 @@ export const step2 = {
         <article class="step-card context-card animate-fade">
           <h3 class="card-title">La règle des dominos</h3>
           <p>
-            Dans une blockchain, chaque wagon transporte deux empreintes distinctes :
+            Dans une blockchain, chaque wagon porte deux codes :
           </p>
           <ul class="clean-bullet-list">
-            <li><strong>À l'avant :</strong> l'empreinte du wagon précédent (<em>PreviousHash</em>).</li>
-            <li><strong>À l'arrière :</strong> sa propre empreinte (<em>Hash</em>).</li>
+            <li><strong>À l'avant :</strong> le code du wagon d'avant (<em>PreviousHash</em>).</li>
+            <li><strong>À l'arrière :</strong> son propre code (<em>Hash</em>).</li>
           </ul>
           <p>
-            Observez les points d'attelage dans la scène : chaque articulation possède sa propre couleur. L'anneau arrière du wagon parent et le crochet avant du wagon suivant affichent toujours la même signature.
+            Regardez les attaches entre deux wagons : chaque liaison a sa propre couleur. L'anneau arrière d'un wagon et le crochet avant du wagon suivant ont toujours la même couleur.
           </p>
         </article>
 
@@ -430,8 +430,8 @@ export const step2 = {
           <h3 class="card-title">Agrandir la chaîne</h3>
           <p class="card-instruction">
             ${!hasThirdWagon
-              ? "Ajoutez un wagon pour observer l'enclenchement instantané d'une nouvelle liaison conforme :"
-              : "Le convoi compte 4 blocs. Chaque ajout étend la chaîne sans jamais altérer les liaisons antérieures."}
+              ? "Ajoutez un wagon pour voir comment il s'accroche automatiquement avec la bonne couleur :"
+              : "Le train compte maintenant 4 blocs. On ajoute toujours les nouveaux wagons à la fin sans toucher aux anciens."}
           </p>
 
           ${!hasThirdWagon ? `
@@ -442,16 +442,16 @@ export const step2 = {
             </div>
           ` : `
             <div class="action-feedback-status visible status-success" style="margin-top: 8px;">
-              Chaîne de 4 blocs intègre : la 3e liaison s'est verrouillée sur le Hash du Wagon #2.
+              Train de 4 blocs valide : le nouveau wagon s'est verrouillé sur le code du Wagon #2.
             </div>
           `}
         </article>
 
         ${hasThirdWagon ? `
           <article class="step-card keypoint-card animate-fade">
-            <h4 class="card-title keypoint-title">Point clé : L'effet domino inverse</h4>
+            <h4 class="card-title keypoint-title">Point clé : L'effet domino</h4>
             <p class="keypoint-text">
-              Chaque bloc dépend mathématiquement de son ancêtre. Pour falsifier un ancien bloc, un attaquant devrait obligatoirement recalculer et ré-atteler <strong>tous les wagons qui le suivent</strong> jusqu'au bout du convoi.
+              Chaque wagon est lié à celui d'avant par son code. Pour tricher sur un ancien wagon, il faudrait obligatoirement recalculer et raccrocher <strong>tous les wagons qui suivent</strong> jusqu'au bout du train.
             </p>
           </article>
         ` : ''}

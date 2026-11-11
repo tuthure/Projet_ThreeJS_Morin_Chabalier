@@ -21,7 +21,7 @@ export const step7 = {
   mode: 'normal', // 'normal' (Pirate 20 % vs 80 %) | 'attack51' (Pirate 60 % vs 40 %)
   raceState: 'idle', // 'idle' | 'running' | 'done'
   raceTimer: 0,
-  raceDuration: 2.7,
+  raceDuration: 5.2,
   hasTestedNormal: false,
   hasTestedAttack51: false,
 
@@ -730,8 +730,8 @@ export const step7 = {
         this.raceTimer += dt;
         const p = Math.min(this.raceTimer / this.raceDuration, 1.0);
 
-        const honestMaxCrans = isNormal ? 30 : 12;
-        const pirateMaxCrans = isNormal ? 9 : 28;
+        const honestMaxCrans = isNormal ? 28 : 14;
+        const pirateMaxCrans = isNormal ? 6 : 21;
 
         if (this.honestWheelObj) {
           const hCrans = Math.max(1, Math.floor(honestMaxCrans * p));
@@ -742,7 +742,7 @@ export const step7 = {
           this.honestWheelObj.currentAngle = THREE.MathUtils.lerp(
             this.honestWheelObj.currentAngle,
             hCrans * (Math.PI / 4),
-            Math.min(1, dt * 18)
+            Math.min(1, dt * 12)
           );
           this.honestWheelObj.wheelMesh.rotation.set(Math.PI / 2, this.honestWheelObj.currentAngle, 0);
         }
@@ -756,14 +756,14 @@ export const step7 = {
           this.pirateWheelObj.currentAngle = THREE.MathUtils.lerp(
             this.pirateWheelObj.currentAngle,
             pCrans * (Math.PI / 4),
-            Math.min(1, dt * 18)
+            Math.min(1, dt * 12)
           );
           this.pirateWheelObj.wheelMesh.rotation.set(Math.PI / 2, this.pirateWheelObj.currentAngle, 0);
         }
 
         // Assemblage progressif des wagons #2, #3, #4 (de 1 à 3 wagons sur la branche la plus rapide)
-        const newHonest = isNormal ? (p >= 0.72 ? 3 : p >= 0.36 ? 2 : 1) : 1;
-        const newPirate = isNormal ? 1 : (p >= 0.72 ? 3 : p >= 0.36 ? 2 : 1);
+        const newHonest = isNormal ? (p >= 0.8 ? 3 : p >= 0.42 ? 2 : 1) : 1;
+        const newPirate = isNormal ? 1 : (p >= 0.8 ? 3 : p >= 0.42 ? 2 : 1);
 
         if (newHonest !== this.honestBranchCount || newPirate !== this.pirateBranchCount) {
           this.honestBranchCount = newHonest;
@@ -798,9 +798,9 @@ export const step7 = {
             const targetX = honestWins ? i * 3.8 : i * 3.8 + this.branchOffsetX;
             const targetZ = honestWins ? 0 : this.honestBranchZ;
 
-            w.position.x = THREE.MathUtils.lerp(w.position.x, targetX, Math.min(1, dt * 7.5));
-            w.position.z = THREE.MathUtils.lerp(w.position.z, targetZ, Math.min(1, dt * 7.5));
-            const nextScale = THREE.MathUtils.lerp(w.scale.x, 1.0, Math.min(1, dt * 10));
+            w.position.x = THREE.MathUtils.lerp(w.position.x, targetX, Math.min(1, dt * 4.5));
+            w.position.z = THREE.MathUtils.lerp(w.position.z, targetZ, Math.min(1, dt * 4.5));
+            const nextScale = THREE.MathUtils.lerp(w.scale.x, 1.0, Math.min(1, dt * 6.5));
             w.scale.setScalar(nextScale);
 
             // Redresse le crochet d'attelage du Wagon #2 quand il s'emboîte dans le Wagon #1
@@ -838,11 +838,11 @@ export const step7 = {
           const targetX = pirateWins ? pw.coupledX : pw.coupledX + this.branchOffsetX;
           const targetZ = pirateWins ? 0 : this.pirateBranchZ;
 
-          pw.currentX = THREE.MathUtils.lerp(pw.currentX, targetX, Math.min(1, dt * 7.5));
-          pw.currentZ = THREE.MathUtils.lerp(pw.currentZ, targetZ, Math.min(1, dt * 7.5));
+          pw.currentX = THREE.MathUtils.lerp(pw.currentX, targetX, Math.min(1, dt * 4.0));
+          pw.currentZ = THREE.MathUtils.lerp(pw.currentZ, targetZ, Math.min(1, dt * 4.0));
           pw.group.position.set(pw.currentX, 0, pw.currentZ);
 
-          const nextScale = THREE.MathUtils.lerp(pw.group.scale.x, 1.0, Math.min(1, dt * 10));
+          const nextScale = THREE.MathUtils.lerp(pw.group.scale.x, 1.0, Math.min(1, dt * 6.0));
           pw.group.scale.setScalar(nextScale);
 
           if (idx === 0) {
@@ -973,12 +973,12 @@ export const step7 = {
     const modeBannerHTML = isNormal
       ? `
         <div class="share-meaning-banner">
-          <strong>80 % contre 20 % :</strong> les gares honnêtes sont 4 fois plus rapides que le pirate seul.
+          <strong>Pirate seul (20 %) :</strong> les gares honnêtes (80 %) avancent 4 fois plus vite que lui.
         </div>
       `
       : `
         <div class="share-meaning-banner" style="border-left-color: #ef4444;">
-          <strong>40 % contre 60 % :</strong> le pirate possède plus de la moitié des machines du réseau.
+          <strong>Pirate majoritaire (60 %) :</strong> il contrôle plus de la moitié des machines. Il construit des wagons plus vite que le réseau.
         </div>
       `;
 
@@ -986,12 +986,12 @@ export const step7 = {
       ? isNormal
         ? `
           <p style="margin: 10px 0 0 0;">
-            Les gares honnêtes gagnent (<strong>+3 wagons contre +1</strong>) et s'attachent au Wagon #1.
+            Les gares honnêtes assemblent <strong>3 wagons contre 1</strong>. Leur voie s'accroche au train. La triche du pirate échoue.
           </p>
         `
         : `
           <p style="margin: 10px 0 0 0;">
-            Le pirate gagne (<strong>+3 wagons contre +1</strong>) et attache sa file au Wagon #1 !
+            Le pirate assemble <strong>3 wagons contre 1</strong>. Sa file est la plus longue : elle remplace la suite officielle !
           </p>
         `
       : '';
@@ -1003,9 +1003,15 @@ export const step7 = {
 
       <div class="step-panel-scroll">
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">La chaîne la plus longue gagne</h3>
+          <h3 class="card-title">Une course sur deux voies</h3>
           <p>
-            Derrière le <strong>Wagon #1</strong>, un pirate tente d'attacher sa propre file de wagons. Règle du réseau : <strong>seule la file qui assemble le plus de wagons s'attache au train</strong>.
+            Sur la voie du haut, les <strong>gares honnêtes</strong> ajoutent la suite normale du train.
+          </p>
+          <p>
+            Sur la voie du bas, un <strong>pirate</strong> fabrique en secret une fausse suite pour annuler son propre paiement (double dépense).
+          </p>
+          <p>
+            Règle du réseau : <strong>le train le plus long gagne</strong> et s'accroche au Wagon #1.
           </p>
         </article>
 
@@ -1030,9 +1036,9 @@ export const step7 = {
 
         ${(this.hasTestedNormal || this.hasTestedAttack51) ? `
           <article class="step-card keypoint-card animate-fade">
-            <h4 class="card-title keypoint-title">Point clé : L'attaque des 51 %</h4>
+            <h4 class="card-title keypoint-title">Pourquoi est-ce presque impossible en vrai ?</h4>
             <p class="keypoint-text">
-              Pour dépasser le réseau honnête, un pirate devrait contrôler plus de <strong>51 %</strong> des machines (PoW) ou de la caution (PoS) du monde entier.
+              Pour dépasser les gares honnêtes, un pirate doit posséder plus de <strong>51 %</strong> des machines (PoW) ou des jetons (PoS) du monde entier. Sur un grand réseau public, cela coûte beaucoup trop cher.
             </p>
           </article>
         ` : ''}

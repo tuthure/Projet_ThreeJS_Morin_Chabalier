@@ -1190,7 +1190,7 @@ export const step6 = {
       `
       : `
         <div class="share-meaning-banner">
-          <strong>Part de caution (100 jetons au total) :</strong> chaque jeton déposé donne 1 % de la barre de tirage ci-dessous (50, 35 et 15 %).
+          <strong>Garantie déposée (100 jetons en jeu) :</strong> plus une gare dépose de jetons, plus elle a de chances d'être tirée au sort (50 %, 35 % et 15 %).
         </div>
         <div class="pos-lottery-box">
           <div class="pos-lottery-track">
@@ -1206,12 +1206,12 @@ export const step6 = {
       ? isPoW
         ? `
           <p style="margin: 10px 0 0 0;">
-            La <strong>${winner.name}</strong> a trouvé le <strong>Nonce #${this.winningNonce}</strong> en premier et attelle le Wagon #2, alors que les 2 autres gares ont gaspillé de l'énergie en tournant pour rien...
+            La <strong>${winner.name}</strong> a trouvé le <strong>Nonce #${this.winningNonce}</strong> en premier et accroche le Wagon #2. Les 2 autres gares ont dépensé de l'électricité pour rien...
           </p>
         `
         : `
           <p style="margin: 10px 0 0 0;">
-            La <strong>${winner.name}</strong> a été tirée au sort : seule sa molette a tourné jusqu'au <strong>Nonce #${this.winningNonce}</strong>. Contrairement au système PoW, les 2 autres gares sont restées au repos sans gaspiller d'énergie.
+            La <strong>${winner.name}</strong> a été tirée au sort : seule sa molette a tourné jusqu'au <strong>Nonce #${this.winningNonce}</strong>. Les 2 autres gares sont restées au repos sans gaspiller d'énergie.
           </p>
         `
       : '';
@@ -1223,14 +1223,14 @@ export const step6 = {
 
       <div class="step-panel-scroll">
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Comment départager les 3 gares ?</h3>
+          <h3 class="card-title">Comment choisir la gare gagnante ?</h3>
           <p>
-            Les <strong>Gares A, B et C</strong> veulent toutes valider le <strong>Wagon #2</strong>. Comparez la <strong>course (PoW)</strong> et le <strong>tirage au sort (PoS)</strong>.
+            Les <strong>Gares A, B et C</strong> veulent toutes accrocher le <strong>Wagon #2</strong>. Comparez deux méthodes : la <strong>course (PoW)</strong> et le <strong>tirage au sort (PoS)</strong>.
           </p>
         </article>
 
         <article class="step-card action-card animate-fade">
-          <div class="difficulty-selector-row" role="tablist" aria-label="Choix du mécanisme de consensus">
+          <div class="difficulty-selector-row" role="tablist" aria-label="Choix de la méthode">
             <button id="btn-tab-pow" class="btn-diff-option ${isPoW ? 'active' : ''}" role="tab" aria-selected="${isPoW}" ${isBusy ? 'disabled' : ''}>
               <span>PoW (Course)</span>
             </button>
@@ -1250,9 +1250,9 @@ export const step6 = {
 
         ${(this.hasTestedPoW || this.hasTestedPoS) ? `
           <article class="step-card keypoint-card animate-fade">
-            <h4 class="card-title keypoint-title">Point clé : PoW vs PoS</h4>
+            <h4 class="card-title keypoint-title">Point clé : Preuve de Travail (PoW) vs Preuve d'Enjeu (PoS)</h4>
             <p class="keypoint-text">
-              En <strong>PoW (Bitcoin)</strong>, les 3 molettes tournent en même temps : le calcul des perdantes est gaspillé. En <strong>PoS (Ethereum)</strong>, on tire d'abord au sort la gare gagnante, puis <strong>seule sa molette tourne</strong>.
+              En <strong>PoW (Bitcoin)</strong>, tout le monde cherche en même temps : le travail des perdantes consomme de l'énergie pour rien. En <strong>PoS (Ethereum)</strong>, on tire une gare au sort grâce aux jetons déposés en garantie, et <strong>seule sa molette tourne</strong>.
             </p>
           </article>
         ` : ''}

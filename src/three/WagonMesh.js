@@ -250,100 +250,34 @@ export class WagonMesh extends THREE.Group {
         this.cargoGroup.add(bar);
       }
     } else {
-      // 1. Grand conteneur maritime nervure (cote gauche, x = -0.55)
-      const containerGeo = new THREE.BoxGeometry(0.85, 0.68, 0.85);
-      const containerMat = new THREE.MeshStandardMaterial({
+      // Interieur epure : uniquement deux caisses bien lisibles et espacees pour aerer la vue
+      const mainCrateGeo = new THREE.BoxGeometry(0.76, 0.56, 0.68);
+      const mainCrateMat = new THREE.MeshStandardMaterial({
         color: 0xf97316, // Orange fret haute visibilite
-        metalness: 0.65,
-        roughness: 0.3,
+        metalness: 0.45,
+        roughness: 0.4,
         emissive: 0xc2410c,
-        emissiveIntensity: 0.25
-      });
-      this.containerMaterials.push(containerMat);
-
-      const containerMesh = new THREE.Mesh(containerGeo, containerMat);
-      containerMesh.position.set(-0.55, 0.5, 0);
-      this.cargoGroup.add(containerMesh);
-
-      // Rainures de tole ondulee horizontales sur le conteneur
-      for (let yOffset = -0.2; yOffset <= 0.2; yOffset += 0.12) {
-        const ribGeo = new THREE.BoxGeometry(0.87, 0.03, 0.87);
-        const ribMat = new THREE.MeshStandardMaterial({
-          color: 0xea580c,
-          metalness: 0.8,
-          roughness: 0.25
-        });
-        const rib = new THREE.Mesh(ribGeo, ribMat);
-        rib.position.set(-0.55, 0.5 + yOffset, 0);
-        this.cargoGroup.add(rib);
-      }
-
-      // 2. Palette de caisses empilees en bois/acier (centre droit, x = 0.3)
-      const crateBottomGeo = new THREE.BoxGeometry(0.55, 0.4, 0.7);
-      const crateBottomMat = new THREE.MeshStandardMaterial({
-        color: 0xd97706,
-        metalness: 0.3,
-        roughness: 0.7,
-        emissive: 0x92400e,
         emissiveIntensity: 0.2
       });
-      this.containerMaterials.push(crateBottomMat);
-      const crateBottom = new THREE.Mesh(crateBottomGeo, crateBottomMat);
-      crateBottom.position.set(0.28, 0.36, 0);
-      this.cargoGroup.add(crateBottom);
+      this.containerMaterials.push(mainCrateMat);
 
-      const crateTopGeo = new THREE.BoxGeometry(0.48, 0.32, 0.58);
-      const crateTopMat = new THREE.MeshStandardMaterial({
-        color: 0xb45309,
+      const mainCrate = new THREE.Mesh(mainCrateGeo, mainCrateMat);
+      mainCrate.position.set(-0.46, 0.42, 0);
+      this.cargoGroup.add(mainCrate);
+
+      const secondaryCrateGeo = new THREE.BoxGeometry(0.6, 0.44, 0.6);
+      const secondaryCrateMat = new THREE.MeshStandardMaterial({
+        color: 0xd97706, // Ambre bois/acier
         metalness: 0.35,
-        roughness: 0.65,
-        emissive: 0x78350f,
-        emissiveIntensity: 0.2
+        roughness: 0.55,
+        emissive: 0x92400e,
+        emissiveIntensity: 0.15
       });
-      this.containerMaterials.push(crateTopMat);
-      const crateTop = new THREE.Mesh(crateTopGeo, crateTopMat);
-      crateTop.position.set(0.3, 0.72, 0.04);
-      this.cargoGroup.add(crateTop);
+      this.containerMaterials.push(secondaryCrateMat);
 
-      // Sangles metalliques de retenue sur les caisses
-      const strapGeo = new THREE.BoxGeometry(0.5, 0.72, 0.03);
-      const strapMat = new THREE.MeshStandardMaterial({
-        color: 0x475569,
-        metalness: 0.9,
-        roughness: 0.3
-      });
-      const strap = new THREE.Mesh(strapGeo, strapMat);
-      strap.position.set(0.29, 0.54, 0.36);
-      this.cargoGroup.add(strap);
-
-      // 3. Deux bonbonnes / canisters cylindriques d'energie (jetons, x = 0.85)
-      [-0.26, 0.26].forEach((zPos) => {
-        const canisterGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.55, 16);
-        const canisterMat = new THREE.MeshStandardMaterial({
-          color: 0x0284c7, // Bleu cobalt haute technologie
-          metalness: 0.8,
-          roughness: 0.2,
-          emissive: 0x0369a1,
-          emissiveIntensity: 0.35
-        });
-        this.containerMaterials.push(canisterMat);
-
-        const canister = new THREE.Mesh(canisterGeo, canisterMat);
-        canister.position.set(0.85, 0.44, zPos);
-        this.cargoGroup.add(canister);
-
-        // Anneau neon central sur chaque bonbonne
-        const ringGeo = new THREE.TorusGeometry(0.15, 0.02, 8, 20);
-        const ringMat = new THREE.MeshStandardMaterial({
-          color: 0x38bdf8,
-          emissive: 0x38bdf8,
-          emissiveIntensity: 1.2
-        });
-        const ring = new THREE.Mesh(ringGeo, ringMat);
-        ring.rotation.x = Math.PI / 2;
-        ring.position.set(0.85, 0.44, zPos);
-        this.cargoGroup.add(ring);
-      });
+      const secondaryCrate = new THREE.Mesh(secondaryCrateGeo, secondaryCrateMat);
+      secondaryCrate.position.set(0.48, 0.36, 0);
+      this.cargoGroup.add(secondaryCrate);
     }
 
     this.add(this.cargoGroup);
@@ -357,7 +291,7 @@ export class WagonMesh extends THREE.Group {
     const glassMaterial = new THREE.MeshStandardMaterial({
       color: 0x38bdf8,
       transparent: true,
-      opacity: 0.28,
+      opacity: 0.16,
       metalness: 0.1,
       roughness: 0.15,
       depthWrite: false
@@ -838,7 +772,7 @@ export class WagonMesh extends THREE.Group {
       // 2. Verriere protectrice cyan limpide
       this.glassMaterials.forEach((mat) => {
         mat.color.setHex(0x38bdf8);
-        mat.opacity = 0.28;
+        mat.opacity = 0.16;
       });
       this.edgeMaterials.forEach((mat) => {
         mat.color.setHex(0x38bdf8);
@@ -884,7 +818,7 @@ export class WagonMesh extends THREE.Group {
       // 2. Verriere : conserver l'aspect protecteur cyan normal
       this.glassMaterials.forEach((mat) => {
         mat.color.setHex(0x38bdf8);
-        mat.opacity = 0.28;
+        mat.opacity = 0.16;
       });
       this.edgeMaterials.forEach((mat) => {
         mat.color.setHex(0x38bdf8);

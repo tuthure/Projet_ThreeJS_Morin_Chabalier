@@ -437,7 +437,7 @@ export const step5 = {
         </button>
         <div class="scene-tooltip-card">
           <div class="scene-tooltip-card-title">Déjà miné et attelé</div>
-          <p class="scene-tooltip-card-text">Comme la Locomotive #0, ce wagon a déjà été miné : son Hash commence bien par "${targetPrefix}".</p>
+          <p class="scene-tooltip-card-text">Comme la Locomotive #0, ce wagon a déjà réussi l'épreuve : son Hash commence bien par "${targetPrefix}".</p>
         </div>
       </div>
 
@@ -448,8 +448,8 @@ export const step5 = {
           <span class="scene-tooltip-label">Hash #2 : <code id="s5-pill-hash-code">${hash2Short}...</code> · <strong id="s5-pill-hash-badge" style="color: #fb923c;">Sans "${targetPrefix}" (Bloqué)</strong></span>
         </button>
         <div class="scene-tooltip-card">
-          <div class="scene-tooltip-card-title">Condition d'attelage (Preuve de Travail)</div>
-          <p class="scene-tooltip-card-text">Tant que ce Hash ne commence pas par "${targetPrefix}", le Wagon #2 reste bloqué à distance et ne peut pas rejoindre le train.</p>
+          <div class="scene-tooltip-card-title">Règle pour accrocher le wagon</div>
+          <p class="scene-tooltip-card-text">Tant que ce Hash ne commence pas par "${targetPrefix}", le Wagon #2 reste bloqué à droite et ne peut pas rejoindre le train.</p>
         </div>
       </div>
 
@@ -845,22 +845,25 @@ export const step5 = {
 
       <div class="step-panel-scroll">
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Pourquoi tourner la molette du Nonce ?</h3>
+          <h3 class="card-title">À quoi sert le minage (la molette du Nonce) ?</h3>
+          <div class="share-meaning-banner" style="border-left-color: #f59e0b; margin-top: 4px; margin-bottom: 10px;">
+            L'objectif du minage n'est pas de créer de l'argent, mais de <strong>rendre la validation mathématiquement très coûteuse, ce qui empêche les tricheurs de réécrire l'historique</strong>.
+          </div>
           <p>
-            Tous les wagons du train doivent avoir un Hash qui commence par <strong>"${targetPrefix}"</strong>. Le <strong>Wagon #2</strong> à droite est bloqué car le sien commence par <code>${this.currentHash.substring(0, 4)}...</code>.
+            Pour entrer dans le train, chaque wagon doit avoir un Hash qui commence par <strong>"${targetPrefix}"</strong>. Le <strong>Wagon #2</strong> à droite est bloqué car son code commence par <code>${this.currentHash.substring(0, 4)}...</code>.
           </p>
           <div class="block-formula-box">
             <div class="formula-func">
               <strong>SHA-256</strong>( PreviousHash + Transactions + <span style="color: #f59e0b; font-weight: 700;">Nonce</span> ) = <strong>Hash</strong>
             </div>
             <div class="formula-example">
-              Comme le <code>PreviousHash</code> et les <code>Transactions</code> ne peuvent pas être modifiés, seul le <strong style="color: #f59e0b;">Nonce</strong> peut changer pour tenter d'obtenir <code>${targetPrefix}...</code>.
+              On ne peut changer ni le <code>PreviousHash</code> ni les <code>Transactions</code> : il faut donc tourner le <strong style="color: #f59e0b;">Nonce</strong> cran par cran jusqu'à obtenir <code>${targetPrefix}...</code>.
             </div>
           </div>
         </article>
 
         <article class="step-card action-card animate-fade">
-          <h3 class="card-title">Preuve de Travail (Proof of Work)</h3>
+          <h3 class="card-title">Trouver le bon Nonce (Preuve de Travail)</h3>
           <p class="card-instruction">
             Cliquez sur la <strong>molette en 3D</strong> pour tester 1 cran à la main, ou lancez le <strong>minage automatique</strong> :
           </p>
@@ -883,8 +886,8 @@ export const step5 = {
 
           <div class="action-feedback-box ${this.isMined ? 'success' : (this.isMining || this.attemptsDone > 0 ? 'error' : '')}">
             <div class="feedback-row">
-              <span class="feedback-label">Règle d'admission :</span>
-              <span class="feedback-val">Hash débutant par "${targetPrefix}"</span>
+              <span class="feedback-label">Code demandé :</span>
+              <span class="feedback-val">Hash commençant par "${targetPrefix}"</span>
             </div>
             <div class="feedback-row">
               <span class="feedback-label">Molette Nonce :</span>
@@ -907,7 +910,7 @@ export const step5 = {
           <article class="step-card keypoint-card animate-fade">
             <h4 class="card-title keypoint-title">Point clé : En réalité, c'est beaucoup plus long</h4>
             <p class="keypoint-text">
-              Ici, le calcul est volontairement simplifié (1 à 3 zéros, soit ~${avgLabel} crans) pour ne durer qu'une à deux secondes. Sur une vraie blockchain comme Bitcoin, le réseau exige environ <strong>19 zéros d'affilée</strong> : même avec des milliers d'ordinateurs spécialisés, il faut en moyenne <strong>10 minutes</strong> pour valider un seul bloc.
+              Ici, on demande seulement 1 à 3 zéros (~${avgLabel} essais) pour que cela dure 1 ou 2 secondes. Sur un vrai réseau comme Bitcoin, il faut environ <strong>19 zéros d'affilée</strong> : même avec des milliers d'ordinateurs puissants, il faut environ <strong>10 minutes</strong> pour accrocher un seul wagon. Un tricheur devrait refaire tout ce travail immense pour chaque wagon.
             </p>
           </article>
         ` : ''}
