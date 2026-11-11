@@ -741,8 +741,8 @@ export class WagonMesh extends THREE.Group {
         const prevShort = this.block.previousHash.substring(0, 16);
         ctx.fillText(`${prevShort}...`, 20, 94);
         ctx.fillStyle = '#64748b';
-        ctx.font = '18px monospace';
-        ctx.fillText('(Sceau wagon avant)', 20, 146);
+        ctx.font = '16px monospace';
+        ctx.fillText('(Empreinte du wagon précédent)', 20, 146);
       }
 
       this.badges.prev.texture.needsUpdate = true;
