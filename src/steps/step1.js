@@ -582,43 +582,37 @@ export const step1 = {
         <article class="step-card keypoint-card animate-fade">
           <h4 class="card-title keypoint-title">Point clé : Un code calculé sans aucun hasard</h4>
           <p class="keypoint-text">
-            Le Hash n'est pas choisi au hasard : l'ordinateur fusionne automatiquement les 3 premiers éléments du wagon :
+            Le Hash n'est pas choisi au hasard. C'est une formule mathématique automatique (appelée SHA-256) qui mélange les 3 éléments :
           </p>
           <div class="hash-schema-box">
-            <div class="hash-schema-inputs">
-              <div class="hash-schema-item" style="--item-color: ${colorPrev};">
-                <span class="hash-schema-dot"></span>
-                <span class="hash-schema-name">1. PreviousHash</span>
-                <code class="hash-schema-val">${prevShort}...</code>
-              </div>
-
-              <div class="hash-schema-plus">+</div>
-
-              <div class="hash-schema-item" style="--item-color: ${colorCargo};">
-                <span class="hash-schema-dot"></span>
-                <span class="hash-schema-name">2. Transactions</span>
-                <code class="hash-schema-val">Fret #104 : 15 t d'acier</code>
-              </div>
-
-              <div class="hash-schema-plus">+</div>
-
-              <div class="hash-schema-item" style="--item-color: ${colorNonce};">
-                <span class="hash-schema-dot"></span>
-                <span class="hash-schema-name">3. Nonce</span>
-                <code class="hash-schema-val">${nonceVal}</code>
-              </div>
+            <!-- Ligne 1 : HASH (au centre) -->
+            <div class="calc-row-hash">
+              <span class="calc-hash-title" style="color: ${colorHash};">HASH</span>
+              <span class="calc-hash-sub" style="color: ${colorHash};">(${hashShort}...)</span>
             </div>
 
-            <div class="hash-schema-funnel">
-              <span class="hash-schema-arrow">&darr;</span>
-              <span class="hash-schema-badge">Calcul automatique (SHA-256)</span>
-              <span class="hash-schema-arrow">&darr;</span>
-            </div>
+            <div class="calc-equal">=</div>
 
-            <div class="hash-schema-result" style="--item-color: ${colorHash};">
-              <span class="hash-schema-dot"></span>
-              <span class="hash-schema-name">= 4. Hash du wagon</span>
-              <code class="hash-schema-val">${hashShort}...</code>
+            <!-- Ligne 2 & 3 : PreviousHash + Transactions + Nonce et leurs exemples -->
+            <div class="calc-row-terms">
+              <div class="calc-col" style="--col-color: ${colorPrev};">
+                <span class="calc-term">PreviousHash</span>
+                <span class="calc-example">(${prevShort}...)</span>
+              </div>
+
+              <span class="calc-plus">+</span>
+
+              <div class="calc-col" style="--col-color: ${colorCargo};">
+                <span class="calc-term">Transactions</span>
+                <span class="calc-example">(15 tonnes d'acier)</span>
+              </div>
+
+              <span class="calc-plus">+</span>
+
+              <div class="calc-col" style="--col-color: ${colorNonce};">
+                <span class="calc-term">Nonce</span>
+                <span class="calc-example">(${nonceVal})</span>
+              </div>
             </div>
           </div>
           <p class="keypoint-subtext">
