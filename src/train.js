@@ -306,6 +306,7 @@ export class TrainConvoy {
    * @param {number} [delta=0.016] - Pas de temps de la frame courante.
    */
   animateSuspension(elapsedTime, speed = 0, delta = 0.016) {
+    if (!this.group || !this.group.visible) return;
     this.wheelPhase += (speed / 0.25) * delta;
     const speedFactor = Math.min(1, speed / 3.5);
     const freq = 4.2;

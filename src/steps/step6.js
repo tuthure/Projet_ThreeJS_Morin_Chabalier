@@ -17,7 +17,7 @@ export const step6 = {
   rafId: null,
   mode: 'pow', // 'pow' | 'pos'
 
-  // Etats : 'idle' | 'pow_loading' | 'pow_racing' | 'pow_coupling' | 'pos_lottery' | 'pos_loading' | 'pos_coupling' | 'done'
+  // Etats : 'idle' | 'pow_loading' | 'pow_racing' | 'pow_coupling' | 'pos_lottery' | 'pos_zoom_in' | 'pos_loading' | 'pos_zoom_out' | 'pos_coupling' | 'done'
   simState: 'idle',
   simTimer: 0,
   winnerIndex: 0,
@@ -27,22 +27,25 @@ export const step6 = {
   lotteryStartPercent: 12,
   hasTestedPoW: false,
   hasTestedPoS: false,
+  posSealedInCloseUp: false,
 
   roundCounter: 0,
   winningNonce: 18,
   winningHash: '00e4a1...',
   powTickAccum: 0,
 
+  overviewCamPos: new THREE.Vector3(3.8, 4.55, 12.45),
+  overviewCamTarget: new THREE.Vector3(3.8, 0.32, 1.85),
   coupledTargetPos: new THREE.Vector3(7.6, 0.0, 0.0),
-  sidingScale: 0.58,
+  sidingScale: 0.48,
   wasCoupled: false,
   couplerFlashRing: null,
   couplerFlashAlpha: 0,
 
   consensusGroup: null,
   lotteryHaloGroup: null,
-  lotteryHaloX: -0.1,
-  lotteryHaloZ: 3.15,
+  lotteryHaloX: 0.0,
+  lotteryHaloZ: 3.25,
   validators: [],
   tooltipLayer: null,
 
@@ -64,8 +67,8 @@ export const step6 = {
         cargaison: 'Turbines bleues et bobines jaunes',
         quai: 'Quai Gare A'
       },
-      x: -0.1,
-      z: 3.15
+      x: 0.0,
+      z: 3.25
     },
     {
       id: 'gare-b',
@@ -85,7 +88,7 @@ export const step6 = {
         quai: 'Quai Gare B'
       },
       x: 3.8,
-      z: 3.15
+      z: 3.25
     },
     {
       id: 'gare-c',
@@ -104,8 +107,8 @@ export const step6 = {
         cargaison: 'Batteries violettes et modules rouges',
         quai: 'Quai Gare C'
       },
-      x: 7.7,
-      z: 3.15
+      x: 7.6,
+      z: 3.25
     }
   ],
 
@@ -172,11 +175,11 @@ export const step6 = {
     this.createStationTooltips();
     this.applyModeVisuals();
 
-    // Cadrage global sans coupure : train en circulation en haut, 3 gares + caisses + wagons candidats devant
+    // Cadrage global rapproche : train en circulation en haut, 3 gares aerees devant
     if (cameraController) {
       cameraController.moveTo(
-        new THREE.Vector3(3.8, 5.55, 15.2),
-        new THREE.Vector3(3.8, 0.35, 1.55),
+        this.overviewCamPos,
+        this.overviewCamTarget,
         1.25
       );
     }
@@ -225,7 +228,9 @@ export const step6 = {
       this.simState === 'pow_racing' ||
       this.simState === 'pow_coupling' ||
       this.simState === 'pos_lottery' ||
+      this.simState === 'pos_zoom_in' ||
       this.simState === 'pos_loading' ||
+      this.simState === 'pos_zoom_out' ||
       this.simState === 'pos_coupling'
     );
   },
@@ -447,27 +452,28 @@ export const step6 = {
   },
 
   /**
-   * Construit le batiment de gare ferroviaire en 3D sur la partie arriere-gauche du quai.
+   * Construit le batiment de gare ferroviaire en 3D au fond du quai,
+   * avec enseigne blanche rehaussee au-dessus du wagon candidat.
    */
   createStationBuildingMesh(v, shared) {
     const buildingGroup = new THREE.Group();
-    buildingGroup.position.set(-0.56, 0.08, -0.44);
-    buildingGroup.scale.setScalar(0.84);
+    buildingGroup.position.set(-0.12, 0.20, -0.82);
+    buildingGroup.scale.setScalar(0.92);
 
     const plinth = new THREE.Mesh(shared.plinthGeo, shared.stoneTrimMat);
     plinth.position.set(-0.10, 0.07, 0);
     buildingGroup.add(plinth);
 
     const mainHall = new THREE.Mesh(shared.mainHallGeo, shared.brickMat);
-    mainHall.position.set(-0.10, 0.48, 0);
+    mainHall.position.set(-0.10, 0.59, 0);
     buildingGroup.add(mainHall);
 
     const cornice = new THREE.Mesh(shared.corniceGeo, shared.stoneTrimMat);
-    cornice.position.set(-0.10, 0.85, 0);
+    cornice.position.set(-0.10, 1.08, 0);
     buildingGroup.add(cornice);
 
     const mainRoof = new THREE.Mesh(shared.roofPrismGeo, shared.slateRoofMat);
-    mainRoof.position.set(-0.10, 1.09, 0);
+    mainRoof.position.set(-0.10, 1.32, 0);
     mainRoof.rotation.y = Math.PI / 4;
     mainRoof.scale.set(1.16, 1.0, 0.62);
     buildingGroup.add(mainRoof);
@@ -480,22 +486,22 @@ export const step6 = {
     });
     [-0.44, -0.10, 0.24].forEach((wx) => {
       const win = new THREE.Mesh(shared.winGeo, windowMat);
-      win.position.set(wx, 0.34, 0.31);
+      win.position.set(wx, 0.42, 0.31);
       buildingGroup.add(win);
     });
 
     const canopy = new THREE.Mesh(shared.canopyGeo, shared.darkMetalMat);
-    canopy.position.set(-0.10, 0.50, 0.28);
+    canopy.position.set(-0.10, 0.60, 0.28);
     buildingGroup.add(canopy);
 
     [-0.68, 0.48].forEach((px) => {
       const pillar = new THREE.Mesh(shared.pillarGeo, shared.darkMetalMat);
-      pillar.position.set(px, 0.25, 0.42);
+      pillar.position.set(px, 0.30, 0.42);
       buildingGroup.add(pillar);
     });
 
     const signBack = new THREE.Mesh(shared.signBackGeo, shared.darkMetalMat);
-    signBack.position.set(-0.10, 0.68, 0.44);
+    signBack.position.set(-0.10, 0.88, 0.46);
     buildingGroup.add(signBack);
 
     const signTex = this.createStationSignTexture(v.name);
@@ -503,24 +509,24 @@ export const step6 = {
       shared.signBoardGeo,
       new THREE.MeshBasicMaterial({ map: signTex })
     );
-    signMesh.position.set(-0.10, 0.68, 0.465);
+    signMesh.position.set(-0.10, 0.88, 0.485);
     buildingGroup.add(signMesh);
 
     const tower = new THREE.Mesh(shared.towerBodyGeo, shared.brickMat);
-    tower.position.set(-0.62, 0.68, -0.14);
+    tower.position.set(-0.66, 0.80, -0.14);
     buildingGroup.add(tower);
 
     const towerRoof = new THREE.Mesh(shared.towerRoofGeo, shared.slateRoofMat);
-    towerRoof.position.set(-0.62, 1.56, -0.14);
+    towerRoof.position.set(-0.66, 1.78, -0.14);
     towerRoof.rotation.y = Math.PI / 4;
     buildingGroup.add(towerRoof);
 
     const clockFront = new THREE.Mesh(shared.clockFaceGeo, shared.clockMat);
-    clockFront.position.set(-0.62, 1.24, 0.08);
+    clockFront.position.set(-0.66, 1.44, 0.08);
     buildingGroup.add(clockFront);
 
     const signalMast = new THREE.Mesh(shared.signalMastGeo, shared.darkMetalMat);
-    signalMast.position.set(-0.84, 0.52, 0.24);
+    signalMast.position.set(-0.90, 0.56, 0.24);
     buildingGroup.add(signalMast);
 
     const beaconMat = new THREE.MeshStandardMaterial({
@@ -530,7 +536,7 @@ export const step6 = {
       roughness: 0.2
     });
     const beacon = new THREE.Mesh(shared.beaconGeo, beaconMat);
-    beacon.position.set(-0.84, 1.06, 0.24);
+    beacon.position.set(-0.90, 1.12, 0.24);
     buildingGroup.add(beacon);
 
     return { buildingGroup, beaconMat, windowMat };
@@ -554,14 +560,14 @@ export const step6 = {
     const parentBlock = trainConvoy?.blockchain?.chain?.[1];
     const parentHash = parentBlock ? parentBlock.hash : '0000abcd1234';
 
-    const platformGeo = new THREE.BoxGeometry(3.15, 0.16, 2.35);
+    const platformGeo = new THREE.BoxGeometry(3.42, 0.16, 2.68);
     const platformMat = new THREE.MeshStandardMaterial({
       color: 0x1e293b,
       roughness: 0.65,
       metalness: 0.3
     });
 
-    const ringGeo = new THREE.RingGeometry(1.22, 1.34, 36);
+    const ringGeo = new THREE.RingGeometry(1.36, 1.48, 36);
 
     const wheelStandGeo = new THREE.BoxGeometry(0.30, 0.54, 0.14);
     const wheelStandMat = new THREE.MeshStandardMaterial({
@@ -573,9 +579,9 @@ export const step6 = {
     const wheelGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.11, 24);
     const toothGeo = new THREE.BoxGeometry(0.07, 0.10, 0.09);
     const dialGeo = new THREE.CircleGeometry(0.29, 32);
-    const coinGeo = new THREE.CylinderGeometry(0.29, 0.29, 0.085, 20);
+    const coinGeo = new THREE.CylinderGeometry(0.28, 0.28, 0.085, 20);
 
-    const palletGeo = new THREE.BoxGeometry(0.92, 0.06, 0.72);
+    const palletGeo = new THREE.BoxGeometry(0.84, 0.06, 0.68);
     const palletMat = new THREE.MeshStandardMaterial({
       color: 0x78350f,
       roughness: 0.85
@@ -584,26 +590,26 @@ export const step6 = {
     const crateGeo = new THREE.BoxGeometry(0.56, 0.42, 0.40);
     const crateEdgesGeo = new THREE.EdgesGeometry(crateGeo);
 
-    const sidingTieGeo = new THREE.BoxGeometry(0.09, 0.03, 0.86);
+    const sidingTieGeo = new THREE.BoxGeometry(0.08, 0.03, 0.72);
     const sidingTieMat = new THREE.MeshStandardMaterial({ color: 0x3f2e21, roughness: 0.9 });
-    const sidingRailGeo = new THREE.BoxGeometry(1.75, 0.04, 0.055);
+    const sidingRailGeo = new THREE.BoxGeometry(1.48, 0.04, 0.05);
     const sidingRailMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.3 });
 
     const clockTexture = this.createClockTexture();
     const sharedStationAssets = {
-      plinthGeo: new THREE.BoxGeometry(1.32, 0.14, 0.68),
-      mainHallGeo: new THREE.BoxGeometry(1.24, 0.68, 0.60),
-      corniceGeo: new THREE.BoxGeometry(1.34, 0.06, 0.70),
-      roofPrismGeo: new THREE.ConeGeometry(0.94, 0.42, 4),
+      plinthGeo: new THREE.BoxGeometry(1.38, 0.14, 0.68),
+      mainHallGeo: new THREE.BoxGeometry(1.30, 0.90, 0.60),
+      corniceGeo: new THREE.BoxGeometry(1.40, 0.06, 0.70),
+      roofPrismGeo: new THREE.ConeGeometry(0.96, 0.42, 4),
       winGeo: new THREE.BoxGeometry(0.20, 0.24, 0.03),
-      canopyGeo: new THREE.BoxGeometry(1.38, 0.05, 0.34),
-      pillarGeo: new THREE.CylinderGeometry(0.024, 0.024, 0.48, 8),
-      signBackGeo: new THREE.BoxGeometry(1.18, 0.28, 0.04),
-      signBoardGeo: new THREE.PlaneGeometry(1.14, 0.24),
-      towerBodyGeo: new THREE.BoxGeometry(0.42, 1.34, 0.42),
+      canopyGeo: new THREE.BoxGeometry(1.42, 0.05, 0.34),
+      pillarGeo: new THREE.CylinderGeometry(0.024, 0.024, 0.56, 8),
+      signBackGeo: new THREE.BoxGeometry(1.32, 0.32, 0.04),
+      signBoardGeo: new THREE.PlaneGeometry(1.28, 0.28),
+      towerBodyGeo: new THREE.BoxGeometry(0.42, 1.56, 0.42),
       towerRoofGeo: new THREE.ConeGeometry(0.35, 0.46, 4),
       clockFaceGeo: new THREE.CircleGeometry(0.14, 20),
-      signalMastGeo: new THREE.CylinderGeometry(0.026, 0.030, 1.04, 8),
+      signalMastGeo: new THREE.CylinderGeometry(0.026, 0.030, 1.12, 8),
       beaconGeo: new THREE.SphereGeometry(0.095, 12, 12),
       brickMat: new THREE.MeshStandardMaterial({ color: 0x9a3412, roughness: 0.72 }),
       stoneTrimMat: new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.6 }),
@@ -619,10 +625,10 @@ export const step6 = {
       new THREE.Vector3(0.48, 0.40, 0.23)
     ];
     const crateStarts = [
-      new THREE.Vector3(-2.14, 0.01, -0.21),
-      new THREE.Vector3(-1.58, 0.01, -0.21),
-      new THREE.Vector3(-2.14, 0.01, 0.21),
-      new THREE.Vector3(-1.58, 0.01, 0.21)
+      new THREE.Vector3(-2.72, 0.02, -0.22),
+      new THREE.Vector3(-2.14, 0.02, -0.22),
+      new THREE.Vector3(-2.72, 0.02, 0.22),
+      new THREE.Vector3(-2.14, 0.02, 0.22)
     ];
 
     this.validatorData.forEach((v) => {
@@ -638,34 +644,34 @@ export const step6 = {
       });
       const ring = new THREE.Mesh(ringGeo, ringMat);
       ring.rotation.x = -Math.PI / 2;
-      ring.position.set(0, 0.09, 0.05);
+      ring.position.set(0, 0.09, 0.08);
       vGroup.add(ring);
 
       const { buildingGroup, beaconMat, windowMat } = this.createStationBuildingMesh(v, sharedStationAssets);
       vGroup.add(buildingGroup);
 
-      // Palette de chargement sur le quai (a gauche du wagon candidat)
+      // Palette de chargement bien a l'ecart sur la gauche du quai
       const pallet = new THREE.Mesh(palletGeo, palletMat);
-      pallet.position.set(-0.92, 0.11, 0.44);
+      pallet.position.set(-1.24, 0.11, 0.42);
       vGroup.add(pallet);
 
-      // Voie de quai pour le wagon candidat
-      const sidingLocalX = 0.18;
-      const sidingLocalZ = 0.44;
+      // Voie de quai centree pour le wagon candidat
+      const sidingLocalX = -0.06;
+      const sidingLocalZ = 0.42;
       for (let t = -3; t <= 3; t++) {
         const tie = new THREE.Mesh(sidingTieGeo, sidingTieMat);
-        tie.position.set(sidingLocalX + t * 0.24, 0.095, sidingLocalZ);
+        tie.position.set(sidingLocalX + t * 0.21, 0.095, sidingLocalZ);
         vGroup.add(tie);
       }
-      [-0.36, 0.36].forEach((rz) => {
+      [-0.31, 0.31].forEach((rz) => {
         const rail = new THREE.Mesh(sidingRailGeo, sidingRailMat);
         rail.position.set(sidingLocalX, 0.125, sidingLocalZ + rz);
         vGroup.add(rail);
       });
 
-      // --- 1. Indicateur PoW : Molette du Nonce sur le cote droit (+X) ---
+      // --- 1. Indicateur PoW : Molette du Nonce franchement sur la droite et vers l'avant (+X, +Z) ---
       const powNodeGroup = new THREE.Group();
-      powNodeGroup.position.set(1.06, 0.06, -0.28);
+      powNodeGroup.position.set(1.16, 0.06, 0.62);
 
       const stand = new THREE.Mesh(wheelStandGeo, wheelStandMat);
       stand.position.set(0, 0.34, -0.05);
@@ -713,9 +719,9 @@ export const step6 = {
 
       vGroup.add(powNodeGroup);
 
-      // --- 2. Indicateur PoS : Pile de jetons de caution sur le cote droit (+X) ---
+      // --- 2. Indicateur PoS : Pile de jetons strictement fixe sur la droite vers l'avant (+X, +Z) ---
       const posNodeGroup = new THREE.Group();
-      posNodeGroup.position.set(1.06, 0.08, -0.28);
+      posNodeGroup.position.set(0.92, 0.08, 0.58);
       const coinMat = new THREE.MeshStandardMaterial({
         color: 0xfacc15,
         emissive: 0xb45309,
@@ -733,7 +739,7 @@ export const step6 = {
 
       this.consensusGroup.add(vGroup);
 
-      // --- 3. Wagon candidat propre a la gare (pose sur sa voie de quai) ---
+      // --- 3. Wagon candidat propre a la gare (centre du quai, parallele a la voie) ---
       const sidingPos = new THREE.Vector3(v.x + sidingLocalX, -0.18, v.z + sidingLocalZ);
       const candidateBlock = new Block(2, Date.now(), { ...v.candidateCargo }, parentHash, 0);
       const candidateWagon = new WagonMesh(candidateBlock, { spacing: 3.8 });
@@ -823,7 +829,7 @@ export const step6 = {
 
     // Halo / projecteur 3D mobile de tirage au sort PoS
     this.lotteryHaloGroup = new THREE.Group();
-    const haloRingGeo = new THREE.RingGeometry(1.24, 1.38, 36);
+    const haloRingGeo = new THREE.RingGeometry(1.38, 1.52, 36);
     const haloRingMat = new THREE.MeshBasicMaterial({
       color: 0xfacc15,
       side: THREE.DoubleSide,
@@ -834,7 +840,7 @@ export const step6 = {
     haloRing.rotation.x = -Math.PI / 2;
     this.lotteryHaloGroup.add(haloRing);
 
-    const haloBeamGeo = new THREE.CylinderGeometry(1.24, 1.24, 1.85, 28, 1, true);
+    const haloBeamGeo = new THREE.CylinderGeometry(1.38, 1.38, 1.85, 28, 1, true);
     const haloBeamMat = new THREE.MeshBasicMaterial({
       color: 0xfacc15,
       transparent: true,
@@ -846,7 +852,7 @@ export const step6 = {
     haloBeam.position.y = 0.92;
     this.lotteryHaloGroup.add(haloBeam);
 
-    this.lotteryHaloGroup.position.set(this.validatorData[0].x, -0.34, this.validatorData[0].z + 0.05);
+    this.lotteryHaloGroup.position.set(this.validatorData[0].x, -0.34, this.validatorData[0].z + 0.08);
     this.lotteryHaloGroup.visible = false;
     this.lotteryHaloGroup.userData = { haloRingMat, haloBeamMat };
     this.consensusGroup.add(this.lotteryHaloGroup);
@@ -948,12 +954,17 @@ export const step6 = {
     this.mode = targetMode;
     this.simState = 'idle';
     this.simTimer = 0;
+    this.posSealedInCloseUp = false;
     this.lotteryCursorPercent = 25;
 
     this.resetRoundVisuals();
     this.applyModeVisuals();
     this.updateTooltipsDOM();
     this.renderLeftPanel();
+
+    if (this.ctx?.cameraController) {
+      this.ctx.cameraController.moveTo(this.overviewCamPos, this.overviewCamTarget, 0.75);
+    }
   },
 
   pickWeightedWinner() {
@@ -986,6 +997,7 @@ export const step6 = {
     this.resetRoundVisuals();
     this.powTickAccum = 0;
     this.simTimer = 0;
+    this.posSealedInCloseUp = false;
 
     if (this.mode === 'pow') {
       this.winnerIndex = 0;
@@ -997,6 +1009,9 @@ export const step6 = {
       this.lotteryStartPercent = this.lotteryCursorPercent;
       this.lotteryHaloX = this.validatorData[this.rouletteHighlightIndex].x;
       this.lotteryHaloZ = this.validatorData[this.rouletteHighlightIndex].z;
+      if (this.ctx?.cameraController) {
+        this.ctx.cameraController.moveTo(this.overviewCamPos, this.overviewCamTarget, 0.6);
+      }
     }
 
     this.applyModeVisuals();
@@ -1006,34 +1021,35 @@ export const step6 = {
 
   /**
    * Met a jour les visuels des molettes, jetons, anneaux et lignes de raccordement.
+   * La hauteur et la taille des piles de jetons PoS restent strictement fixes.
    */
   applyModeVisuals() {
     const isPoW = this.mode === 'pow';
     const showPosWheel =
       !isPoW &&
-      (this.simState === 'pos_loading' || this.simState === 'pos_coupling' || this.simState === 'done');
+      (this.simState === 'pos_loading' ||
+        this.simState === 'pos_zoom_out' ||
+        this.simState === 'pos_coupling' ||
+        this.simState === 'done');
 
     this.validators.forEach((v, idx) => {
       const isWinner = idx === this.winnerIndex;
 
       if (isPoW) {
+        v.powNodeGroup.position.set(1.16, 0.06, 0.62);
         v.powNodeGroup.visible = true;
         v.powNodeGroup.scale.setScalar(1);
         v.posNodeGroup.visible = false;
       } else {
         const showWinnerWheel = showPosWheel && isWinner;
+        v.powNodeGroup.position.set(1.38, 0.06, 0.62);
         v.powNodeGroup.visible = showWinnerWheel;
         v.powNodeGroup.scale.setScalar(showWinnerWheel ? Math.max(0.01, v.wheelScale) : 0.01);
 
+        // Pile de jetons strictement fixe : aucune variation de hauteur ni de scale
         v.posNodeGroup.visible = true;
-        if (showWinnerWheel) {
-          v.posNodeGroup.position.set(1.12, 0.08, -0.78);
-          v.posNodeGroup.scale.setScalar(0.68);
-        } else {
-          const isHigh = this.simState === 'pos_lottery' && idx === this.rouletteHighlightIndex;
-          v.posNodeGroup.position.set(1.06, isHigh ? 0.16 : 0.08, -0.28);
-          v.posNodeGroup.scale.setScalar(isHigh ? 1.08 : 1.0);
-        }
+        v.posNodeGroup.position.set(0.92, 0.08, 0.58);
+        v.posNodeGroup.scale.set(1, 1, 1);
       }
 
       let colorHex = 0x38bdf8;
@@ -1043,13 +1059,24 @@ export const step6 = {
         colorHex = 0xf59e0b;
         lineOpacity = 0.58;
       } else if (this.simState === 'pos_lottery') {
-        const isHigh = idx === this.rouletteHighlightIndex;
-        colorHex = isHigh ? 0xfacc15 : 0x38bdf8;
-        lineOpacity = isHigh ? 0.85 : 0.2;
-      } else if (this.simState === 'pos_loading') {
+        const isLockedPhase = this.simTimer >= 2.5;
+        if (isLockedPhase) {
+          colorHex = isWinner ? 0x10b981 : 0x475569;
+          lineOpacity = isWinner ? 0.9 : 0.15;
+        } else {
+          const isHigh = idx === this.rouletteHighlightIndex;
+          colorHex = isHigh ? 0xfacc15 : 0x38bdf8;
+          lineOpacity = isHigh ? 0.85 : 0.2;
+        }
+      } else if (this.simState === 'pos_zoom_in' || this.simState === 'pos_loading') {
         colorHex = isWinner ? 0x10b981 : 0x475569;
         lineOpacity = isWinner ? 0.85 : 0.15;
-      } else if (this.simState === 'pow_coupling' || this.simState === 'pos_coupling' || this.simState === 'done') {
+      } else if (
+        this.simState === 'pow_coupling' ||
+        this.simState === 'pos_zoom_out' ||
+        this.simState === 'pos_coupling' ||
+        this.simState === 'done'
+      ) {
         if (isWinner) {
           colorHex = 0x10b981;
           lineOpacity = 0.95;
@@ -1065,7 +1092,12 @@ export const step6 = {
       if (v.beaconMat) {
         v.beaconMat.color.setHex(colorHex);
         v.beaconMat.emissive.setHex(colorHex);
-        v.beaconMat.emissiveIntensity = !isWinner && (this.simState === 'done' || this.simState === 'pos_coupling') && !isPoW ? 0.4 : 1.7;
+        v.beaconMat.emissiveIntensity =
+          !isWinner &&
+          (this.simState === 'done' || this.simState === 'pos_zoom_out' || this.simState === 'pos_coupling') &&
+          !isPoW
+            ? 0.4
+            : 1.7;
       }
     });
 
@@ -1073,16 +1105,19 @@ export const step6 = {
       const showHalo =
         !isPoW &&
         (this.simState === 'pos_lottery' ||
+          this.simState === 'pos_zoom_in' ||
           this.simState === 'pos_loading' ||
+          this.simState === 'pos_zoom_out' ||
           this.simState === 'pos_coupling' ||
           this.simState === 'done');
       this.lotteryHaloGroup.visible = showHalo;
       if (showHalo) {
         const { haloRingMat, haloBeamMat } = this.lotteryHaloGroup.userData;
-        const haloColor = this.simState === 'pos_lottery' ? 0xfacc15 : 0x10b981;
+        const isSweeping = this.simState === 'pos_lottery' && this.simTimer < 2.5;
+        const haloColor = isSweeping ? 0xfacc15 : 0x10b981;
         haloRingMat.color.setHex(haloColor);
         haloBeamMat.color.setHex(haloColor);
-        haloBeamMat.opacity = this.simState === 'pos_lottery' ? 0.22 : 0.12;
+        haloBeamMat.opacity = isSweeping ? 0.22 : 0.14;
       }
     }
   },
@@ -1117,22 +1152,37 @@ export const step6 = {
         statusText = `${v.data.probLabel} · Nonce #${v.currentCrans}`;
         statusColor = '#fde68a';
       } else if (this.simState === 'pos_lottery') {
-        const isHigh = idx === this.rouletteHighlightIndex;
-        spotColor = isHigh ? '#facc15' : '#38bdf8';
-        statusText = `${v.data.tokens} jetons (${v.data.probLabel})`;
-        statusColor = isHigh ? '#fde047' : '#94a3b8';
-      } else if (this.simState === 'pos_loading') {
+        if (this.simTimer >= 2.5) {
+          const isWinner = idx === this.winnerIndex;
+          spotColor = isWinner ? '#10b981' : '#64748b';
+          statusText = isWinner ? 'Choisie ! Zoom en cours...' : 'En attente (0 cran)';
+          statusColor = isWinner ? '#34d399' : '#94a3b8';
+        } else {
+          const isHigh = idx === this.rouletteHighlightIndex;
+          spotColor = isHigh ? '#facc15' : '#38bdf8';
+          statusText = `${v.data.tokens} jetons (${v.data.probLabel})`;
+          statusColor = isHigh ? '#fde047' : '#94a3b8';
+        }
+      } else if (this.simState === 'pos_zoom_in' || this.simState === 'pos_loading') {
         const isWinner = idx === this.winnerIndex;
         if (isWinner) {
           spotColor = '#10b981';
-          statusText = 'Élue · Chargement & scellement';
+          statusText =
+            this.simState === 'pos_zoom_in'
+              ? 'Élue · Cadrage gros plan'
+              : 'Élue · Chargement & Nonce';
           statusColor = '#34d399';
         } else {
           spotColor = '#64748b';
           statusText = 'En attente (0 cran)';
           statusColor = '#94a3b8';
         }
-      } else if (this.simState === 'pow_coupling' || this.simState === 'pos_coupling' || this.simState === 'done') {
+      } else if (
+        this.simState === 'pow_coupling' ||
+        this.simState === 'pos_zoom_out' ||
+        this.simState === 'pos_coupling' ||
+        this.simState === 'done'
+      ) {
         const isWinner = idx === this.winnerIndex;
         if (isWinner) {
           spotColor = '#10b981';
@@ -1158,9 +1208,15 @@ export const step6 = {
       }
       if (segEl) {
         const segBase = idx === 0 ? 'seg-a' : idx === 1 ? 'seg-b' : 'seg-c';
-        const isSweep = this.simState === 'pos_lottery' && idx === this.rouletteHighlightIndex;
+        const isSweep =
+          this.simState === 'pos_lottery' && this.simTimer < 2.5 && idx === this.rouletteHighlightIndex;
         const isWin =
-          (this.simState === 'pos_loading' || this.simState === 'pos_coupling' || this.simState === 'done') &&
+          ((this.simState === 'pos_lottery' && this.simTimer >= 2.5) ||
+            this.simState === 'pos_zoom_in' ||
+            this.simState === 'pos_loading' ||
+            this.simState === 'pos_zoom_out' ||
+            this.simState === 'pos_coupling' ||
+            this.simState === 'done') &&
           idx === this.winnerIndex;
         segEl.className = `pos-lottery-segment ${segBase} ${isSweep ? 'sweep-active' : ''} ${isWin ? 'winner' : ''}`;
       }
@@ -1190,16 +1246,28 @@ export const step6 = {
     if (this.simState === 'pow_loading' || this.simState === 'pow_racing') {
       wagonColor = '#f59e0b';
       wagonText = 'Attend le 1er wagon valide...';
-    } else if (this.simState === 'pos_lottery' || this.simState === 'pos_loading') {
-      wagonColor = '#facc15';
-      wagonText =
-        this.simState === 'pos_lottery'
-          ? 'Tirage de la gare...'
-          : `Attend le wagon ${winnerData.name}`;
-    } else if (this.simState === 'pow_coupling' || this.simState === 'pos_coupling') {
+    } else if (this.simState === 'pos_lottery') {
+      const isLotteryLocked = this.simTimer >= 2.5;
+      wagonColor = isLotteryLocked ? '#10b981' : '#facc15';
+      wagonText = isLotteryLocked
+        ? `Gare élue : ${winnerData.name}`
+        : 'Tirage de la gare...';
+    } else if (this.simState === 'pos_zoom_in' || this.simState === 'pos_loading') {
+      wagonColor = this.posSealedInCloseUp ? '#10b981' : '#facc15';
+      wagonText = this.posSealedInCloseUp
+        ? `Wagon ${winnerData.name} scellé (#${this.winningNonce})`
+        : `Chargement à ${winnerData.name}...`;
+    } else if (
+      this.simState === 'pos_zoom_out' ||
+      this.simState === 'pow_coupling' ||
+      this.simState === 'pos_coupling'
+    ) {
       titleText = `Wagon ${winnerData.name}`;
       wagonColor = '#10b981';
-      wagonText = 'Raccordement au convoi...';
+      wagonText =
+        this.simState === 'pos_zoom_out'
+          ? 'Prêt pour raccordement...'
+          : 'Raccordement au convoi...';
     } else if (this.simState === 'done') {
       titleText = `Wagon #2 (${winnerData.name})`;
       wagonColor = '#10b981';
@@ -1221,7 +1289,7 @@ export const step6 = {
    * Finalise la victoire d'une gare (PoW ou PoS) : met a jour son wagon candidat en vert,
    * les perdants en gris/rouge (en PoW) et prepare la phase de raccordement.
    */
-  sealWinnerAndPrepareCoupling(winIdx, winCrans, nextState) {
+  sealWinnerAndPrepareCoupling(winIdx, winCrans, nextState = null) {
     this.winnerIndex = winIdx;
     const winVal = this.validators[winIdx];
     const resolvedCrans = Math.max(1, winCrans);
@@ -1277,8 +1345,10 @@ export const step6 = {
       });
     }
 
-    this.simState = nextState;
-    this.simTimer = 0;
+    if (nextState) {
+      this.simState = nextState;
+      this.simTimer = 0;
+    }
     this.applyModeVisuals();
     this.updateTooltipsDOM();
     this.renderLeftPanel();
@@ -1397,15 +1467,16 @@ export const step6 = {
         }
       }
 
-      // 2A. PoS — Temps 1 : Tirage au sort sur les piles de jetons (1.5 s)
+      // 2A. PoS — Temps 1 : Tirage au sort sur les piles de jetons (2.5 s de balayage + 0.3 s de verrouillage vert)
       if (this.simState === 'pos_lottery') {
+        const prevTimer = this.simTimer;
         this.simTimer += dt;
-        const progress = Math.min(this.simTimer / 1.5, 1.0);
+        const sweepProgress = Math.min(this.simTimer / 2.5, 1.0);
 
-        if (progress < 1.0) {
-          const easeOut = 1 - Math.pow(1 - progress, 2.6);
-          const damp = Math.pow(1 - progress, 1.45);
-          const oscillation = Math.sin(progress * Math.PI * 5.2) * 52 * damp;
+        if (sweepProgress < 1.0) {
+          const easeOut = 1 - Math.pow(1 - sweepProgress, 2.6);
+          const damp = Math.pow(1 - sweepProgress, 1.45);
+          const oscillation = Math.sin(sweepProgress * Math.PI * 5.2) * 52 * damp;
           const basePos = THREE.MathUtils.lerp(this.lotteryStartPercent, this.lotteryTargetPercent, easeOut);
           this.lotteryCursorPercent = Math.max(3, Math.min(97, basePos + oscillation));
 
@@ -1413,11 +1484,46 @@ export const step6 = {
           else if (this.lotteryCursorPercent < 85) this.rouletteHighlightIndex = 1;
           else this.rouletteHighlightIndex = 2;
 
+          const cursorEl = document.getElementById('step6-lottery-cursor');
+          if (cursorEl) cursorEl.style.left = `${this.lotteryCursorPercent.toFixed(1)}%`;
+
           this.applyModeVisuals();
           this.updateTooltipsDOM();
         } else {
           this.lotteryCursorPercent = this.lotteryTargetPercent;
           this.rouletteHighlightIndex = this.winnerIndex;
+          const cursorEl = document.getElementById('step6-lottery-cursor');
+          if (cursorEl) cursorEl.style.left = `${this.lotteryCursorPercent.toFixed(1)}%`;
+
+          if (prevTimer < 2.5) {
+            this.applyModeVisuals();
+            this.updateTooltipsDOM();
+            this.renderLeftPanel();
+          }
+
+          if (this.simTimer >= 2.8) {
+            const winData = this.validatorData[this.winnerIndex];
+            this.posSealedInCloseUp = false;
+            this.simState = 'pos_zoom_in';
+            this.simTimer = 0;
+            if (winData) {
+              cameraController.moveTo(
+                new THREE.Vector3(winData.x, 1.85, winData.z + 4.55),
+                new THREE.Vector3(winData.x, -0.02, winData.z + 0.12),
+                0.8
+              );
+            }
+            this.applyModeVisuals();
+            this.updateTooltipsDOM();
+            this.renderLeftPanel();
+          }
+        }
+      }
+
+      // 2B. PoS — Temps 2A : Zoom dynamique sur la gare elue (0.85 s)
+      if (this.simState === 'pos_zoom_in') {
+        this.simTimer += dt;
+        if (this.simTimer >= 0.85) {
           this.simState = 'pos_loading';
           this.simTimer = 0;
           this.applyModeVisuals();
@@ -1426,46 +1532,77 @@ export const step6 = {
         }
       }
 
-      // 2B. PoS — Temps 2 : Seule la gare elue charge ses caisses et verrouille son Nonce (1.2 s)
+      // 2C. PoS — Temps 2B : Gros plan — chargement des caisses puis verrouillage du Nonce (2.0 s)
       if (this.simState === 'pos_loading') {
         this.simTimer += dt;
-        const p = Math.min(this.simTimer / 1.2, 1.0);
         const winnerVal = this.validators[this.winnerIndex];
 
         if (winnerVal) {
-          winnerVal.wheelScale = Math.min(1.0, p * 4.0);
+          const loadP = Math.min(this.simTimer / 0.95, 1.0);
+          winnerVal.wheelScale = Math.min(1.0, loadP * 2.5);
           winnerVal.powNodeGroup.scale.setScalar(winnerVal.wheelScale);
-          winnerVal.loadProgress = p;
-          this.applyCratesLoadProgress(winnerVal, p);
+          winnerVal.loadProgress = loadP;
+          this.applyCratesLoadProgress(winnerVal, loadP);
 
-          const liveCran = Math.max(1, Math.floor(winnerVal.targetCrans * p));
-          if (liveCran !== winnerVal.currentCrans) {
-            winnerVal.currentCrans = liveCran;
-            this.renderStationWheelDial(winnerVal.dialCanvas, winnerVal.dialTex, liveCran, '#10b981');
-            if (winnerVal.candidateBlock && winnerVal.candidateWagon) {
-              winnerVal.candidateBlock.nonce = liveCran;
-              winnerVal.candidateWagon.renderPlates();
+          if (this.simTimer >= 0.95) {
+            const dialP = Math.min((this.simTimer - 0.95) / 0.8, 1.0);
+            const liveCran = Math.max(1, Math.floor(winnerVal.targetCrans * dialP));
+            if (liveCran !== winnerVal.currentCrans) {
+              winnerVal.currentCrans = liveCran;
+              this.renderStationWheelDial(
+                winnerVal.dialCanvas,
+                winnerVal.dialTex,
+                liveCran,
+                this.posSealedInCloseUp ? '#10b981' : '#facc15'
+              );
+              if (winnerVal.candidateBlock && winnerVal.candidateWagon) {
+                winnerVal.candidateBlock.nonce = liveCran;
+                winnerVal.candidateWagon.renderPlates();
+              }
+            }
+            const angle = liveCran * (Math.PI / 4);
+            winnerVal.currentAngle = THREE.MathUtils.lerp(winnerVal.currentAngle, angle, Math.min(1, dt * 18));
+            if (winnerVal.wheelMesh) {
+              winnerVal.wheelMesh.rotation.set(Math.PI / 2, winnerVal.currentAngle, 0);
+            }
+            if (winnerVal.candidateWagon?.nonceWheel) {
+              winnerVal.candidateWagon.nonceWheel.rotation.set(Math.PI / 2, winnerVal.currentAngle, 0);
             }
           }
-          const angle = liveCran * (Math.PI / 4);
-          winnerVal.currentAngle = THREE.MathUtils.lerp(winnerVal.currentAngle, angle, Math.min(1, dt * 18));
-          if (winnerVal.wheelMesh) {
-            winnerVal.wheelMesh.rotation.set(Math.PI / 2, winnerVal.currentAngle, 0);
-          }
-          if (winnerVal.candidateWagon?.nonceWheel) {
-            winnerVal.candidateWagon.nonceWheel.rotation.set(Math.PI / 2, winnerVal.currentAngle, 0);
-          }
-        }
 
-        if (p >= 1.0 && winnerVal) {
-          this.sealWinnerAndPrepareCoupling(this.winnerIndex, winnerVal.targetCrans, 'pos_coupling');
+          if (this.simTimer >= 1.75 && !this.posSealedInCloseUp) {
+            this.posSealedInCloseUp = true;
+            this.sealWinnerAndPrepareCoupling(this.winnerIndex, winnerVal.targetCrans, null);
+          }
+
+          if (this.simTimer >= 2.0) {
+            this.simState = 'pos_zoom_out';
+            this.simTimer = 0;
+            cameraController.moveTo(this.overviewCamPos, this.overviewCamTarget, 0.75);
+            this.applyModeVisuals();
+            this.updateTooltipsDOM();
+            this.renderLeftPanel();
+          }
         }
       }
 
-      // 3. Temps 3 commun (PoW & PoS) : Raccordement du wagon gagnant au train en circulation (1.5 s)
+      // 2D. PoS — Temps 2C : Dezoom vers la vue d'ensemble (0.55 s)
+      if (this.simState === 'pos_zoom_out') {
+        this.simTimer += dt;
+        if (this.simTimer >= 0.55) {
+          this.simState = 'pos_coupling';
+          this.simTimer = 0;
+          this.applyModeVisuals();
+          this.updateTooltipsDOM();
+          this.renderLeftPanel();
+        }
+      }
+
+      // 3. Temps 3 commun (PoW & PoS) : Raccordement du wagon gagnant au train en circulation
       if (this.simState === 'pow_coupling' || this.simState === 'pos_coupling') {
         this.simTimer += dt;
-        const p = Math.min(this.simTimer / 1.5, 1.0);
+        const couplingDuration = this.mode === 'pow' ? 1.5 : 1.25;
+        const p = Math.min(this.simTimer / couplingDuration, 1.0);
         const eased = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
 
         const winnerVal = this.validators[this.winnerIndex];
@@ -1536,7 +1673,7 @@ export const step6 = {
         const targetV = this.validatorData[targetIdx];
         this.lotteryHaloX = THREE.MathUtils.lerp(this.lotteryHaloX, targetV.x, Math.min(1, dt * 16));
         this.lotteryHaloZ = THREE.MathUtils.lerp(this.lotteryHaloZ, targetV.z, Math.min(1, dt * 16));
-        this.lotteryHaloGroup.position.set(this.lotteryHaloX, -0.34, this.lotteryHaloZ + 0.05);
+        this.lotteryHaloGroup.position.set(this.lotteryHaloX, -0.34, this.lotteryHaloZ + 0.08);
         this.lotteryHaloGroup.rotation.y += dt * 1.8;
       }
 
@@ -1560,11 +1697,14 @@ export const step6 = {
         const toX = (v) => (v.x * 0.5 + 0.5) * width;
         const toY = (v) => (-v.y * 0.5 + 0.5) * height;
 
+        const isZoomedClose = this.simState === 'pos_zoom_in' || this.simState === 'pos_loading';
         let anyBehind = false;
-        const pts = this.validators.map((v) => {
-          const worldP = new THREE.Vector3(v.data.x - 0.56, -0.44 + 1.45, v.data.z - 0.44);
+        const pts = this.validators.map((v, idx) => {
+          const worldP = new THREE.Vector3(v.data.x - 0.12, -0.44 + 1.85, v.data.z - 0.82);
           const pr = worldP.project(camera);
-          if (pr.z > 1) anyBehind = true;
+          if (pr.z > 1 && (!isZoomedClose || idx === this.winnerIndex)) {
+            anyBehind = true;
+          }
           return { x: toX(pr), y: toY(pr) };
         });
 
@@ -1577,32 +1717,45 @@ export const step6 = {
           wagonWorld = winnerWagon.localToWorld(new THREE.Vector3(0, 1.15, 0));
         }
         const prW = wagonWorld.project(camera);
-        if (prW.z > 1) anyBehind = true;
+        if (prW.z > 1 && !isZoomedClose) anyBehind = true;
         const wagonPt = { x: toX(prW), y: toY(prW) };
 
         if (anyBehind) {
           this.tooltipLayer.style.opacity = '0';
           this.tooltipLayer.style.visibility = 'hidden';
         } else {
-          const isCovered = width > 768 && pts[0].x < 365;
+          const isCovered = !isZoomedClose && width > 768 && pts[0].x < 365;
           this.tooltipLayer.style.opacity = isCovered ? '0' : '1';
           this.tooltipLayer.style.visibility = isCovered ? 'hidden' : 'visible';
 
-          const wPillX = Math.max(460, Math.min(width - 140, wagonPt.x));
-          const wPillY = Math.max(38, wagonPt.y - 44);
-          const elWagon = document.getElementById('tooltip-s6-wagon');
-          if (elWagon) {
-            elWagon.style.transform = `translate3d(${wPillX.toFixed(1)}px, ${wPillY.toFixed(1)}px, 0) translate(-50%, -50%)`;
+          const setElDisplay = (id, show) => {
+            const node = document.getElementById(id);
+            if (node) node.style.display = show ? '' : 'none';
+          };
+
+          const showWagon = !isZoomedClose;
+          setElDisplay('tooltip-s6-wagon', showWagon);
+          setElDisplay('s6-line-wagon', showWagon);
+          setElDisplay('s6-dot-in-wagon', showWagon);
+          setElDisplay('s6-dot-out-wagon', showWagon);
+
+          if (showWagon) {
+            const wPillX = Math.max(460, Math.min(width - 140, wagonPt.x));
+            const wPillY = Math.max(38, wagonPt.y - 44);
+            const elWagon = document.getElementById('tooltip-s6-wagon');
+            if (elWagon) {
+              elWagon.style.transform = `translate3d(${wPillX.toFixed(1)}px, ${wPillY.toFixed(1)}px, 0) translate(-50%, -50%)`;
+            }
+            setLineAndDot(
+              's6-line-wagon',
+              's6-dot-in-wagon',
+              's6-dot-out-wagon',
+              wPillX,
+              wPillY + 14,
+              wagonPt.x,
+              wagonPt.y
+            );
           }
-          setLineAndDot(
-            's6-line-wagon',
-            's6-dot-in-wagon',
-            's6-dot-out-wagon',
-            wPillX,
-            wPillY + 14,
-            wagonPt.x,
-            wagonPt.y
-          );
 
           const minX = 465;
           const maxX = Math.max(minX + 300, width - 130);
@@ -1613,7 +1766,14 @@ export const step6 = {
           const pillXs = [pillX0, pillX1, pillX2];
 
           pts.forEach((pt, idx) => {
-            const px = pillXs[idx];
+            const showStation = !isZoomedClose || idx === this.winnerIndex;
+            setElDisplay(`tooltip-s6-${idx}`, showStation);
+            setElDisplay(`s6-line-${idx}`, showStation);
+            setElDisplay(`s6-dot-in-${idx}`, showStation);
+            setElDisplay(`s6-dot-out-${idx}`, showStation);
+            if (!showStation) return;
+
+            const px = isZoomedClose ? Math.max(465, Math.min(width - 130, pt.x)) : pillXs[idx];
             const py = pt.y - 34;
             const el = document.getElementById(`tooltip-s6-${idx}`);
             if (el) {
@@ -1686,9 +1846,9 @@ export const step6 = {
         </div>
         <div class="pos-lottery-box">
           <div class="pos-lottery-track">
-            <div id="s6-seg-0" class="pos-lottery-segment seg-a ${(this.simState === 'pos_loading' || this.simState === 'pos_coupling' || isDone) && this.winnerIndex === 0 ? 'winner' : ''}">Gare A (50 %)</div>
-            <div id="s6-seg-1" class="pos-lottery-segment seg-b ${(this.simState === 'pos_loading' || this.simState === 'pos_coupling' || isDone) && this.winnerIndex === 1 ? 'winner' : ''}">Gare B (35 %)</div>
-            <div id="s6-seg-2" class="pos-lottery-segment seg-c ${(this.simState === 'pos_loading' || this.simState === 'pos_coupling' || isDone) && this.winnerIndex === 2 ? 'winner' : ''}">C (15 %)</div>
+            <div id="s6-seg-0" class="pos-lottery-segment seg-a ${((this.simState === 'pos_lottery' && this.simTimer >= 2.5) || this.simState === 'pos_zoom_in' || this.simState === 'pos_loading' || this.simState === 'pos_zoom_out' || this.simState === 'pos_coupling' || isDone) && this.winnerIndex === 0 ? 'winner' : ''}">Gare A (50 %)</div>
+            <div id="s6-seg-1" class="pos-lottery-segment seg-b ${((this.simState === 'pos_lottery' && this.simTimer >= 2.5) || this.simState === 'pos_zoom_in' || this.simState === 'pos_loading' || this.simState === 'pos_zoom_out' || this.simState === 'pos_coupling' || isDone) && this.winnerIndex === 1 ? 'winner' : ''}">Gare B (35 %)</div>
+            <div id="s6-seg-2" class="pos-lottery-segment seg-c ${((this.simState === 'pos_lottery' && this.simTimer >= 2.5) || this.simState === 'pos_zoom_in' || this.simState === 'pos_loading' || this.simState === 'pos_zoom_out' || this.simState === 'pos_coupling' || isDone) && this.winnerIndex === 2 ? 'winner' : ''}">C (15 %)</div>
             <div id="step6-lottery-cursor" class="pos-lottery-cursor" style="left: ${this.lotteryCursorPercent.toFixed(1)}%;"></div>
           </div>
         </div>
