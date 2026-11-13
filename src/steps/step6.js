@@ -1990,16 +1990,22 @@ export const step6 = {
 
     const modeExplanationHTML = isPoW
       ? `
-        <div class="share-meaning-banner">
-          Chaque gare charge ses propres marchandises (caisses de couleurs différentes) dans son wagon candidat. Comme le contenu diffère d'une gare à l'autre, chacune doit chercher son propre Nonce. Toutes les gares calculent en même temps : la première qui trouve raccroche son wagon au train, les autres ont dépensé de l'énergie pour rien.
+        <div class="share-meaning-banner" style="border-left-color: #38bdf8;">
+          <strong>Course simultanée :</strong> chaque gare prépare son wagon avec ses propres marchandises et cherche son propre Nonce.
+          <div style="margin-top: 5px; color: #cbd5e1;">
+            La première qui trouve raccroche son wagon au train. Les autres gares ont tourné pour rien.
+          </div>
         </div>
         <div class="panel-hint-row">
-          Puissance : Gare A (${this.validatorData[0].probLabel}, bleues/jaunes), Gare B (${this.validatorData[1].probLabel}, vertes/orange), Gare C (${this.validatorData[2].probLabel}, violettes/rouges).
+          Puissance : Gare A (${this.validatorData[0].probLabel}), Gare B (${this.validatorData[1].probLabel}), Gare C (${this.validatorData[2].probLabel}).
         </div>
       `
       : `
-        <div class="share-meaning-banner">
-          Ici, pas de course : le réseau tire au sort une seule gare validatrice en fonction de sa pile de jetons en garantie. Seule la gare choisie charge ses caisses dans son wagon et l'accroche au convoi.
+        <div class="share-meaning-banner" style="border-left-color: #a855f7;">
+          <strong>Tirage au sort :</strong> le réseau sélectionne d'abord une seule gare selon sa caution de jetons.
+          <div style="margin-top: 5px; color: #cbd5e1;">
+            Seule la gare élue prépare son wagon et l'attelle, sans aucune compétition d'énergie.
+          </div>
         </div>
         <div class="pos-lottery-box">
           <div class="pos-lottery-track">
@@ -2014,14 +2020,18 @@ export const step6 = {
     const resultHTML = isDone
       ? isPoW
         ? `
-          <p style="margin: 10px 0 0 0;">
-            La <strong>${winner.name}</strong> a trouvé le <strong>Nonce #${this.winningNonce}</strong> en premier et raccroche son wagon (${winner.crateLabel}) au convoi en circulation. Les 2 autres gares ont calculé pour rien.
-          </p>
+          <div class="consensus-result-card pow-result">
+            <p class="consensus-result-text">
+              La <strong>${winner.name}</strong> a trouvé le <strong>Nonce #${this.winningNonce}</strong> en premier et raccroche son wagon (${winner.crateLabel}) au convoi. Les 2 autres gares ont calculé pour rien.
+            </p>
+          </div>
         `
         : `
-          <p style="margin: 10px 0 0 0;">
-            La <strong>${winner.name}</strong> a été tirée au sort : elle seule a chargé ses ${winner.crateLabel}, verrouillé le <strong>Nonce #${this.winningNonce}</strong> et raccroché son wagon au convoi. Les 2 autres gares restent en attente sur leur quai.
-          </p>
+          <div class="consensus-result-card pos-result">
+            <p class="consensus-result-text">
+              La <strong>${winner.name}</strong> a été tirée au sort : elle seule a chargé ses ${winner.crateLabel}, verrouillé le <strong>Nonce #${this.winningNonce}</strong> et raccroché son wagon au convoi.
+            </p>
+          </div>
         `
       : '';
 

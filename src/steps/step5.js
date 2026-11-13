@@ -1046,13 +1046,13 @@ export const step5 = {
         <article class="step-card context-card animate-fade">
           <h3 class="card-title">À quoi sert le minage (la molette du Nonce) ?</h3>
           <p>
-            Dans une blockchain, il n'y a pas d'administrateur central pour valider les wagons : ce sont les ordinateurs des gares (les mineurs) qui s'en chargent. Ici, vous incarnez l'opérateur d'une gare : choisissez une difficulté, puis tournez la molette manuellement ou lancez le minage automatique pour tester des milliers de combinaisons jusqu'à trouver le code qui verrouille le wagon.
+            Dans une blockchain, il n'y a pas d'administrateur central : ce sont les ordinateurs des gares (les mineurs) qui valident les wagons.
           </p>
-          <div class="share-meaning-banner" style="border-left-color: #f59e0b; margin-top: 4px; margin-bottom: 10px;">
-            L'objectif du minage n'est pas de créer de l'argent, mais de <strong>rendre la validation mathématiquement très coûteuse, ce qui empêche les tricheurs de réécrire l'historique</strong>.
+          <div class="share-meaning-banner" style="border-left-color: #f59e0b; margin: 8px 0 10px 0;">
+            L'objectif n'est pas de créer de l'argent, mais de <strong>rendre la validation mathématiquement coûteuse</strong> pour empêcher les tricheurs de réécrire l'historique.
           </div>
           <p>
-            Pour entrer dans le train, chaque wagon doit avoir un Hash qui commence par <strong>"${targetPrefix}"</strong>. Le <strong>Wagon #2</strong> à droite est bloqué car son code commence par <code>${this.currentHash.substring(0, 4)}...</code>.
+            Pour entrer dans le train, le <strong>Wagon #2</strong> à droite doit avoir un Hash qui commence par <strong>"${targetPrefix}"</strong> (bloqué à <code>${this.currentHash.substring(0, 4)}...</code>).
           </p>
           <div class="block-formula-box">
             <div class="formula-func">
