@@ -17,7 +17,7 @@ export const step6 = {
   rafId: null,
   mode: 'pow', // 'pow' | 'pos'
 
-  // Etats : 'idle' | 'pow_loading' | 'pow_racing' | 'pow_coupling' | 'pos_lottery' | 'pos_zoom_in' | 'pos_loading' | 'pos_zoom_out' | 'pos_coupling' | 'done'
+  // Etats : 'idle' | 'pow_loading' | 'pow_racing' | 'pow_verdict' | 'pow_fade_losers' | 'pow_coupling' | 'pos_lottery' | 'pos_selected' | 'pos_zoom_in' | 'pos_loading' | 'pos_zoom_out' | 'pos_coupling' | 'done'
   simState: 'idle',
   simTimer: 0,
   winnerIndex: 0,
@@ -190,6 +190,10 @@ export const step6 = {
 
   exit() {
     this.stopAnimationLoop();
+    this.ctx?.cameraController?.cancelTransition();
+    this.simState = 'idle';
+    this.simTimer = 0;
+    this.posSealedInCloseUp = false;
 
     if (this.ctx?.trainConvoy?.group) {
       this.ctx.trainConvoy.group.position.x = 0;
@@ -226,8 +230,11 @@ export const step6 = {
     return (
       this.simState === 'pow_loading' ||
       this.simState === 'pow_racing' ||
+      this.simState === 'pow_verdict' ||
+      this.simState === 'pow_fade_losers' ||
       this.simState === 'pow_coupling' ||
       this.simState === 'pos_lottery' ||
+      this.simState === 'pos_selected' ||
       this.simState === 'pos_zoom_in' ||
       this.simState === 'pos_loading' ||
       this.simState === 'pos_zoom_out' ||
@@ -279,6 +286,51 @@ export const step6 = {
   },
 
   /**
+   * Regle l'opacite et la visibilite d'une gare complete (quai, batiment, caisses, wagon, molette et voie).
+   */
+  setStationOpacity(v, alpha) {
+    if (!v) return;
+    const clamped = Math.max(0, Math.min(1, alpha));
+    v.opacity = clamped;
+
+    if (clamped <= 0.005) {
+      if (v.group) v.group.visible = false;
+      if (v.candidateWagon) v.candidateWagon.visible = false;
+      if (v.linkLine) v.linkLine.visible = false;
+      return;
+    }
+
+    if (v.group) v.group.visible = true;
+    if (v.candidateWagon) v.candidateWagon.visible = true;
+    if (v.linkLine) v.linkLine.visible = true;
+
+    const isFading = clamped < 0.995;
+    if (Array.isArray(v.fadeMaterials)) {
+      v.fadeMaterials.forEach((mat) => {
+        const baseTransparent = Boolean(mat.userData.baseTransparent);
+        const baseOpacity = mat.userData.baseOpacity !== undefined ? mat.userData.baseOpacity : 1.0;
+        const baseDepthWrite = mat.userData.baseDepthWrite !== undefined ? mat.userData.baseDepthWrite : true;
+
+        if (isFading) {
+          if (!mat.transparent) {
+            mat.transparent = true;
+            mat.needsUpdate = true;
+          }
+          mat.depthWrite = false;
+          mat.opacity = baseOpacity * clamped;
+        } else {
+          if (mat.transparent !== baseTransparent) {
+            mat.transparent = baseTransparent;
+            mat.needsUpdate = true;
+          }
+          mat.depthWrite = baseDepthWrite;
+          mat.opacity = baseOpacity;
+        }
+      });
+    }
+  },
+
+  /**
    * Reinitialise les 3 quais, caisses, molettes et wagons candidats pour une nouvelle manche.
    */
   resetRoundVisuals() {
@@ -289,7 +341,7 @@ export const step6 = {
     this.wasCoupled = false;
     this.couplerFlashAlpha = 0;
 
-    this.validators.forEach((v) => {
+    this.validators.forEach((v, idx) => {
       v.cranFloat = 0;
       v.currentCrans = 0;
       v.targetCrans = 0;
@@ -320,6 +372,9 @@ export const step6 = {
         v.candidateWagon.scale.setScalar(this.sidingScale);
         v.candidateWagon.nonceDialAccentColor = '#f59e0b';
         v.candidateWagon.updateStatus(false);
+        v.candidateWagon.glassMaterials.forEach((mat) => {
+          mat.userData.baseOpacity = mat.opacity;
+        });
 
         if (v.candidateWagon.couplerGroup) {
           v.candidateWagon.couplerGroup.visible = false;
@@ -335,6 +390,20 @@ export const step6 = {
       }
 
       this.applyCratesLoadProgress(v, 0);
+      this.setStationOpacity(v, 1.0);
+
+      [`tooltip-s6-${idx}`, `s6-line-${idx}`, `s6-dot-in-${idx}`, `s6-dot-out-${idx}`].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.style.display = '';
+          el.style.opacity = id.startsWith('tooltip-') ? '1' : '';
+        }
+      });
+    });
+
+    ['tooltip-s6-wagon', 's6-line-wagon', 's6-dot-in-wagon', 's6-dot-out-wagon'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = '';
     });
   },
 
@@ -455,24 +524,24 @@ export const step6 = {
    * Construit le batiment de gare ferroviaire en 3D au fond du quai,
    * avec enseigne blanche rehaussee au-dessus du wagon candidat.
    */
-  createStationBuildingMesh(v, shared) {
+  createStationBuildingMesh(v, shared, stationMats) {
     const buildingGroup = new THREE.Group();
     buildingGroup.position.set(-0.12, 0.20, -0.82);
     buildingGroup.scale.setScalar(0.92);
 
-    const plinth = new THREE.Mesh(shared.plinthGeo, shared.stoneTrimMat);
+    const plinth = new THREE.Mesh(shared.plinthGeo, stationMats.stoneTrimMat);
     plinth.position.set(-0.10, 0.07, 0);
     buildingGroup.add(plinth);
 
-    const mainHall = new THREE.Mesh(shared.mainHallGeo, shared.brickMat);
+    const mainHall = new THREE.Mesh(shared.mainHallGeo, stationMats.brickMat);
     mainHall.position.set(-0.10, 0.59, 0);
     buildingGroup.add(mainHall);
 
-    const cornice = new THREE.Mesh(shared.corniceGeo, shared.stoneTrimMat);
+    const cornice = new THREE.Mesh(shared.corniceGeo, stationMats.stoneTrimMat);
     cornice.position.set(-0.10, 1.08, 0);
     buildingGroup.add(cornice);
 
-    const mainRoof = new THREE.Mesh(shared.roofPrismGeo, shared.slateRoofMat);
+    const mainRoof = new THREE.Mesh(shared.roofPrismGeo, stationMats.slateRoofMat);
     mainRoof.position.set(-0.10, 1.32, 0);
     mainRoof.rotation.y = Math.PI / 4;
     mainRoof.scale.set(1.16, 1.0, 0.62);
@@ -490,17 +559,17 @@ export const step6 = {
       buildingGroup.add(win);
     });
 
-    const canopy = new THREE.Mesh(shared.canopyGeo, shared.darkMetalMat);
+    const canopy = new THREE.Mesh(shared.canopyGeo, stationMats.darkMetalMat);
     canopy.position.set(-0.10, 0.60, 0.28);
     buildingGroup.add(canopy);
 
     [-0.68, 0.48].forEach((px) => {
-      const pillar = new THREE.Mesh(shared.pillarGeo, shared.darkMetalMat);
+      const pillar = new THREE.Mesh(shared.pillarGeo, stationMats.darkMetalMat);
       pillar.position.set(px, 0.30, 0.42);
       buildingGroup.add(pillar);
     });
 
-    const signBack = new THREE.Mesh(shared.signBackGeo, shared.darkMetalMat);
+    const signBack = new THREE.Mesh(shared.signBackGeo, stationMats.darkMetalMat);
     signBack.position.set(-0.10, 0.88, 0.46);
     buildingGroup.add(signBack);
 
@@ -512,20 +581,20 @@ export const step6 = {
     signMesh.position.set(-0.10, 0.88, 0.485);
     buildingGroup.add(signMesh);
 
-    const tower = new THREE.Mesh(shared.towerBodyGeo, shared.brickMat);
+    const tower = new THREE.Mesh(shared.towerBodyGeo, stationMats.brickMat);
     tower.position.set(-0.66, 0.80, -0.14);
     buildingGroup.add(tower);
 
-    const towerRoof = new THREE.Mesh(shared.towerRoofGeo, shared.slateRoofMat);
+    const towerRoof = new THREE.Mesh(shared.towerRoofGeo, stationMats.slateRoofMat);
     towerRoof.position.set(-0.66, 1.78, -0.14);
     towerRoof.rotation.y = Math.PI / 4;
     buildingGroup.add(towerRoof);
 
-    const clockFront = new THREE.Mesh(shared.clockFaceGeo, shared.clockMat);
+    const clockFront = new THREE.Mesh(shared.clockFaceGeo, stationMats.clockMat);
     clockFront.position.set(-0.66, 1.44, 0.08);
     buildingGroup.add(clockFront);
 
-    const signalMast = new THREE.Mesh(shared.signalMastGeo, shared.darkMetalMat);
+    const signalMast = new THREE.Mesh(shared.signalMastGeo, stationMats.darkMetalMat);
     signalMast.position.set(-0.90, 0.56, 0.24);
     buildingGroup.add(signalMast);
 
@@ -561,39 +630,17 @@ export const step6 = {
     const parentHash = parentBlock ? parentBlock.hash : '0000abcd1234';
 
     const platformGeo = new THREE.BoxGeometry(3.42, 0.16, 2.68);
-    const platformMat = new THREE.MeshStandardMaterial({
-      color: 0x1e293b,
-      roughness: 0.65,
-      metalness: 0.3
-    });
-
     const ringGeo = new THREE.RingGeometry(1.36, 1.48, 36);
-
     const wheelStandGeo = new THREE.BoxGeometry(0.30, 0.54, 0.14);
-    const wheelStandMat = new THREE.MeshStandardMaterial({
-      color: 0x0f172a,
-      metalness: 0.85,
-      roughness: 0.3
-    });
-
     const wheelGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.11, 24);
     const toothGeo = new THREE.BoxGeometry(0.07, 0.10, 0.09);
     const dialGeo = new THREE.CircleGeometry(0.29, 32);
     const coinGeo = new THREE.CylinderGeometry(0.28, 0.28, 0.085, 20);
-
     const palletGeo = new THREE.BoxGeometry(0.84, 0.06, 0.68);
-    const palletMat = new THREE.MeshStandardMaterial({
-      color: 0x78350f,
-      roughness: 0.85
-    });
-
     const crateGeo = new THREE.BoxGeometry(0.56, 0.42, 0.40);
     const crateEdgesGeo = new THREE.EdgesGeometry(crateGeo);
-
     const sidingTieGeo = new THREE.BoxGeometry(0.08, 0.03, 0.72);
-    const sidingTieMat = new THREE.MeshStandardMaterial({ color: 0x3f2e21, roughness: 0.9 });
     const sidingRailGeo = new THREE.BoxGeometry(1.48, 0.04, 0.05);
-    const sidingRailMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.3 });
 
     const clockTexture = this.createClockTexture();
     const sharedStationAssets = {
@@ -610,12 +657,7 @@ export const step6 = {
       towerRoofGeo: new THREE.ConeGeometry(0.35, 0.46, 4),
       clockFaceGeo: new THREE.CircleGeometry(0.14, 20),
       signalMastGeo: new THREE.CylinderGeometry(0.026, 0.030, 1.12, 8),
-      beaconGeo: new THREE.SphereGeometry(0.095, 12, 12),
-      brickMat: new THREE.MeshStandardMaterial({ color: 0x9a3412, roughness: 0.72 }),
-      stoneTrimMat: new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.6 }),
-      slateRoofMat: new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.55, flatShading: true }),
-      darkMetalMat: new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.75, roughness: 0.3 }),
-      clockMat: new THREE.MeshBasicMaterial({ map: clockTexture })
+      beaconGeo: new THREE.SphereGeometry(0.095, 12, 12)
     };
 
     const crateTargets = [
@@ -635,6 +677,31 @@ export const step6 = {
       const vGroup = new THREE.Group();
       vGroup.position.set(v.x, -0.44, v.z);
 
+      // Materiaux dedies a cette gare uniquement (aucun partage pour permettre le fondu independant)
+      const platformMat = new THREE.MeshStandardMaterial({
+        color: 0x1e293b,
+        roughness: 0.65,
+        metalness: 0.3
+      });
+      const wheelStandMat = new THREE.MeshStandardMaterial({
+        color: 0x0f172a,
+        metalness: 0.85,
+        roughness: 0.3
+      });
+      const palletMat = new THREE.MeshStandardMaterial({
+        color: 0x78350f,
+        roughness: 0.85
+      });
+      const sidingTieMat = new THREE.MeshStandardMaterial({ color: 0x3f2e21, roughness: 0.9 });
+      const sidingRailMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.3 });
+      const stationMats = {
+        brickMat: new THREE.MeshStandardMaterial({ color: 0x9a3412, roughness: 0.72 }),
+        stoneTrimMat: new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.6 }),
+        slateRoofMat: new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.55, flatShading: true }),
+        darkMetalMat: new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.75, roughness: 0.3 }),
+        clockMat: new THREE.MeshBasicMaterial({ map: clockTexture })
+      };
+
       const platform = new THREE.Mesh(platformGeo, platformMat);
       vGroup.add(platform);
 
@@ -647,7 +714,11 @@ export const step6 = {
       ring.position.set(0, 0.09, 0.08);
       vGroup.add(ring);
 
-      const { buildingGroup, beaconMat, windowMat } = this.createStationBuildingMesh(v, sharedStationAssets);
+      const { buildingGroup, beaconMat, windowMat } = this.createStationBuildingMesh(
+        v,
+        sharedStationAssets,
+        stationMats
+      );
       vGroup.add(buildingGroup);
 
       // Palette de chargement bien a l'ecart sur la gauche du quai
@@ -721,7 +792,7 @@ export const step6 = {
 
       // --- 2. Indicateur PoS : Pile de jetons strictement fixe sur la droite vers l'avant (+X, +Z) ---
       const posNodeGroup = new THREE.Group();
-      posNodeGroup.position.set(0.92, 0.08, 0.58);
+      posNodeGroup.position.set(0.84, 0.08, 0.58);
       const coinMat = new THREE.MeshStandardMaterial({
         color: 0xfacc15,
         emissive: 0xb45309,
@@ -797,6 +868,31 @@ export const step6 = {
       const linkLine = new THREE.Line(lineGeo, lineMat);
       this.consensusGroup.add(linkLine);
 
+      const fadeMaterialSet = new Set();
+      const registerFadeMaterials = (root) => {
+        if (!root) return;
+        root.traverse((obj) => {
+          if (!obj.material) return;
+          const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+          mats.forEach((mat) => {
+            if (!mat || fadeMaterialSet.has(mat)) return;
+            fadeMaterialSet.add(mat);
+            if (mat.userData.baseOpacity === undefined) {
+              mat.userData.baseOpacity = mat.opacity !== undefined ? mat.opacity : 1.0;
+            }
+            if (mat.userData.baseTransparent === undefined) {
+              mat.userData.baseTransparent = Boolean(mat.transparent);
+            }
+            if (mat.userData.baseDepthWrite === undefined) {
+              mat.userData.baseDepthWrite = mat.depthWrite !== undefined ? mat.depthWrite : true;
+            }
+          });
+        });
+      };
+      registerFadeMaterials(vGroup);
+      registerFadeMaterials(candidateWagon);
+      registerFadeMaterials(linkLine);
+
       this.validators.push({
         data: v,
         group: vGroup,
@@ -811,6 +907,9 @@ export const step6 = {
         windowMat,
         coinMat,
         lineMat,
+        linkLine,
+        fadeMaterials: Array.from(fadeMaterialSet),
+        opacity: 1.0,
         sidingPos,
         trackCurve,
         candidateBlock,
@@ -912,7 +1011,7 @@ export const step6 = {
           <button type="button" class="scene-tooltip-pill">
             <span class="scene-tooltip-dot"></span>
             <span class="scene-tooltip-label">
-              <strong>${v.name}</strong> · <span id="s6-pill-status-${idx}" style="color: #cbd5e1;">${v.probLabel}</span>
+              <strong>${v.name}</strong> - <span id="s6-pill-status-${idx}" style="color: #cbd5e1;">${v.probLabel}</span>
             </span>
           </button>
         </div>
@@ -950,7 +1049,8 @@ export const step6 = {
   },
 
   setMode(targetMode) {
-    if (this.mode === targetMode || this.isBusyState()) return;
+    if (this.mode === targetMode && this.simState === 'idle') return;
+    this.ctx?.cameraController?.cancelTransition();
     this.mode = targetMode;
     this.simState = 'idle';
     this.simTimer = 0;
@@ -963,7 +1063,7 @@ export const step6 = {
     this.renderLeftPanel();
 
     if (this.ctx?.cameraController) {
-      this.ctx.cameraController.moveTo(this.overviewCamPos, this.overviewCamTarget, 0.75);
+      this.ctx.cameraController.moveTo(this.overviewCamPos, this.overviewCamTarget, 0.65);
     }
   },
 
@@ -992,7 +1092,10 @@ export const step6 = {
   },
 
   startConsensusRound() {
-    if (this.isBusyState()) return;
+    this.ctx?.cameraController?.cancelTransition();
+    if (this.ctx?.cameraController) {
+      this.ctx.cameraController.moveTo(this.overviewCamPos, this.overviewCamTarget, 0.5);
+    }
 
     this.resetRoundVisuals();
     this.powTickAccum = 0;
@@ -1009,9 +1112,6 @@ export const step6 = {
       this.lotteryStartPercent = this.lotteryCursorPercent;
       this.lotteryHaloX = this.validatorData[this.rouletteHighlightIndex].x;
       this.lotteryHaloZ = this.validatorData[this.rouletteHighlightIndex].z;
-      if (this.ctx?.cameraController) {
-        this.ctx.cameraController.moveTo(this.overviewCamPos, this.overviewCamTarget, 0.6);
-      }
     }
 
     this.applyModeVisuals();
@@ -1027,7 +1127,9 @@ export const step6 = {
     const isPoW = this.mode === 'pow';
     const showPosWheel =
       !isPoW &&
-      (this.simState === 'pos_loading' ||
+      (this.simState === 'pos_selected' ||
+        this.simState === 'pos_zoom_in' ||
+        this.simState === 'pos_loading' ||
         this.simState === 'pos_zoom_out' ||
         this.simState === 'pos_coupling' ||
         this.simState === 'done');
@@ -1048,7 +1150,7 @@ export const step6 = {
 
         // Pile de jetons strictement fixe : aucune variation de hauteur ni de scale
         v.posNodeGroup.visible = true;
-        v.posNodeGroup.position.set(0.92, 0.08, 0.58);
+        v.posNodeGroup.position.set(0.84, 0.08, 0.58);
         v.posNodeGroup.scale.set(1, 1, 1);
       }
 
@@ -1059,19 +1161,19 @@ export const step6 = {
         colorHex = 0xf59e0b;
         lineOpacity = 0.58;
       } else if (this.simState === 'pos_lottery') {
-        const isLockedPhase = this.simTimer >= 2.5;
-        if (isLockedPhase) {
-          colorHex = isWinner ? 0x10b981 : 0x475569;
-          lineOpacity = isWinner ? 0.9 : 0.15;
-        } else {
-          const isHigh = idx === this.rouletteHighlightIndex;
-          colorHex = isHigh ? 0xfacc15 : 0x38bdf8;
-          lineOpacity = isHigh ? 0.85 : 0.2;
-        }
-      } else if (this.simState === 'pos_zoom_in' || this.simState === 'pos_loading') {
-        colorHex = isWinner ? 0x10b981 : 0x475569;
-        lineOpacity = isWinner ? 0.85 : 0.15;
+        const isHigh = idx === this.rouletteHighlightIndex;
+        colorHex = isHigh ? 0xfacc15 : 0x38bdf8;
+        lineOpacity = isHigh ? 0.85 : 0.2;
       } else if (
+        this.simState === 'pos_selected' ||
+        this.simState === 'pos_zoom_in' ||
+        this.simState === 'pos_loading'
+      ) {
+        colorHex = isWinner ? 0x10b981 : 0x475569;
+        lineOpacity = isWinner ? 0.9 : 0.15;
+      } else if (
+        this.simState === 'pow_verdict' ||
+        this.simState === 'pow_fade_losers' ||
         this.simState === 'pow_coupling' ||
         this.simState === 'pos_zoom_out' ||
         this.simState === 'pos_coupling' ||
@@ -1088,7 +1190,8 @@ export const step6 = {
 
       v.ringMat.color.setHex(colorHex);
       v.lineMat.color.setHex(colorHex);
-      v.lineMat.opacity = lineOpacity;
+      v.lineMat.opacity = lineOpacity * (v.opacity !== undefined ? v.opacity : 1.0);
+      v.lineMat.userData.baseOpacity = lineOpacity;
       if (v.beaconMat) {
         v.beaconMat.color.setHex(colorHex);
         v.beaconMat.emissive.setHex(colorHex);
@@ -1105,6 +1208,7 @@ export const step6 = {
       const showHalo =
         !isPoW &&
         (this.simState === 'pos_lottery' ||
+          this.simState === 'pos_selected' ||
           this.simState === 'pos_zoom_in' ||
           this.simState === 'pos_loading' ||
           this.simState === 'pos_zoom_out' ||
@@ -1113,7 +1217,7 @@ export const step6 = {
       this.lotteryHaloGroup.visible = showHalo;
       if (showHalo) {
         const { haloRingMat, haloBeamMat } = this.lotteryHaloGroup.userData;
-        const isSweeping = this.simState === 'pos_lottery' && this.simTimer < 2.5;
+        const isSweeping = this.simState === 'pos_lottery';
         const haloColor = isSweeping ? 0xfacc15 : 0x10b981;
         haloRingMat.color.setHex(haloColor);
         haloBeamMat.color.setHex(haloColor);
@@ -1151,53 +1255,59 @@ export const step6 = {
         spotColor = '#f59e0b';
         statusText = `${v.data.probLabel} · Nonce #${v.currentCrans}`;
         statusColor = '#fde68a';
-      } else if (this.simState === 'pos_lottery') {
-        if (this.simTimer >= 2.5) {
-          const isWinner = idx === this.winnerIndex;
-          spotColor = isWinner ? '#10b981' : '#64748b';
-          statusText = isWinner ? 'Choisie ! Zoom en cours...' : 'En attente (0 cran)';
-          statusColor = isWinner ? '#34d399' : '#94a3b8';
-        } else {
-          const isHigh = idx === this.rouletteHighlightIndex;
-          spotColor = isHigh ? '#facc15' : '#38bdf8';
-          statusText = `${v.data.tokens} jetons (${v.data.probLabel})`;
-          statusColor = isHigh ? '#fde047' : '#94a3b8';
-        }
-      } else if (this.simState === 'pos_zoom_in' || this.simState === 'pos_loading') {
-        const isWinner = idx === this.winnerIndex;
-        if (isWinner) {
-          spotColor = '#10b981';
-          statusText =
-            this.simState === 'pos_zoom_in'
-              ? 'Élue · Cadrage gros plan'
-              : 'Élue · Chargement & Nonce';
-          statusColor = '#34d399';
-        } else {
-          spotColor = '#64748b';
-          statusText = 'En attente (0 cran)';
-          statusColor = '#94a3b8';
-        }
       } else if (
-        this.simState === 'pow_coupling' ||
-        this.simState === 'pos_zoom_out' ||
-        this.simState === 'pos_coupling' ||
-        this.simState === 'done'
+        this.simState === 'pow_verdict' ||
+        this.simState === 'pow_fade_losers' ||
+        (isPoW && (this.simState === 'pow_coupling' || this.simState === 'done'))
       ) {
         const isWinner = idx === this.winnerIndex;
         if (isWinner) {
           spotColor = '#10b981';
-          statusText =
-            this.simState === 'done'
-              ? `Gagnante (Nonce #${v.currentCrans})`
-              : 'Raccordement au train...';
+          statusText = `Gagnante (Nonce #${v.currentCrans})`;
           statusColor = '#34d399';
-        } else if (isPoW) {
+        } else {
           spotColor = '#ef4444';
-          statusText = `Battue (${v.currentCrans} crans)`;
+          statusText = 'Battue';
           statusColor = '#fca5a5';
+        }
+      } else if (this.simState === 'pos_lottery') {
+        const isHigh = idx === this.rouletteHighlightIndex;
+        spotColor = isHigh ? '#facc15' : '#38bdf8';
+        statusText = `${v.data.tokens} jetons (${v.data.probLabel})`;
+        statusColor = isHigh ? '#fde047' : '#94a3b8';
+      } else if (this.simState === 'pos_selected' || this.simState === 'pos_zoom_in') {
+        const isWinner = idx === this.winnerIndex;
+        spotColor = isWinner ? '#10b981' : '#64748b';
+        statusText = isWinner ? 'Choisie' : 'En attente';
+        statusColor = isWinner ? '#34d399' : '#94a3b8';
+      } else if (this.simState === 'pos_loading') {
+        const isWinner = idx === this.winnerIndex;
+        if (isWinner) {
+          spotColor = '#10b981';
+          statusText = this.posSealedInCloseUp
+            ? `Choisie (Nonce #${this.winningNonce})`
+            : this.simTimer < 0.85
+              ? 'Chargement des caisses...'
+              : `Nonce #${v.currentCrans}`;
+          statusColor = '#34d399';
         } else {
           spotColor = '#64748b';
-          statusText = 'En attente (0 cran)';
+          statusText = 'En attente';
+          statusColor = '#94a3b8';
+        }
+      } else if (
+        this.simState === 'pos_zoom_out' ||
+        this.simState === 'pos_coupling' ||
+        (!isPoW && this.simState === 'done')
+      ) {
+        const isWinner = idx === this.winnerIndex;
+        if (isWinner) {
+          spotColor = '#10b981';
+          statusText = `Choisie (Nonce #${this.winningNonce})`;
+          statusColor = '#34d399';
+        } else {
+          spotColor = '#64748b';
+          statusText = 'En attente';
           statusColor = '#94a3b8';
         }
       }
@@ -1208,15 +1318,14 @@ export const step6 = {
       }
       if (segEl) {
         const segBase = idx === 0 ? 'seg-a' : idx === 1 ? 'seg-b' : 'seg-c';
-        const isSweep =
-          this.simState === 'pos_lottery' && this.simTimer < 2.5 && idx === this.rouletteHighlightIndex;
+        const isSweep = this.simState === 'pos_lottery' && idx === this.rouletteHighlightIndex;
         const isWin =
-          ((this.simState === 'pos_lottery' && this.simTimer >= 2.5) ||
+          (this.simState === 'pos_selected' ||
             this.simState === 'pos_zoom_in' ||
             this.simState === 'pos_loading' ||
             this.simState === 'pos_zoom_out' ||
             this.simState === 'pos_coupling' ||
-            this.simState === 'done') &&
+            (!isPoW && this.simState === 'done')) &&
           idx === this.winnerIndex;
         segEl.className = `pos-lottery-segment ${segBase} ${isSweep ? 'sweep-active' : ''} ${isWin ? 'winner' : ''}`;
       }
@@ -1246,13 +1355,16 @@ export const step6 = {
     if (this.simState === 'pow_loading' || this.simState === 'pow_racing') {
       wagonColor = '#f59e0b';
       wagonText = 'Attend le 1er wagon valide...';
+    } else if (this.simState === 'pow_verdict' || this.simState === 'pow_fade_losers') {
+      wagonColor = '#10b981';
+      wagonText = `Wagon ${winnerData.name} validé`;
     } else if (this.simState === 'pos_lottery') {
-      const isLotteryLocked = this.simTimer >= 2.5;
-      wagonColor = isLotteryLocked ? '#10b981' : '#facc15';
-      wagonText = isLotteryLocked
-        ? `Gare élue : ${winnerData.name}`
-        : 'Tirage de la gare...';
-    } else if (this.simState === 'pos_zoom_in' || this.simState === 'pos_loading') {
+      wagonColor = '#facc15';
+      wagonText = 'Tirage de la gare...';
+    } else if (this.simState === 'pos_selected' || this.simState === 'pos_zoom_in') {
+      wagonColor = '#10b981';
+      wagonText = `Gare élue : ${winnerData.name}`;
+    } else if (this.simState === 'pos_loading') {
       wagonColor = this.posSealedInCloseUp ? '#10b981' : '#facc15';
       wagonText = this.posSealedInCloseUp
         ? `Wagon ${winnerData.name} scellé (#${this.winningNonce})`
@@ -1334,6 +1446,7 @@ export const step6 = {
           v.candidateWagon.glassMaterials.forEach((mat) => {
             mat.color.setHex(0xef4444);
             mat.opacity = 0.2;
+            mat.userData.baseOpacity = 0.2;
           });
           v.candidateWagon.edgeMaterials.forEach((mat) => {
             mat.color.setHex(0x64748b);
@@ -1382,7 +1495,7 @@ export const step6 = {
       const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
-      const { trainConvoy, camera } = this.ctx;
+      const { trainConvoy, camera, cameraController } = this.ctx;
       const wheelPhase = trainConvoy?.wheelPhase || 0;
 
       // 1A. PoW — Temps 1 : Chargement simultane des caisses colorees sur les 3 quais (1.2 s)
@@ -1451,7 +1564,7 @@ export const step6 = {
         }
 
         if (winIdx !== -1) {
-          this.sealWinnerAndPrepareCoupling(winIdx, this.validators[winIdx].currentCrans, 'pow_coupling');
+          this.sealWinnerAndPrepareCoupling(winIdx, this.validators[winIdx].currentCrans, 'pow_verdict');
         } else {
           this.validators.forEach((v) => {
             const targetAngle = v.currentCrans * (Math.PI / 4);
@@ -1467,9 +1580,42 @@ export const step6 = {
         }
       }
 
-      // 2A. PoS — Temps 1 : Tirage au sort sur les piles de jetons (2.5 s de balayage + 0.3 s de verrouillage vert)
+      // 1C. PoW — Temps 2B : Verdict visuel (gagnante verte, 2 perdantes rouges maintenues 1.75 s)
+      if (this.simState === 'pow_verdict') {
+        this.simTimer += dt;
+        if (this.simTimer >= 1.75) {
+          this.simState = 'pow_fade_losers';
+          this.simTimer = 0;
+          this.applyModeVisuals();
+          this.updateTooltipsDOM();
+          this.renderLeftPanel();
+        }
+      }
+
+      // 1D. PoW — Temps 2C : Disparition en fondu des 2 gares perdantes (0.8 s)
+      if (this.simState === 'pow_fade_losers') {
+        this.simTimer += dt;
+        const fadeP = Math.min(this.simTimer / 0.8, 1.0);
+        this.validators.forEach((v, idx) => {
+          if (idx === this.winnerIndex) return;
+          this.setStationOpacity(v, 1.0 - fadeP);
+        });
+        if (fadeP >= 1.0) {
+          this.validators.forEach((v, idx) => {
+            if (idx !== this.winnerIndex) {
+              this.setStationOpacity(v, 0);
+            }
+          });
+          this.simState = 'pow_coupling';
+          this.simTimer = 0;
+          this.applyModeVisuals();
+          this.updateTooltipsDOM();
+          this.renderLeftPanel();
+        }
+      }
+
+      // 2A. PoS — Temps 1 : Tirage au sort sur les piles de jetons (2.5 s)
       if (this.simState === 'pos_lottery') {
-        const prevTimer = this.simTimer;
         this.simTimer += dt;
         const sweepProgress = Math.min(this.simTimer / 2.5, 1.0);
 
@@ -1495,35 +1641,53 @@ export const step6 = {
           const cursorEl = document.getElementById('step6-lottery-cursor');
           if (cursorEl) cursorEl.style.left = `${this.lotteryCursorPercent.toFixed(1)}%`;
 
-          if (prevTimer < 2.5) {
-            this.applyModeVisuals();
-            this.updateTooltipsDOM();
-            this.renderLeftPanel();
+          const winnerVal = this.validators[this.winnerIndex];
+          if (winnerVal) {
+            winnerVal.wheelScale = 1.0;
           }
-
-          if (this.simTimer >= 2.8) {
-            const winData = this.validatorData[this.winnerIndex];
-            this.posSealedInCloseUp = false;
-            this.simState = 'pos_zoom_in';
-            this.simTimer = 0;
-            if (winData) {
-              cameraController.moveTo(
-                new THREE.Vector3(winData.x, 1.85, winData.z + 4.55),
-                new THREE.Vector3(winData.x, -0.02, winData.z + 0.12),
-                0.8
-              );
-            }
-            this.applyModeVisuals();
-            this.updateTooltipsDOM();
-            this.renderLeftPanel();
-          }
+          this.simState = 'pos_selected';
+          this.simTimer = 0;
+          this.applyModeVisuals();
+          this.updateTooltipsDOM();
+          this.renderLeftPanel();
         }
       }
 
-      // 2B. PoS — Temps 2A : Zoom dynamique sur la gare elue (0.85 s)
+      // 2B. PoS — Temps 2 : Pause sur la selection verte en plan large (1.75 s)
+      if (this.simState === 'pos_selected') {
+        this.simTimer += dt;
+        if (this.simTimer >= 1.75) {
+          const winData = this.validatorData[this.winnerIndex];
+          this.posSealedInCloseUp = false;
+          this.simState = 'pos_zoom_in';
+          this.simTimer = 0;
+          if (cameraController && winData) {
+            cameraController.moveTo(
+              new THREE.Vector3(winData.x + 0.08, 1.95, winData.z + 4.65),
+              new THREE.Vector3(winData.x + 0.08, 0.05, winData.z + 0.20),
+              0.9
+            );
+          }
+          this.applyModeVisuals();
+          this.updateTooltipsDOM();
+          this.renderLeftPanel();
+        }
+      }
+
+      // 2C. PoS — Temps 3 : Fondu des 2 gares non retenues et gros zoom sur la gare elue (0.9 s)
       if (this.simState === 'pos_zoom_in') {
         this.simTimer += dt;
-        if (this.simTimer >= 0.85) {
+        const zoomP = Math.min(this.simTimer / 0.9, 1.0);
+        this.validators.forEach((v, idx) => {
+          if (idx === this.winnerIndex) return;
+          this.setStationOpacity(v, 1.0 - zoomP);
+        });
+        if (this.simTimer >= 0.9) {
+          this.validators.forEach((v, idx) => {
+            if (idx !== this.winnerIndex) {
+              this.setStationOpacity(v, 0);
+            }
+          });
           this.simState = 'pos_loading';
           this.simTimer = 0;
           this.applyModeVisuals();
@@ -1532,20 +1696,21 @@ export const step6 = {
         }
       }
 
-      // 2C. PoS — Temps 2B : Gros plan — chargement des caisses puis verrouillage du Nonce (2.0 s)
+      // 2D. PoS — Temps 4 : Gros plan — chargement des caisses puis rotation et verrouillage du Nonce (2.0 s)
       if (this.simState === 'pos_loading') {
         this.simTimer += dt;
         const winnerVal = this.validators[this.winnerIndex];
 
         if (winnerVal) {
-          const loadP = Math.min(this.simTimer / 0.95, 1.0);
-          winnerVal.wheelScale = Math.min(1.0, loadP * 2.5);
-          winnerVal.powNodeGroup.scale.setScalar(winnerVal.wheelScale);
+          winnerVal.wheelScale = 1.0;
+          winnerVal.powNodeGroup.scale.setScalar(1.0);
+
+          const loadP = Math.min(this.simTimer / 0.85, 1.0);
           winnerVal.loadProgress = loadP;
           this.applyCratesLoadProgress(winnerVal, loadP);
 
-          if (this.simTimer >= 0.95) {
-            const dialP = Math.min((this.simTimer - 0.95) / 0.8, 1.0);
+          if (this.simTimer >= 0.85) {
+            const dialP = Math.min((this.simTimer - 0.85) / 0.8, 1.0);
             const liveCran = Math.max(1, Math.floor(winnerVal.targetCrans * dialP));
             if (liveCran !== winnerVal.currentCrans) {
               winnerVal.currentCrans = liveCran;
@@ -1559,6 +1724,7 @@ export const step6 = {
                 winnerVal.candidateBlock.nonce = liveCran;
                 winnerVal.candidateWagon.renderPlates();
               }
+              this.updateTooltipsDOM();
             }
             const angle = liveCran * (Math.PI / 4);
             winnerVal.currentAngle = THREE.MathUtils.lerp(winnerVal.currentAngle, angle, Math.min(1, dt * 18));
@@ -1570,7 +1736,7 @@ export const step6 = {
             }
           }
 
-          if (this.simTimer >= 1.75 && !this.posSealedInCloseUp) {
+          if (this.simTimer >= 1.65 && !this.posSealedInCloseUp) {
             this.posSealedInCloseUp = true;
             this.sealWinnerAndPrepareCoupling(this.winnerIndex, winnerVal.targetCrans, null);
           }
@@ -1578,7 +1744,9 @@ export const step6 = {
           if (this.simTimer >= 2.0) {
             this.simState = 'pos_zoom_out';
             this.simTimer = 0;
-            cameraController.moveTo(this.overviewCamPos, this.overviewCamTarget, 0.75);
+            if (cameraController) {
+              cameraController.moveTo(this.overviewCamPos, this.overviewCamTarget, 0.85);
+            }
             this.applyModeVisuals();
             this.updateTooltipsDOM();
             this.renderLeftPanel();
@@ -1586,10 +1754,10 @@ export const step6 = {
         }
       }
 
-      // 2D. PoS — Temps 2C : Dezoom vers la vue d'ensemble (0.55 s)
+      // 2E. PoS — Temps 5A : Dezoom vers la vue d'ensemble (0.85 s, les 2 autres gares restent invisibles)
       if (this.simState === 'pos_zoom_out') {
         this.simTimer += dt;
-        if (this.simTimer >= 0.55) {
+        if (this.simTimer >= 0.85) {
           this.simState = 'pos_coupling';
           this.simTimer = 0;
           this.applyModeVisuals();
@@ -1598,10 +1766,10 @@ export const step6 = {
         }
       }
 
-      // 3. Temps 3 commun (PoW & PoS) : Raccordement du wagon gagnant au train en circulation
+      // 3. Temps final commun (PoW & PoS) : Raccordement du wagon gagnant au train en circulation
       if (this.simState === 'pow_coupling' || this.simState === 'pos_coupling') {
         this.simTimer += dt;
-        const couplingDuration = this.mode === 'pow' ? 1.5 : 1.25;
+        const couplingDuration = this.mode === 'pow' ? 1.5 : 1.35;
         const p = Math.min(this.simTimer / couplingDuration, 1.0);
         const eased = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
 
@@ -1621,19 +1789,6 @@ export const step6 = {
           if (wagon.couplerGroup && p >= 0.72) {
             wagon.couplerGroup.visible = true;
           }
-        }
-
-        // En PoW : les 2 wagons perdants s'estompent proprement apres 0.45 s
-        if (this.simState === 'pow_coupling') {
-          const fadeP = Math.max(0, (this.simTimer - 0.45) / 1.05);
-          this.validators.forEach((v, idx) => {
-            if (idx === this.winnerIndex || !v.candidateWagon) return;
-            const s = THREE.MathUtils.lerp(this.sidingScale, 0.01, Math.min(1, fadeP));
-            v.candidateWagon.scale.setScalar(s);
-            if (fadeP >= 0.98) {
-              v.candidateWagon.visible = false;
-            }
-          });
         }
 
         if (p >= 1.0) {
@@ -1724,20 +1879,25 @@ export const step6 = {
           this.tooltipLayer.style.opacity = '0';
           this.tooltipLayer.style.visibility = 'hidden';
         } else {
-          const isCovered = !isZoomedClose && width > 768 && pts[0].x < 365;
+          const firstStationVisible = (this.validators[0]?.opacity ?? 1) > 0.01;
+          const isCovered = !isZoomedClose && firstStationVisible && width > 768 && pts[0].x < 365;
           this.tooltipLayer.style.opacity = isCovered ? '0' : '1';
           this.tooltipLayer.style.visibility = isCovered ? 'hidden' : 'visible';
 
-          const setElDisplay = (id, show) => {
+          const setElDisplay = (id, show, opacity = 1) => {
             const node = document.getElementById(id);
-            if (node) node.style.display = show ? '' : 'none';
+            if (!node) return;
+            node.style.display = show ? '' : 'none';
+            if (show) {
+              node.style.opacity = opacity >= 0.995 ? '1' : opacity.toFixed(2);
+            }
           };
 
           const showWagon = !isZoomedClose;
-          setElDisplay('tooltip-s6-wagon', showWagon);
-          setElDisplay('s6-line-wagon', showWagon);
-          setElDisplay('s6-dot-in-wagon', showWagon);
-          setElDisplay('s6-dot-out-wagon', showWagon);
+          setElDisplay('tooltip-s6-wagon', showWagon, 1);
+          setElDisplay('s6-line-wagon', showWagon, 1);
+          setElDisplay('s6-dot-in-wagon', showWagon, 1);
+          setElDisplay('s6-dot-out-wagon', showWagon, 1);
 
           if (showWagon) {
             const wPillX = Math.max(460, Math.min(width - 140, wagonPt.x));
@@ -1766,11 +1926,12 @@ export const step6 = {
           const pillXs = [pillX0, pillX1, pillX2];
 
           pts.forEach((pt, idx) => {
-            const showStation = !isZoomedClose || idx === this.winnerIndex;
-            setElDisplay(`tooltip-s6-${idx}`, showStation);
-            setElDisplay(`s6-line-${idx}`, showStation);
-            setElDisplay(`s6-dot-in-${idx}`, showStation);
-            setElDisplay(`s6-dot-out-${idx}`, showStation);
+            const vOp = this.validators[idx]?.opacity ?? 1;
+            const showStation = vOp > 0.01 && (!isZoomedClose || idx === this.winnerIndex);
+            setElDisplay(`tooltip-s6-${idx}`, showStation, vOp);
+            setElDisplay(`s6-line-${idx}`, showStation, vOp);
+            setElDisplay(`s6-dot-in-${idx}`, showStation, vOp);
+            setElDisplay(`s6-dot-out-${idx}`, showStation, vOp);
             if (!showStation) return;
 
             const px = isZoomedClose ? Math.max(465, Math.min(width - 130, pt.x)) : pillXs[idx];
@@ -1816,20 +1977,16 @@ export const step6 = {
 
     const isPoW = this.mode === 'pow';
     const winner = this.validatorData[this.winnerIndex];
-    const isBusy = this.isBusyState();
     const isDone = this.simState === 'done';
+    const isStarted = this.simState !== 'idle';
 
     const actionButtonLabel = isPoW
-      ? isBusy
-        ? 'Chargement et course en cours...'
-        : isDone
-          ? 'Relancer la course'
-          : 'Lancer la course des 3 molettes'
-      : isBusy
-        ? 'Tirage et raccordement en cours...'
-        : isDone
-          ? 'Relancer le tirage au sort'
-          : 'Lancer le tirage au sort';
+      ? isStarted
+        ? 'Relancer la course'
+        : 'Lancer la course des 3 molettes'
+      : isStarted
+        ? 'Relancer le tirage au sort'
+        : 'Lancer le tirage au sort';
 
     const modeExplanationHTML = isPoW
       ? `
@@ -1846,9 +2003,9 @@ export const step6 = {
         </div>
         <div class="pos-lottery-box">
           <div class="pos-lottery-track">
-            <div id="s6-seg-0" class="pos-lottery-segment seg-a ${((this.simState === 'pos_lottery' && this.simTimer >= 2.5) || this.simState === 'pos_zoom_in' || this.simState === 'pos_loading' || this.simState === 'pos_zoom_out' || this.simState === 'pos_coupling' || isDone) && this.winnerIndex === 0 ? 'winner' : ''}">Gare A (50 %)</div>
-            <div id="s6-seg-1" class="pos-lottery-segment seg-b ${((this.simState === 'pos_lottery' && this.simTimer >= 2.5) || this.simState === 'pos_zoom_in' || this.simState === 'pos_loading' || this.simState === 'pos_zoom_out' || this.simState === 'pos_coupling' || isDone) && this.winnerIndex === 1 ? 'winner' : ''}">Gare B (35 %)</div>
-            <div id="s6-seg-2" class="pos-lottery-segment seg-c ${((this.simState === 'pos_lottery' && this.simTimer >= 2.5) || this.simState === 'pos_zoom_in' || this.simState === 'pos_loading' || this.simState === 'pos_zoom_out' || this.simState === 'pos_coupling' || isDone) && this.winnerIndex === 2 ? 'winner' : ''}">C (15 %)</div>
+            <div id="s6-seg-0" class="pos-lottery-segment seg-a ${(this.simState === 'pos_selected' || this.simState === 'pos_zoom_in' || this.simState === 'pos_loading' || this.simState === 'pos_zoom_out' || this.simState === 'pos_coupling' || isDone) && this.winnerIndex === 0 ? 'winner' : ''}">Gare A (50 %)</div>
+            <div id="s6-seg-1" class="pos-lottery-segment seg-b ${(this.simState === 'pos_selected' || this.simState === 'pos_zoom_in' || this.simState === 'pos_loading' || this.simState === 'pos_zoom_out' || this.simState === 'pos_coupling' || isDone) && this.winnerIndex === 1 ? 'winner' : ''}">Gare B (35 %)</div>
+            <div id="s6-seg-2" class="pos-lottery-segment seg-c ${(this.simState === 'pos_selected' || this.simState === 'pos_zoom_in' || this.simState === 'pos_loading' || this.simState === 'pos_zoom_out' || this.simState === 'pos_coupling' || isDone) && this.winnerIndex === 2 ? 'winner' : ''}">C (15 %)</div>
             <div id="step6-lottery-cursor" class="pos-lottery-cursor" style="left: ${this.lotteryCursorPercent.toFixed(1)}%;"></div>
           </div>
         </div>
@@ -1883,17 +2040,17 @@ export const step6 = {
 
         <article class="step-card action-card animate-fade">
           <div class="difficulty-selector-row" role="tablist" aria-label="Choix de la méthode">
-            <button id="btn-tab-pow" class="btn-diff-option ${isPoW ? 'active' : ''}" role="tab" aria-selected="${isPoW}" ${isBusy ? 'disabled' : ''}>
+            <button id="btn-tab-pow" class="btn-diff-option ${isPoW ? 'active' : ''}" role="tab" aria-selected="${isPoW}">
               <span>PoW (Course)</span>
             </button>
-            <button id="btn-tab-pos" class="btn-diff-option ${!isPoW ? 'active' : ''}" role="tab" aria-selected="${!isPoW}" ${isBusy ? 'disabled' : ''}>
+            <button id="btn-tab-pos" class="btn-diff-option ${!isPoW ? 'active' : ''}" role="tab" aria-selected="${!isPoW}">
               <span>PoS (Loterie)</span>
             </button>
           </div>
 
           ${modeExplanationHTML}
 
-          <button id="btn-step6-run" class="btn-panel-primary" ${isBusy ? 'disabled' : ''}>
+          <button id="btn-step6-run" class="btn-panel-primary">
             <span>${actionButtonLabel}</span>
           </button>
 
@@ -1928,12 +2085,10 @@ export const step6 = {
 
   setupEvents() {
     document.getElementById('btn-tab-pow')?.addEventListener('click', () => {
-      if (this.isBusyState()) return;
       this.setMode('pow');
     });
 
     document.getElementById('btn-tab-pos')?.addEventListener('click', () => {
-      if (this.isBusyState()) return;
       this.setMode('pos');
     });
 

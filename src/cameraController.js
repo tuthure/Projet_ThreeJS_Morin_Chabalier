@@ -32,6 +32,7 @@ export class CameraController {
     this.startTarget = new THREE.Vector3();
     this.targetTarget = new THREE.Vector3();
     this.onTransitionComplete = null;
+    this._transitionResolve = null;
 
     // Décalage visuel horizontal (en pixels) pour centrer la scène dans l'espace utile libre (ex: à droite du volet gauche)
     this.viewOffsetX = 0;
@@ -72,9 +73,29 @@ export class CameraController {
   }
 
   /**
+   * Annule immediatement toute transition camera en cours et reactive les controles.
+   */
+  cancelTransition() {
+    this.isTransitioning = false;
+    this.onTransitionComplete = null;
+    if (this._transitionResolve) {
+      const resolve = this._transitionResolve;
+      this._transitionResolve = null;
+      resolve(false);
+    }
+    this.controls.enabled = true;
+  }
+
+  /**
    * Declenche une transition fluide vers une nouvelle position et cible
    */
   moveTo(position, target, duration = 1.2, onComplete = null) {
+    if (this._transitionResolve) {
+      const prevResolve = this._transitionResolve;
+      this._transitionResolve = null;
+      prevResolve(false);
+    }
+
     this.startPosition.copy(this.camera.position);
     this.targetPosition.copy(position);
 
@@ -86,6 +107,11 @@ export class CameraController {
     this.onTransitionComplete = typeof onComplete === 'function' ? onComplete : null;
     this.isTransitioning = true;
     this.controls.enabled = false;
+    this.updateCameraViewOffset();
+
+    return new Promise((resolve) => {
+      this._transitionResolve = resolve;
+    });
   }
 
   /**
@@ -117,14 +143,20 @@ export class CameraController {
 
       this.camera.position.lerpVectors(this.startPosition, this.targetPosition, eased);
       this.controls.target.lerpVectors(this.startTarget, this.targetTarget, eased);
+      this.updateCameraViewOffset();
 
       if (progress >= 1.0) {
         this.isTransitioning = false;
         this.controls.enabled = true;
-        if (this.onTransitionComplete) {
-          const cb = this.onTransitionComplete;
-          this.onTransitionComplete = null;
+        const cb = this.onTransitionComplete;
+        const resolve = this._transitionResolve;
+        this.onTransitionComplete = null;
+        this._transitionResolve = null;
+        if (cb) {
           cb();
+        }
+        if (resolve) {
+          resolve(true);
         }
       }
     }
