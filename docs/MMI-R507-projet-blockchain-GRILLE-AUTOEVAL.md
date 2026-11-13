@@ -39,55 +39,55 @@
 | 2.1 | `MMI-R507-projet-blockchain-CHOIX-MODELISATION.md` est complet et couvre les 7 notions. | 4 | Le fichier détaille systématiquement l'analogie ferroviaire, les interactions, les alternatives écartées et les choix visuels pour chacune des 7 étapes. |
 | 2.2 | Formes et échelles sont justifiées. | 4 | Les proportions entre la locomotive, les wagons, le réseau de gares et les angles de caméra sont formalisées dans le document de modélisation. |
 | 2.3 | Couleurs et codes sont cohérents et accessibles. | 4 | Une charte constante est respectée : vert pour l'intégrité, ambre pour l'ajustement ou le calcul, rouge pour la rupture ou l'alerte, et teintes dérivées des hashs. |
-| 2.4 | Animations et interactions servent la compréhension. | 4 | Chaque mouvement 3D appuie un concept précis : propagation séquentielle en gossip, surchauffe de la chaudière en PoW, et divergence des convois à l'aiguillage. |
+| 2.4 | Animations et interactions servent la compréhension. | 3 | Chaque mouvement 3D appuie un concept précis : propagation séquentielle en gossip, course des molettes en PoW, tirage avec zoom en PoS et divergence des convois à l'aiguillage, même si certaines séquences denses demandent une seconde observation. |
 | 2.5 | Une alternative écartée est documentée par notion. | 4 | Chaque section de `CHOIX-MODELISATION.md` consigne une solution rejetée (ex: conteneurs opaques, câbles en étoile, chaînes physiques lourdes) et motive son abandon. |
 | 2.6 | Les risques de mauvaise interprétation sont traités. | 2 | Certains risques de surinterprétation (ex: croire qu'une blockchain avance physiquement sur des rails réels) sont identifiés mais méritent encore des garde-fous textuels plus appuyés. |
 | 2.7 | Les décisions s'appuient sur les tests utilisateurs. | 3 | Plusieurs correctifs ergonomiques et textuels ont été appliqués suite aux premiers retours des testeurs, bien que certains ajustements restent récents. |
 
-*Sous-total Partie 2 : 25 / 28*
+*Sous-total Partie 2 : 24 / 28*
 
 ## Partie 3 — GitHub Projects (20 %)
 
 | # | Critère | Score 0-4 | Justification / preuve |
 |:---|:---|:---:|:---|
 | 3.1 | Le board existe depuis la semaine 1 et utilise les 5 colonnes communes. | 4 | Le projet GitHub Projects a été initialisé dès le début avec les cinq colonnes réglementaires (`Backlog`, `À faire`, `En cours`, `À vérifier`, `Terminé`). |
-| 3.2 | Issues granulaires et assignées. | 4 | Les tâches sont découpées de manière ciblée par notion, composant d'interface et livrable, avec assignation équilibrée entre les deux membres. |
+| 3.2 | Issues granulaires et assignées. | 3 | Les tâches sont découpées par notion, composant d'interface et livrable avec assignation entre les deux membres, bien que certaines issues larges regroupent plusieurs sous-étapes. |
 | 3.3 | Labels cohérents. | 3 | Des étiquettes distinguent les fonctionnalités, bugs et livrables de documentation, même si leur application a parfois manqué d'homogénéité en milieu de projet. |
 | 3.4 | Milestones obligatoires correspondant au calendrier. | 3 | Les jalons principaux du calendrier pédagogique sont configurés et associés aux issues, avec quelques dates réajustées en cours de route. |
 | 3.5 | Commits réguliers et liés aux issues. | 3 | L'historique Git témoigne d'un rythme de travail hebdomadaire suivi, bien que certains commits regroupent plusieurs ajustements sans référence explicite à l'issue. |
-| 3.6 | Le board reflète l'état réel. | 3 | Les colonnes suivent fidèlement l'avancement effectif du code et des documents, avec un léger décalage ponctuel lors des phases d'intégration technique. |
+| 3.6 | Le board reflète l'état réel. | 3 | Les colonnes suivent l'avancement effectif du code et des documents, avec une mise à jour complète à la clôture des livrables (29 tâches terminées et seule la répétition générale maintenue dans `À faire`). |
 | 3.7 | Répartition visible et expliquée. | 3 | Les fiches de suivi hebdomadaire et le `README.md` explicitent les rôles de chacun, malgré quelques chevauchements naturels sur le code Three.js. |
-| 3.8 | Retours transformés en issues puis traités. | 3 | Les retours majeurs des utilisateurs ont fait l'objet de correctifs ciblés sur le dépôt, avec un suivi synthétisé dans le protocole de test. |
+| 3.8 | Retours transformés en issues puis traités. | 2 | Les retours majeurs des utilisateurs ont fait l'objet de correctifs ciblés sur le dépôt et documentés dans `PROTOCOLE-TESTS.md`, mais tous n'ont pas été systématiquement détaillés en issues unitaires distinctes. |
 | 3.9 | Usage de l'IA déclaré. | 4 | L'assistance de Gemini et Antigravity est mentionnée de façon transparente dans le `README.md`, le document de choix et les bilans hebdomadaires. |
 | 3.10 | README complet. | 4 | Le `README.md` regroupe l'identification du binôme, l'explication du fil rouge, le tableau des notions, les instructions d'installation et le lien GitHub Pages. |
 
-*Sous-total Partie 3 : 34 / 40*
+*Sous-total Partie 3 : 32 / 40*
 
 ## Partie 4 — Interaction, UX et finition (15 %)
 
 | # | Critère | Score 0-4 | Justification / preuve |
 |:---|:---|:---:|:---|
 | 4.1 | Navigation intuitive et éléments identifiables. | 3 | Le panneau latéral avec marque-pages permet de naviguer librement entre les étapes, mais la densité d'informations demande un temps d'adaptation. |
-| 4.2 | Textes lisibles et contrastés. | 4 | Les typographies, contrastes sur fond sombre et zones de diagnostic respectent des ratios de lisibilité élevés sur poste standard. |
+| 4.2 | Textes lisibles et contrastés. | 3 | Les typographies, contrastes sur fond sombre et zones de diagnostic offrent une bonne lisibilité sur poste standard, même si certains panneaux restent denses sur des résolutions plus réduites. |
 | 4.3 | Rythme des animations compréhensible. | 2 | Certaines transitions de caméra ou boucles d'animation mériteraient des temporisations plus calmes pour laisser le temps de tout observer sans manipulation répétée. |
 | 4.4 | Au moins 30 FPS sur ordinateur standard type poste de TP. | 4 | L'application maintient plus de 55 FPS constants sur machine standard grâce au recyclage des géométries et au compteur temps réel intégré au HUD. |
 | 4.5 | Aucun bug bloquant le parcours principal. | 4 | Le parcours complet de l'accueil jusqu'à la conclusion de l'étape 7 s'exécute sans interruption ni erreur en console, validé par `npm run build`. |
 | 4.6 | Déploiement en ligne réalisé. | 4 | Le projet est déployé et actualisé en continu via GitHub Pages à l'adresse : https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/ |
 
-*Sous-total Partie 4 : 21 / 24*
+*Sous-total Partie 4 : 20 / 24*
 
 ## Partie 5 — Soutenance (15 %)
 
 | # | Critère | Score 0-4 | Justification / preuve |
 |:---|:---|:---:|:---|
 | 5.1 | Démo répétée et plan B prévu. | 3 | Démonstration répétée et Plan B prévu : build statique local prêt, captures d'écran et vidéo de secours en cas de coupure réseau. |
-| 5.2 | Chaque membre justifie tous les choix. | 4 | Chaque membre justifie tous les choix en s'appuyant sur CHOIX-MODELISATION.md et CADRAGE.md, relus et maîtrisés par le binôme. |
+| 5.2 | Chaque membre justifie tous les choix. | 4 | Chaque membre justifie tous les choix en s'appuyant sur `CHOIX-MODELISATION.md` et `CADRAGE.md`, relus et maîtrisés par le binôme. |
 | 5.3 | Chaque membre explique les 7 notions. | 4 | Chaque membre maîtrise et explique les 7 notions obligatoires ainsi que l'architecture du code Three.js. |
 | 5.4 | Bilan du projet appuyé sur des preuves. | 4 | Bilan appuyé sur des preuves concrètes : historique Git, board Kanban, vrai calcul SHA-256 et 5 retours de tests utilisateurs documentés sur 2 phases. |
-| 5.5 | Temps de parole réparti dans les 20 minutes imparties. | 3 | Temps de parole réparti de manière équilibrée dans les 20 minutes imparties selon le plan minuté SOUTENANCE.md. |
-| 5.6 | Support dans le temps imparti. | 4 | Support diaporama et navigation directe par étapes 0 à 7 permettant de respecter strictement le temps imparti. |
+| 5.5 | Temps de parole réparti dans les 20 minutes imparties. | 3 | Temps de parole réparti de manière équilibrée dans les 20 minutes imparties selon le plan minuté `SOUTENANCE.md`. |
+| 5.6 | Support dans le temps imparti. | 3 | Le support diaporama et la navigation directe par étapes 0 à 7 sont calibrés pour respecter les 20 minutes, sous réserve du chronométrage final lors de la répétition générale (#25). |
 
-*Sous-total Partie 5 : 22 / 24*
+*Sous-total Partie 5 : 21 / 24 (estimation provisoire avant passage oral : 12 / 24)*
 
 ## Estimation de votre note
 
@@ -95,7 +95,14 @@ Additionnez les scores obtenus dans chaque partie : P1 / 28, P2 / 28, P3 / 40, P
 
 Note / 20 = (P1/28 * 5) + (P2/28 * 5) + (P3/40 * 4) + (P4/24 * 3) + (P5/24 * 3).
 
-Note = (23 / 28) × 5 + (25 / 28) × 5 + (34 / 40) × 4 + (21 / 24) × 3 + (22 / 24) × 3 = 4,11 + 4,46 + 3,40 + 2,63 + 2,75 = **17,35 / 20**
+Détail pondéré par partie :
+- **Partie 1 (25 %)** : `(23 / 28) × 5 = 4,11 / 5`
+- **Partie 2 (25 %)** : `(24 / 28) × 5 = 4,29 / 5`
+- **Partie 3 (20 %)** : `(32 / 40) × 4 = 3,20 / 4`
+- **Partie 4 (15 %)** : `(20 / 24) × 3 = 2,50 / 3`
+- **Partie 5 (15 %)** : base provisoire avant passage oral `(12 / 24) × 3 = 1,50 / 3` (projection préparée après soutenance à `21 / 24` : `(21 / 24) × 3 = 2,63 / 3`)
+
+Note provisoire globale (avant passage de la soutenance) = `4,11 + 4,29 + 3,20 + 2,50 + 1,50` = **15,60 / 20** (projection avec Partie 5 à `21 / 24` : **16,72 / 20**).
 
 ## Bilan individuel et actions
 
