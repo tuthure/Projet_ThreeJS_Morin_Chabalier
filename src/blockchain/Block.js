@@ -83,6 +83,17 @@ function sha256Sync(input) {
   return result;
 }
 
+function computeHashHue(hash) {
+  if (!hash || hash.length < 6) return -1;
+  const clean = hash.replace(/^0+/, '') || hash;
+  let hashNum = 0;
+  for (let i = 0; i < clean.length; i++) {
+    hashNum = (hashNum << 5) - hashNum + clean.charCodeAt(i);
+    hashNum |= 0;
+  }
+  return Math.abs(hashNum) % 360;
+}
+
 /**
  * Classe representant un bloc logique de la blockchain.
  * Dans la metaphore ferroviaire, chaque bloc correspond a un wagon du convoi.
@@ -117,7 +128,8 @@ export class Block {
   /**
    * Methode utilitaire pour miner le bloc avec une difficulte donnee (zeros initiaux).
    * Ajoute un tres leger timestamp et une variable aleatoire invisible juste avant le while
-   * pour que la recherche du Nonce donne un resultat different a chaque execution.
+   * pour que la recherche du Nonce donne un resultat different a chaque execution,
+   * tout en garantissant une teinte visuellement distincte du bloc precedent.
    * @param {number} difficulty - Nombre de zeros requis en tete du hash.
    * @returns {{ nonce: number, attempts: number, hash: string }}
    */
@@ -128,7 +140,19 @@ export class Block {
     let attempts = 0;
     this.hash = this.calculateHash();
 
-    while (this.hash.substring(0, difficulty) !== targetPrefix) {
+    const prevHue = computeHashHue(this.previousHash);
+    const isHueTooClose = (hash) => {
+      if (prevHue < 0) return false;
+      const hue = computeHashHue(hash);
+      const diff = Math.abs(hue - prevHue);
+      const circularDiff = Math.min(diff, 360 - diff);
+      return circularDiff < 75;
+    };
+
+    while (
+      this.hash.substring(0, difficulty) !== targetPrefix ||
+      (attempts < 600 && isHueTooClose(this.hash))
+    ) {
       this.nonce++;
       attempts++;
       this.hash = this.calculateHash();

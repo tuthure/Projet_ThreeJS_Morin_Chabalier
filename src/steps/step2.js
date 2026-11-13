@@ -428,7 +428,7 @@ export const step2 = {
           <p class="card-instruction">
             ${!hasThirdWagon
               ? "Ajoutez un wagon pour voir comment il s'accroche automatiquement avec la bonne couleur :"
-              : "Le train compte maintenant 4 blocs. On ajoute toujours les nouveaux wagons à la fin sans toucher aux anciens."}
+              : "Et voilà ! Le train compte maintenant 4 blocs. On ajoute toujours les nouveaux wagons à la fin sans toucher aux anciens."}
           </p>
 
           ${!hasThirdWagon ? `
@@ -439,7 +439,7 @@ export const step2 = {
             </div>
           ` : `
             <div class="action-feedback-status visible status-success" style="margin-top: 8px;">
-              Train de 4 blocs valide : le nouveau wagon s'est verrouillé sur le code du Wagon #2.
+              Train de 4 blocs valide : le nouveau wagon s'est bien attaché sur le code du Wagon #2 grâce à la couleur correspondante (représentant le hash).
             </div>
           `}
         </article>
@@ -448,7 +448,7 @@ export const step2 = {
           <article class="step-card keypoint-card animate-fade">
             <h4 class="card-title keypoint-title">Point clé : L'effet domino</h4>
             <p class="keypoint-text">
-              Chaque wagon est verrouillé à celui d'avant par son empreinte numérique. Si quelqu'un tentait de modifier le contenu d'un ancien wagon, son empreinte changerait aussitôt et il faudrait recalculer et raccrocher tous les wagons suivants jusqu'au bout du train (nous allons le tester à l'étape suivante).
+              Chaque wagon est verrouillé à celui d'avant par son empreinte numérique. Si quelqu'un tentait de modifier le contenu d'un ancien wagon, son empreinte changerait aussitôt et il faudrait recalculer et raccrocher tous les wagons suivants jusqu'au bout du train (c'est ce que nous allons le tester à l'étape suivante).
             </p>
           </article>
         ` : ''}

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { hashToColorHex } from '../three/WagonMesh.js';
+import { hashToColorHex, getHashHue } from '../three/WagonMesh.js';
 import { updateLeftPanelPreserveScroll } from './StepManager.js';
 
 /**
@@ -19,6 +19,8 @@ export const step3 = {
   rafId: null,
   isBroken: false,
   restoreWaveUntil: 0,
+  initialBlock1Salt: '',
+  initialBlock1Nonce: 0,
 
   // Couche DOM des infobulles 3D
   tooltipLayer: null,
@@ -30,6 +32,37 @@ export const step3 = {
    */
   init(context) {
     this.ctx = context;
+  },
+
+  /**
+   * Garantit pour le Wagon #1 un hash initial dans les tons vert emeraude / turquoise (145-175 deg)
+   * afin d'offrir un contraste maximal avec la couleur violet/magenta lors de la falsification.
+   */
+  ensureDistinctInitialColors() {
+    const { trainConvoy } = this.ctx;
+    if (!trainConvoy) return;
+
+    const block1 = trainConvoy.getBlock(1);
+    const block2 = trainConvoy.getBlock(2);
+    if (!block1 || !block2) return;
+
+    let guard = 0;
+    while (guard < 2500) {
+      const hue = getHashHue(block1.hash);
+      if (block1.hash.startsWith('0') && hue >= 145 && hue <= 175) {
+        break;
+      }
+      block1.nonce++;
+      block1.hash = block1.calculateHash();
+      guard++;
+    }
+
+    this.initialBlock1Salt = block1._miningSalt || '';
+    this.initialBlock1Nonce = block1.nonce;
+
+    block2.previousHash = block1.hash;
+    block2.mineBlock(1);
+    trainConvoy.sync();
   },
 
   /**
@@ -57,6 +90,7 @@ export const step3 = {
         { lot: 'Fret #104', cargaison: "15 tonnes d'acier", quai: 'Quai A -> Quai B' },
         { lot: 'Convoi express', cargaison: '40 palettes matériel', quai: 'Quai B -> Quai C' }
       ]);
+      this.ensureDistinctInitialColors();
       if (cameraController) {
         cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
       }
@@ -81,6 +115,11 @@ export const step3 = {
    */
   exit() {
     this.stopAnimationLoop();
+
+    const wagon1 = this.ctx?.trainConvoy?.getWagon(1);
+    if (wagon1 && typeof wagon1.setTamperedVisualState === 'function') {
+      wagon1.setTamperedVisualState(false);
+    }
 
     if (this.tooltipLayer) {
       this.tooltipLayer.remove();
@@ -466,10 +505,19 @@ export const step3 = {
         cargaison: "999 tonnes d'or (FALSIFIE)",
         quai: 'Quai A -> Quai Pirate'
       };
-      // Modifier une donnee modifie obligatoirement son hash SHA-256
-      block1.hash = block1.calculateHash();
-      wagon1.colorHash.set(hashToColorHex(block1.hash));
-      wagon1.renderPlates();
+      // Choisit un sel qui produit un hash SHA-256 authentique dans une teinte violet/magenta (285-315 deg)
+      // contrastant franchement avec la teinte vert emeraude attendue par le Wagon #2
+      let saltAttempt = 0;
+      do {
+        block1._miningSalt = `${this.initialBlock1Salt}-tamper-${saltAttempt++}`;
+        block1.hash = block1.calculateHash();
+      } while (
+        (getHashHue(block1.hash) < 285 || getHashHue(block1.hash) > 315) &&
+        saltAttempt < 400
+      );
+
+      const newColorHex = hashToColorHex(block1.hash);
+      wagon1.setTamperedVisualState(true, newColorHex);
     }
 
     // 2. Synchronisation du convoi (le Wagon #2 constate la rupture de concordance)
@@ -504,6 +552,16 @@ export const step3 = {
     if (!trainConvoy) return;
 
     const wasBroken = this.isBroken || !trainConvoy.blockchain.isChainValid();
+
+    const block1 = trainConvoy.getBlock(1);
+    const wagon1 = trainConvoy.getWagon(1);
+    if (block1) {
+      block1._miningSalt = this.initialBlock1Salt;
+      block1.nonce = this.initialBlock1Nonce;
+    }
+    if (wagon1 && typeof wagon1.setTamperedVisualState === 'function') {
+      wagon1.setTamperedVisualState(false);
+    }
 
     trainConvoy.restoreEntireTrain();
     trainConvoy.sync();
@@ -588,9 +646,9 @@ export const step3 = {
           </div>
         ` : `
           <article class="step-card context-card animate-fade">
-            <h3 class="card-title">Pourquoi l'attache a cassé ?</h3>
+            <h3 class="card-title">L'attache a cassé ! Pourquoi ?</h3>
             <p>
-              En modifiant le Wagon #1, son code Hash a changé :
+              En modifiant le Wagon #1, son code Hash a changé. Comparons les deux côtés de son attache arrière :
             </p>
 
             <div class="hash-contrast-box">
@@ -603,9 +661,6 @@ export const step3 = {
                 <span class="contrast-swatch" style="background: ${colorPrev2}; box-shadow: 0 0 8px ${colorPrev2};"></span>
                 <span class="contrast-label">Attendu Wagon #2 :</span>
                 <code class="contrast-code" style="color: ${colorPrev2};">${prev2Short}...</code>
-              </div>
-              <div class="contrast-status">
-                Couleurs différentes &rarr; L'attache se décroche
               </div>
             </div>
 

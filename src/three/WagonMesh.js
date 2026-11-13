@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 
 /**
- * Convertit un hash hexadecimal en couleur Three.js deterministe et eclatante.
+ * Extrait la teinte HSL (0-359) deterministe d'un hash hexadecimal.
  * @param {string} hash - Chaine de hash cryptographique.
- * @returns {string} Code couleur hexadecimal (ex: '#00f5d4').
+ * @returns {number} Teinte entre 0 et 359.
  */
-export function hashToColorHex(hash) {
-  if (!hash || hash.length < 6) return '#00f5d4';
+export function getHashHue(hash) {
+  if (!hash || hash.length < 6) return 165;
 
   const clean = hash.replace(/^0+/, '') || hash;
   let hashNum = 0;
@@ -15,8 +15,18 @@ export function hashToColorHex(hash) {
     hashNum |= 0;
   }
 
-  // Teinte HSL (0-360 deg) derivee de l'empreinte pour un rendu vibrant et sature
-  const hue = Math.abs(hashNum) % 360;
+  return Math.abs(hashNum) % 360;
+}
+
+/**
+ * Convertit un hash hexadecimal en couleur Three.js deterministe et eclatante.
+ * @param {string} hash - Chaine de hash cryptographique.
+ * @returns {string} Code couleur hexadecimal (ex: '#00f5d4').
+ */
+export function hashToColorHex(hash) {
+  if (!hash || hash.length < 6) return '#00f5d4';
+
+  const hue = getHashHue(hash);
   const saturation = 85;
   const lightness = 55;
 
@@ -90,6 +100,8 @@ export class WagonMesh extends THREE.Group {
     this.nonceToothMaterial = null;
     this.nonceDialAccentColor = '#f59e0b';
     this.step1AnatomyMode = false;
+    this.isTamperedHighlight = false;
+    this.tamperedColor = new THREE.Color('#d946ef');
     this.beaconMaterial = null;
 
     // Identifiants pour le raycaster et l'inspection interactive
@@ -864,6 +876,24 @@ export class WagonMesh extends THREE.Group {
   }
 
   /**
+   * Applique ou retire la coloration specifique d'un wagon dont le chargement a ete falsifie.
+   * Teinte la cargaison, la verriere, les aretes et le hash du wagon pour rendre le changement
+   * de couleur immediatement visible par rapport aux autres wagons.
+   * @param {boolean} enabled
+   * @param {string|THREE.Color|null} [customColor=null]
+   */
+  setTamperedVisualState(enabled, customColor = null) {
+    this.isTamperedHighlight = enabled;
+    if (customColor) {
+      this.tamperedColor.set(customColor);
+      this.colorHash.set(customColor);
+    } else if (enabled) {
+      this.tamperedColor.copy(this.colorHash);
+    }
+    this.updateStatus(this.isValid);
+  }
+
+  /**
    * Met a jour l'etat visuel du wagon selon la validite de la blockchain.
    * @param {boolean} isValid - Indique si le bloc et la chaine amont sont valides.
    */
@@ -878,21 +908,60 @@ export class WagonMesh extends THREE.Group {
       this.colorPrevHash.set(hexPrev);
     }
 
-    if (isValid) {
-      // 1. Conteneurs aux couleurs d'origine
-      this.containerMaterials.forEach((mat) => {
-        mat.emissive.setHex(0x000000);
-        mat.emissiveIntensity = 0;
-      });
+    if (this.isTamperedHighlight) {
+      this.colorHash.copy(this.tamperedColor);
+    }
 
-      // 2. Verriere protectrice cyan limpide
-      this.glassMaterials.forEach((mat) => {
-        mat.color.setHex(0x38bdf8);
-        mat.opacity = 0.16;
-      });
-      this.edgeMaterials.forEach((mat) => {
-        mat.color.setHex(0x38bdf8);
-      });
+    const applyInteriorAndCanopyColors = () => {
+      if (this.isTamperedHighlight) {
+        if (this.containerMaterials[0]) {
+          this.containerMaterials[0].color.copy(this.tamperedColor);
+          this.containerMaterials[0].emissive.copy(this.tamperedColor);
+          this.containerMaterials[0].emissiveIntensity = 0.35;
+        }
+        if (this.containerMaterials[1]) {
+          this.containerMaterials[1].color.copy(this.tamperedColor);
+          this.containerMaterials[1].emissive.copy(this.tamperedColor);
+          this.containerMaterials[1].emissiveIntensity = 0.25;
+        }
+        this.glassMaterials.forEach((mat) => {
+          mat.color.copy(this.tamperedColor);
+          mat.opacity = 0.22;
+        });
+        this.edgeMaterials.forEach((mat) => {
+          mat.color.copy(this.tamperedColor);
+        });
+      } else if (!this.step1AnatomyMode) {
+        if (this.block && this.block.index > 0) {
+          if (this.containerMaterials[0]) {
+            this.containerMaterials[0].color.setHex(0xf97316);
+            this.containerMaterials[0].emissive.setHex(0x000000);
+            this.containerMaterials[0].emissiveIntensity = 0;
+          }
+          if (this.containerMaterials[1]) {
+            this.containerMaterials[1].color.setHex(0xd97706);
+            this.containerMaterials[1].emissive.setHex(0x000000);
+            this.containerMaterials[1].emissiveIntensity = 0;
+          }
+        } else {
+          this.containerMaterials.forEach((mat) => {
+            mat.emissive.setHex(0x000000);
+            mat.emissiveIntensity = 0;
+          });
+        }
+        this.glassMaterials.forEach((mat) => {
+          mat.color.setHex(0x38bdf8);
+          mat.opacity = 0.16;
+        });
+        this.edgeMaterials.forEach((mat) => {
+          mat.color.setHex(0x38bdf8);
+        });
+      }
+    };
+
+    if (isValid) {
+      // 1 & 2. Conteneurs et verriere
+      applyInteriorAndCanopyColors();
 
       // 3. Balise de toit verte
       if (this.beaconMaterial) {
@@ -925,20 +994,8 @@ export class WagonMesh extends THREE.Group {
         this.couplerBeamMaterial.emissiveIntensity = 1.6;
       }
     } else {
-      // 1. Conteneurs : conserver l'apparence normale sans les teinter en rouge
-      this.containerMaterials.forEach((mat) => {
-        mat.emissive.setHex(0x000000);
-        mat.emissiveIntensity = 0;
-      });
-
-      // 2. Verriere : conserver l'aspect protecteur cyan normal
-      this.glassMaterials.forEach((mat) => {
-        mat.color.setHex(0x38bdf8);
-        mat.opacity = 0.16;
-      });
-      this.edgeMaterials.forEach((mat) => {
-        mat.color.setHex(0x38bdf8);
-      });
+      // 1 & 2. Conteneurs et verriere
+      applyInteriorAndCanopyColors();
 
       // 3. Seule la balise / lumiere au-dessus passe au rouge d'alerte
       if (this.beaconMaterial) {

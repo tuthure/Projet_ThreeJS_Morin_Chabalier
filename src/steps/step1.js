@@ -177,7 +177,7 @@ export const step1 = {
         </button>
         <div class="scene-tooltip-card">
           <div class="scene-tooltip-card-title">1. Code du wagon d'avant (PreviousHash)</div>
-          <p class="scene-tooltip-card-text">Recopie le code de la locomotive (Bloc #0) sur l'étiquette et le crochet avant pour bien l'accrocher.</p>
+          <p class="scene-tooltip-card-text">Recopie le code du bloc précédent sur l'étiquette et le crochet avant pour bien l'accrocher.</p>
         </div>
       </div>
 
@@ -582,14 +582,43 @@ export const step1 = {
         <article class="step-card keypoint-card animate-fade">
           <h4 class="card-title keypoint-title">Point clé : Un code calculé sans aucun hasard</h4>
           <p class="keypoint-text">
-            Le Hash n'est pas choisi au hasard. C'est une formule mathématique automatique (appelée SHA-256) qui mélange les 3 éléments :
+            Le Hash n'est pas choisi au hasard : l'ordinateur fusionne automatiquement les 3 premiers éléments du wagon :
           </p>
-          <div class="block-formula-box">
-            <div class="formula-func">
-              <strong>Hash</strong> = SHA-256( <span style="color: ${colorPrev}">PreviousHash</span> + <span style="color: ${colorCargo}">Transactions</span> + <span style="color: ${colorNonce}">Nonce</span> )
+          <div class="hash-schema-box">
+            <div class="hash-schema-inputs">
+              <div class="hash-schema-item" style="--item-color: ${colorPrev};">
+                <span class="hash-schema-dot"></span>
+                <span class="hash-schema-name">1. PreviousHash</span>
+                <code class="hash-schema-val">${prevShort}...</code>
+              </div>
+
+              <div class="hash-schema-plus">+</div>
+
+              <div class="hash-schema-item" style="--item-color: ${colorCargo};">
+                <span class="hash-schema-dot"></span>
+                <span class="hash-schema-name">2. Transactions</span>
+                <code class="hash-schema-val">Fret #104 : 15 t d'acier</code>
+              </div>
+
+              <div class="hash-schema-plus">+</div>
+
+              <div class="hash-schema-item" style="--item-color: ${colorNonce};">
+                <span class="hash-schema-dot"></span>
+                <span class="hash-schema-name">3. Nonce</span>
+                <code class="hash-schema-val">${nonceVal}</code>
+              </div>
             </div>
-            <div class="formula-example">
-              SHA-256( "<code style="color: ${colorPrev}">${prevShort}</code>" + "<code style="color: ${colorCargo}">Fret #104 : 15 tonnes d'acier</code>" + "<code style="color: ${colorNonce}">${nonceVal}</code>" ) = <strong style="color: ${colorHash}"><code>${hashShort}...</code></strong>
+
+            <div class="hash-schema-funnel">
+              <span class="hash-schema-arrow">&darr;</span>
+              <span class="hash-schema-badge">Calcul automatique (SHA-256)</span>
+              <span class="hash-schema-arrow">&darr;</span>
+            </div>
+
+            <div class="hash-schema-result" style="--item-color: ${colorHash};">
+              <span class="hash-schema-dot"></span>
+              <span class="hash-schema-name">= 4. Hash du wagon</span>
+              <code class="hash-schema-val">${hashShort}...</code>
             </div>
           </div>
           <p class="keypoint-subtext">
