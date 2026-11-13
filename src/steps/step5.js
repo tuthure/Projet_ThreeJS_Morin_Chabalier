@@ -948,8 +948,8 @@ export const step5 = {
       statusEl.textContent = this.isMining
         ? 'Recherche du Nonce en cours...'
         : this.isMined
-          ? `Validé (débute par "${targetPrefix}") · Wagon attelé`
-          : `Refusé (ne débute pas par "${targetPrefix}") · Wagon à l'écart`;
+          ? `Validé (débute par "${targetPrefix}")`
+          : `Refusé (ne débute pas par "${targetPrefix}")`;
     }
     if (progressFillEl) {
       const pct = this.isMined ? 100 : this.isMining ? Math.max(4, Math.round(this.miningProgress * 100)) : 0;
@@ -1122,7 +1122,7 @@ export const step5 = {
           <article class="step-card keypoint-card animate-fade">
             <h4 class="card-title keypoint-title">Point clé : En réalité, c'est beaucoup plus long</h4>
             <p class="keypoint-text">
-              Ici, on demande seulement 1 à 3 zéros (~${avgLabel} essais) pour que cela dure 1 ou 2 secondes. Sur un vrai réseau comme Bitcoin, il faut environ <strong>19 zéros d'affilée</strong> : même avec des milliers d'ordinateurs puissants, il faut environ <strong>10 minutes</strong> pour accrocher un seul wagon. Un tricheur devrait refaire tout ce travail immense pour chaque wagon.
+              Ici, on demande seulement 1 à 3 zéros (~${avgLabel} essais) pour que cela dure 1 ou 2 secondes. Sur un vrai réseau comme Bitcoin, il faut environ <strong>19 zéros d'affilée</strong> : même avec des milliers d'ordinateurs puissants, il faut environ <strong>10 minutes</strong> pour accrocher un seul wagon. Un tricheur devrait donc refaire tout ce travail immense pour chaque wagon.
             </p>
           </article>
         ` : ''}
