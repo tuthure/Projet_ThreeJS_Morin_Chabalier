@@ -1,134 +1,177 @@
 # Visualisation pédagogique de la blockchain — Le Convoi Ferroviaire Blindé
 
-Projet de BUT MMI 3e année — Ressource R507 : Dispositifs interactifs (Three.js).  
-Conception et développement d'une expérience web interactive en 3D avec Three.js visant à faire comprendre le fonctionnement d'une blockchain à un utilisateur non initié.
+Projet de BUT MMI 3e année — Ressource R507 : *Dispositifs interactifs* (Three.js, IUT de Béziers).  
+Conception et développement d'une expérience web interactive en 3D avec Three.js visant à faire comprendre les principes d'une blockchain à un utilisateur non initié, sans aucune explication orale préalable.
+
+> Note pédagogique : ce projet est un outil de médiation scientifique exécuté côté navigateur. Les empreintes SHA-256, le chaînage cryptographique et la recherche de Nonce sont réellement calculés en JavaScript (`Block.js` et `Blockchain.js`), tandis que la taille du réseau et la difficulté du minage sont volontairement adaptées pour rester observables en temps réel à 60 FPS.
 
 ---
 
 ## Équipe et répartition des rôles
 
-- **Arthur Morin** (`@tuthure`) : Architecture technique Three.js, modélisation procédurale 3D (locomotive, wagons vitrés, archipel de gares, aiguillages), animations mécaniques, logique cryptographique et intégration Vite.
-- **Alban Chabalier** (`@achabalier14`) : Gestion de projet (GitHub Projects, jalons, suivis hebdomadaires), conception UX/UI, ergonomie des contrôles caméra, scénarisation pédagogique des 7 notions et protocole de tests utilisateurs.
+| Membre | GitHub | Rôle principal |
+|:---|:---|:---|
+| **Arthur Morin** | `@tuthure` | Architecture technique Three.js, modélisation procédurale 3D (locomotive, wagons vitrés, gares, aiguillages), animations mécaniques, logique cryptographique et intégration Vite / GitHub Actions. |
+| **Alban Chabalier** | `@achabalier14` | Gestion de projet (GitHub Projects, jalons, fiches hebdomadaires), conception UX/UI (volet pédagogique et infobulles SVG), ergonomie des contrôles caméra, scénarisation des 7 notions et campagne de tests utilisateurs. |
 
-## Liens du projet
-
-- **Démo interactive en ligne (GitHub Pages)** : https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/
-- **Tableau de bord GitHub Projects (Kanban)** : https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier/projects
-- **Dépôt GitHub** : https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier
-- **Formulaire de tests utilisateurs** : https://forms.gle/SrQx1cJVSrnMt7sc9
-- **Livrable des choix de modélisation** : [`docs/MMI-R507-projet-blockchain-CHOIX-MODELISATION.md`](docs/MMI-R507-projet-blockchain-CHOIX-MODELISATION.md)
-- **Protocole de test utilisateur** : [`docs/PROTOCOLE-TESTS.md`](docs/PROTOCOLE-TESTS.md)
-- **Grille d'auto-évaluation** : [`docs/MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md`](docs/MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md)
+Chaque membre maîtrise l'ensemble des 7 notions obligatoires et l'architecture complète du dépôt en vue de la soutenance.
 
 ---
 
-## Public cible et objectif pédagogique
+## Liens et livrables du projet
 
-Le dispositif s'adresse à un **utilisateur non initié** (personne extérieure au groupe, n'ayant pas suivi le cours R507 et ne recevant **aucune explication orale préalable**).  
-L'objectif de médiation scientifique consiste à traduire les concepts abstraits de la blockchain en représentations spatiales, animées et interactives à travers une métaphore fil rouge cohérente : **Le Convoi Ferroviaire Blindé**.
+- **Démo interactive en ligne (GitHub Pages)** : https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/
+- **Dépôt GitHub** : https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier
+- **Tableau de bord GitHub Projects (Kanban)** : https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier/projects
+- **Formulaire public de tests utilisateurs** : https://forms.gle/SrQx1cJVSrnMt7sc9
 
-### Principe de la métaphore ferroviaire
+| Livrable officiel R507 | Fichier / Emplacement | Contenu |
+|:---|:---|:---|
+| Application Three.js | `index.html`, `src/` | Parcours interactif (accueil + étapes 0 à 7), calcul SHA-256 réel et compteur FPS intégré. |
+| Choix de modélisation (25 % de la note) | [`docs/MMI-R507-projet-blockchain-CHOIX-MODELISATION.md`](docs/MMI-R507-projet-blockchain-CHOIX-MODELISATION.md) | Justification détaillée de chaque notion, correspondance technique, alternatives écartées et limites assumées. |
+| Protocole et bilan des tests | [`docs/PROTOCOLE-TESTS.md`](docs/PROTOCOLE-TESTS.md) | Questionnaire complet, résultats détaillés des 4 testeurs externes (4,25 / 5) et 5 correctifs appliqués. |
+| Plan de soutenance | [`docs/SOUTENANCE.md`](docs/SOUTENANCE.md) | Répartition minutée (20 min), script de démo en direct (7 min), plan B et réponses aux questions du jury. |
+| Grille d'auto-évaluation | [`docs/MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md`](docs/MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md) | Auto-évaluation factuelle critère par critère avant soutenance. |
+| Fiches de suivi hebdomadaire | [`docs/suivi-hebdo/`](docs/suivi-hebdo/) | Suivi hebdomadaire de la progression, des commits et des décisions (`SEMAINE-01.md` à `SEMAINE-05.md`). |
 
-- **La locomotive de tête (Protocole et bloc Genesis #0)** : Elle ouvre la marche sans conducteur central et applique les règles mathématiques du réseau.
-- **Les wagons vitrés (Les blocs)** : Leurs parois transparentes permettent à chacun de vérifier les cargaisons (transactions) transportées à l'intérieur, tout en restant scellées.
-- **L'attelage magnétique coloré (Hash et PreviousHash)** : Chaque wagon possède une plaque d'empreinte centrale (son Hash) et un crochet avant (PreviousHash). L'attelage entre deux wagons ne se verrouille que si la couleur et le code du crochet avant correspondent exactement à l'anneau arrière du wagon précédent.
-- **La molette latérale crantée (Le Nonce)** : Un engrenage mécanique rotatif fixé sur le châssis du wagon permet de faire varier le Nonce cran par cran pour modifier l'empreinte du bloc lors du minage.
-- **L'archipel de gares (Le réseau décentralisé)** : Six gares autonomes réparties sur le territoire maintiennent chacune une copie complète du train et se transmettent les nouveaux wagons de proche en proche.
+---
+
+## Public cible et métaphore du Convoi Ferroviaire Blindé
+
+Le dispositif s'adresse à un **utilisateur non initié** découvrant l'application en autonomie totale. Chaque concept abstrait est traduit dans une métaphore ferroviaire cohérente et manipulable :
+
+- **Le réseau ferroviaire public (Étape 0)** : Aucune compagnie centrale ni chef de gare unique ne contrôle les rails ; le réseau est maintenu et vérifié collectivement par toutes les gares.
+- **La locomotive de tête (Bloc Genesis #0)** : Elle ouvre la marche et porte les règles partagées du convoi.
+- **Les wagons vitrés (Les blocs)** : Leurs parois vitrées permettent de voir publiquement les cargaisons (transactions) transportées à l'intérieur, sans autoriser leur altération discrète.
+- **L'attelage magnétique coloré (Hash et `previousHash`)** : L'anneau arrière d'un wagon affiche la couleur et le code de son Hash ; le crochet avant du wagon suivant doit porter exactement la même signature pour maintenir l'attelage verrouillé.
+- **La molette latérale crantée (Le Nonce)** : Un engrenage rotatif fixé sur le wagon candidat permet d'incrémenter le Nonce cran par cran (`1 essai = +1 cran de 45 degrés`) lors du minage.
+- **L'archipel de 6 gares autonomes (Le réseau décentralisé)** : Six gares de taille identique maintiennent chacune une copie complète du train et se relaient les transactions de proche en proche (protocole Gossip).
 
 ---
 
 ## Les 7 notions obligatoires et interactions 3D associées
 
-Chaque notion obligatoire du programme est traduite par une mise en scène spatiale et une interaction directe dans la scène Three.js :
-
-| # | Notion obligatoire (formulation officielle) | Métaphore ferroviaire | Interaction 3D codée dans l'application |
-|:---:|:---|:---|:---|
-| **0** | *Sas d'accueil et introduction* | Vue panoramique d'un convoi de 10 wagons en circulation nocturne | Découverte libre du train en mouvement et présentation des 3 piliers (locomotive, wagons, attelages) avant d'entrer dans le parcours. |
-| **1** | **Structure d'un bloc** : données, hash du bloc, hash du bloc parent et, si pertinent, nonce | Anatomie d'un wagon blindé à parois vitrées | Inspection à 360 degrés avec 4 infobulles 3D reliées en SVG aux composants physiques ; modification du chargement (transactions) et rotation de la molette du Nonce recalculant en direct l'empreinte SHA-256. |
-| **2** | **Chaînage cryptographique** : hash/empreinte cryptographique, lien avec le bloc parent et effet de la moindre modification | Attelage magnétique par concordance de signature entre wagons consécutifs | Vue panoramique des liaisons entre wagons avec infobulles comparatives montrant l'égalité entre le Hash du bloc parent et le PreviousHash du bloc enfant ; ajout interactif de nouveaux wagons au convoi. |
-| **3** | **Immutabilité et détection de falsification** : une modification rend les empreintes incohérentes et doit être détectable par les autres nœuds | Altération frauduleuse d'une cargaison provoquant le décrochage mécanique en cascade | Modification du chargement du Wagon #1 : son Hash change immédiatement de valeur et de couleur, brisant la concordance avec l'attache du Wagon #2 et faisant basculer la suite du convoi en alerte rouge. |
-| **4** | **Réseau et décentralisation** : nœuds, copies distribuées et propagation des transactions/blocs, sans centre unique | Archipel de 6 gares autonomes (Gares A à F) hébergeant chacune une copie du train | Déclenchement d'une propagation pair-à-pair (protocole Gossip de proche en proche), clic direct en 3D sur une gare pour simuler une panne de nœud avec contournement automatique, et simulation d'une tricherie locale rejetée par la majorité. |
-| **5** | **Validation et minage** : vérification d'une transaction ou d'un bloc et, dans le cas du proof of work (PoW), recherche d'un nonce sous contrainte de difficulté | Effort mécanique sur la molette d'un wagon candidat pour aligner les zéros requis | Réglage de la difficulté (1, 2 ou 3 zéros exigés en tête du Hash), clic direct en 3D sur la molette crantée du Wagon #2 candidat (1 essai = +1 cran de 45 degrés) ou lancement du minage automatique jusqu'au verrouillage de l'attelage. |
-| **6** | **Comparaison d'au moins deux mécanismes de consensus** : proof of work (PoW) et proof of stake (PoS), différences, avantages et limites | Course simultanée de 3 molettes (PoW) face au tirage au sort sur caution (PoS) entre 3 gares | Bascule interactive sur les 3 gares (50 %, 35 %, 15 %) : en PoW, les 3 molettes tournent simultanément et 2 gares dépensent leur énergie en pure perte ; en PoS, une loterie pondérée par la caution désigne une seule gare qui tourne son unique molette sans gaspillage énergétique. |
-| **7** | **Cycle de vie d'une transaction et scénario d'attaque illustré** : création, propagation, validation, inclusion dans un bloc, confirmation, puis illustration d'une attaque et de sa détection/limitation | Aiguillage symétrique en Y opposant la chaîne des gares honnêtes à une branche pirate (attaque des 51 %) | Simulation de course d'assemblage de wagons après le Wagon #1 selon deux modes : cas normal (pirate à 20 % battu par les 80 % du réseau, sa branche est abandonnée sur voie de garage) et attaque des 51 % (pirate majoritaire à 60 % assemblant plus vite la chaîne la plus longue qui s'attache au rail central). |
+| # | Notion obligatoire (sujet R507) | Module(s) | Métaphore ferroviaire | Interaction 3D et calcul réel | Limite pédagogique assumée |
+|:---:|:---|:---|:---|:---|:---|
+| **0** | *Accueil et cadrage* | `welcome.js`, `step0.js` | Convoi complet circulant sur un réseau ferroviaire public | Découverte panoramique des 3 piliers (locomotive, wagons vitrés, attelages) avant d'entrer dans le parcours. | Présentation introductive sans édition de bloc. |
+| **1** | **Structure d'un bloc** : données, hash, hash du parent, nonce | `step1.js`, `Block.js` | Anatomie d'un wagon blindé à parois vitrées | Inspection à 360° avec 4 infobulles reliées en SVG ; modification de cargaison et rotation de la molette du Nonce recalculant un vrai SHA-256 (`sha256Sync`). | Arbre de Merkle synthétisé sous forme de deux caisses lisibles par wagon. |
+| **2** | **Chaînage cryptographique** : hash, lien parent, sensibilité | `step2.js`, `Blockchain.js` | Attelage magnétique par concordance d'anneaux | Comparaison simultanée des jonctions (`Hash #N-1 == PreviousHash #N`) et ajout de nouveaux wagons au train. | Les wagons ajoutés ici sont pré-minés pour isoler la notion de chaînage. |
+| **3** | **Immutabilité et détection de falsification** | `step3.js`, `Blockchain.js` | Altération du Wagon #1 et décrochage mécanique en cascade | Modification de la cargaison du Wagon #1 : son anneau vire au jaune, rompt l'attelage cyan du Wagon #2 (`getBlockValidityList()`) et passe la suite en alerte rouge. | Le fraudeur modifie localement sans tenter de re-miner toute la suite (vu à l'étape 7). |
+| **4** | **Réseau et décentralisation** : nœuds, copies, propagation sans centre | `step4.js` | Archipel de 6 gares autonomes (A à F) sans gare centrale | Propagation Gossip séquentielle de voisin en voisin, mise en panne d'une gare au clic 3D avec contournement, et rejet d'une copie pirate par les 5 autres gares. | Réseau borné à 6 gares en mémoire locale (vs milliers de nœuds P2P réels). |
+| **5** | **Validation et minage (PoW)** : vérification et recherche de nonce | `step5.js`, `Block.js` | Effort sur la molette crantée d'un wagon candidat à distance | Choix de difficulté (`0`, `00`, `000`), clic manuel cran par cran sur la molette 3D ou minage automatique (`mineBlock()` avec sel aléatoire) et stats réels vs moyenne théorique (`16`, `256`, `4 096`). | Difficulté limitée à 1-3 zéros hexadécimaux pour rester observable en quelques secondes. |
+| **6** | **Comparaison PoW vs PoS** : différences, avantages et limites | `step6.js` | Compétition de 3 gares (PoW) face au tirage sur caution (PoS) | Comparaison à poids égaux (50 %, 35 %, 15 %) : en PoW les 3 molettes tournent simultanément (énergie perdue) ; en PoS une loterie élit une gare unique pendant que les 2 autres restent à 0 cran. | Les comités d'attestation et le *slashing* sont expliqués textuellement. |
+| **7** | **Cycle de vie d'une transaction et attaque** (51 %) | `step7.js` | Aiguillage en Y opposant branche honnête et branche pirate | Rappel des 5 phases du cycle de vie, puis course d'assemblage sur l'aiguillage en Y : scénario 20 % vs 80 % (victoire honnête) et scénario 60 % vs 40 % (réorganisation par chaîne la plus longue). | Course condensée sur 3 wagons (vs 6 confirmations sur Bitcoin) ; pas de signature ECDSA. |
 
 ---
 
-## Calendrier et jalons officiels
+## Gestion de projet, calendrier et jalons
 
-Le suivi du projet s'appuie sur les jalons définis dans le sujet officiel R507 et configurés sous forme de *Milestones* dans GitHub Projects :
+Le suivi est organisé sur **GitHub Projects** avec un tableau Kanban à 5 colonnes (`Backlog`, `À faire`, `En cours`, `À vérifier`, `Terminé`), des issues assignées liées aux commits et des bilans hebdomadaires dans [`docs/suivi-hebdo/`](docs/suivi-hebdo/).
 
-| Jalon / échéance | Date et heure (2026) | Livrable ou attendu |
+| Jalon / échéance | Date (2026) | Attendu |
 |:---|:---|:---|
-| **Présentation du projet** | 1er octobre 2026 | Lancement du sujet et prise en main des documents de référence. |
-| **Cadrage, groupes, dépôt et GitHub Projects créés** | 9 octobre 2026, 17h | Groupes de 2 ou 3, dépôt GitHub, board GitHub Projects à 5 colonnes et premières issues. |
-| **Livraison du projet** | 15 novembre 2026, 23h59 | Dépôt GitHub complet, GitHub Projects à jour, documentation officielle et démo en ligne fonctionnelle. |
-| **Répétition finale** | 19 novembre 2026, 9h30 - 11h | Répétition générale croisée entre les différents groupes. |
-| **Soutenance** | 19 novembre 2026, 11h - 12h30 | Soutenance finale de 20 minutes par groupe avec démonstration interactive. |
+| **Présentation du sujet** | 1er octobre 2026 | Prise en main des consignes R507 et définition de la métaphore ferroviaire. |
+| **Cadrage et GitHub Projects** | 9 octobre 2026, 17h | Dépôt créé, board Kanban configuré, jalons et premières issues rédigées. |
+| **Livraison du projet** | 15 novembre 2026, 23h59 | Application complète déployée sur GitHub Pages, documentation officielle et tests finalisés. |
+| **Répétition finale** | 19 novembre 2026, 9h30 | Répétition chronométrée entre groupes avant passage devant le jury. |
+| **Soutenance finale** | 19 novembre 2026, 11h00 | Présentation de 20 minutes avec diaporama et démonstration en direct. |
 
 ---
 
-## Critères de qualité et performances
+## Tests utilisateurs et qualité technique
 
-- **Fluidité graphique (objectif >= 30 FPS)** : Le parcours principal est conçu pour maintenir entre 55 et 60 FPS sur un ordinateur standard de salle de TP (au-delà du seuil minimal exigé de 30 FPS). Cet objectif est atteint grâce au partage des instances `BufferGeometry`, à l'emploi de matériaux standards sobres et au nettoyage systématique des groupes 3D et écouteurs d'événements lors des changements d'étape (`exit()`).
-- **Compréhension en autonomie** : L'interface combine un volet pédagogique structuré à gauche (avec marque-pages numérotés de 0 à 7) et des infobulles contextuelles 3D reliées par des pointeurs vectoriels SVG aux pièces exactes du train.
-- **Validation par tests utilisateurs** : Évaluation du dispositif auprès d'au moins 2 personnes extérieures au groupe et non initiées à la blockchain, sans intervention orale pendant la découverte.
+### Bilan des tests utilisateurs (4 testeurs externes)
+Conformément au protocole décrit dans [`docs/PROTOCOLE-TESTS.md`](docs/PROTOCOLE-TESTS.md), **4 personnes extérieures au groupe** (18-25 ans, novices sur la blockchain) ont parcouru l'application déployée à distance en totale autonomie sans explication orale préalable, puis ont répondu au formulaire Google Forms :
+
+- **Compréhension globale après parcours :** **4,25 / 5** en moyenne.
+- **Équilibre texte / animation 3D :** **5,00 / 5** auprès des 4 testeurs.
+- **Fluidité WebGL constatée :** **100 % fluide** sur les 4 ordinateurs personnels (compteur intégré à 55-60 FPS en conditions standard, au-dessus du minimum exigé de 30 FPS).
+- **5 correctifs implémentés suite aux retours :**
+  1. Clarification explicite de l'absence de serveur central à l'étape 4 (50 % des testeurs avaient initialement répondu « serveur central ») et refonte des gares.
+  2. Épuration de l'intérieur des wagons dans `WagonMesh.js` (2 caisses nettes, suppression de « l'effet tunnel »).
+  3. Ajout d'un encadré direct sur le rôle sécuritaire du minage et statistiques réelles vs théoriques à l'étape 5.
+  4. Raccourcissement des textes et ralentissement de la course sur l'aiguillage en Y à l'étape 7.
+  5. Passe de simplification du vocabulaire sur l'ensemble des étapes 0 à 7.
 
 ---
 
-## Tests utilisateurs
+## Stack technique et architecture du dépôt
 
-Pour évaluer la clarté de la métaphore ferroviaire et l'ergonomie des interactions auprès d'un public non initié, un protocole de test et un questionnaire de recueil ont été mis en place :
+### Technologies utilisées
+- **Three.js** (`^0.170.0`) : Moteur de rendu 3D WebGL (géométries procédurales low-poly, `MeshPhysicalMaterial`, `Raycaster`, `OrbitControls`, `ACESFilmicToneMapping`).
+- **Vite** (`^6.0.0`) : Serveur de développement rapide et bundler ES Modules pour la production.
+- **JavaScript ES6+ / HTML5 / CSS3** : Architecture modulaire sans framework tiers ni texture externe lourde pour préserver la cible >= 30 FPS.
+- **GitHub Actions & GitHub Pages** : Build et déploiement continu à chaque push sur la branche `main`.
 
-- **Lien du formulaire public Google Forms** : https://forms.gle/SrQx1cJVSrnMt7sc9
-- **Protocole détaillé pour l'animateur** : disponible dans [`docs/PROTOCOLE-TESTS.md`](docs/PROTOCOLE-TESTS.md).
+### Structure du dépôt
+```text
+Projet_ThreeJS_Morin_Chabalier/
+├── .github/workflows/deploy.yml          # Pipeline de déploiement GitHub Pages
+├── docs/
+│   ├── MMI-R507-projet-blockchain-CHOIX-MODELISATION.md   # Livrable officiel (25 %)
+│   ├── MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md      # Auto-évaluation avant soutenance
+│   ├── PROTOCOLE-TESTS.md                # Protocole, résultats (4 testeurs) et correctifs
+│   ├── SOUTENANCE.md                     # Plan minuté (20 min), script démo et plan B
+│   └── suivi-hebdo/                      # Fiches hebdomadaires SEMAINE-01.md à SEMAINE-05.md
+├── src/
+│   ├── main.js                           # Scène WebGL, éclairage, boucle FPS et orchestration
+│   ├── welcome.js                        # Écran d'accueil introductif
+│   ├── cameraController.js               # Transitions caméra amorties et OrbitControls
+│   ├── environment.js                    # Voies ferrées, sol nocturne et décor procédural
+│   ├── train.js                          # Assemblage et gestion dynamique du convoi
+│   ├── style.css                         # Charte visuelle du volet gauche et infobulles SVG
+│   ├── blockchain/
+│   │   ├── Block.js                      # Implémentation SHA-256 synchrone et minage avec sel
+│   │   └── Blockchain.js                 # Chaînage, validation en cascade et corruption de bloc
+│   ├── three/
+│   │   ├── LocomotiveMesh.js             # Modèle procédural de la locomotive (Genesis #0)
+│   │   └── WagonMesh.js                  # Modèle procédural du wagon vitré et molette du Nonce
+│   └── steps/
+│       ├── StepManager.js                # Cycle de vie enter()/update()/exit() des étapes
+│       └── step0.js … step7.js           # Mise en scène et logique de chaque étape (0 à 7)
+├── index.html                            # Point d'entrée HTML et structure du HUD
+├── package.json                          # Dépendances Three.js et Vite
+└── README.md
+```
+
+### Commandes d'installation et de build local
+
+```bash
+# 1. Cloner le dépôt
+git clone https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier.git
+cd Projet_ThreeJS_Morin_Chabalier
+
+# 2. Installer les dépendances
+npm install
+
+# 3. Lancer le serveur de développement local
+npm run dev
+
+# 4. Générer et prévisualiser le build de production (plan B soutenance)
+npm run build
+npm run preview
+```
 
 ---
 
-## Déclaration d'usage de l'IA générative
+## Déclaration transparente de l'usage de l'IA générative
 
-Conformément aux consignes du projet R507, l'utilisation d'outils d'intelligence artificielle générative est déclarée ci-dessous de manière transparente :
+Conformément au règlement du module R507, l'utilisation d'outils d'IA générative est documentée ci-dessous et détaillée par domaine dans la section 6 de [`CHOIX-MODELISATION.md`](docs/MMI-R507-projet-blockchain-CHOIX-MODELISATION.md) :
 
 | Outil utilisé | Usages réalisés dans le projet | Vérification et contrôle par le binôme |
 |:---|:---|:---|
-| **Gemini** | Aide à l'initialisation de la structure Vite / Three.js, appui sur la structuration modulaire du code (découpage par étapes) et mise en forme Markdown des documents de suivi. | Chaque extrait proposé a été relu, compris, adapté à notre métaphore du convoi ferroviaire et vérifié manuellement par les deux membres du groupe. |
-| **Antigravity** | Assistance sur l'architecture du code JavaScript/Three.js (positionnement spatial des composants 3D, projection des infobulles SVG), structuration des fichiers Markdown et synchronisation du suivi GitHub Projects. | Tout le code intégré a été testé localement sur navigateur, corrigé pour garantir la fluidité à plus de 30 FPS et le respect strict des consignes (zéro emoji, sobriété éditoriale). |
+| **Gemini** | Aide à l'initialisation de la structure Vite / Three.js, appui sur le découpage modulaire par étapes (`step0.js` à `step7.js`) et mise en forme Markdown des documents de suivi. | Chaque extrait proposé a été relu, adapté à notre métaphore ferroviaire et testé manuellement par le binôme. |
+| **Antigravity** | Assistance sur la modélisation procédurale Three.js (gares de l'étape 4, projection vectorielle SVG des infobulles, aiguillage en Y), correctifs CSS et rédaction/audit des livrables documentaires. | Tout le code a été vérifié sur navigateur (60 FPS, zéro erreur console), les propositions superflues ont été retirées et la rédaction a été relue sans emoji. |
 
 ---
 
-## Stack technique et installation locale
+## Sources principales
 
-### Technologies utilisées
-
-- **Three.js** (`^0.170.0`) : Moteur de rendu 3D WebGL (scène, éclairage, matériaux physiques et standards, Raycaster, OrbitControls).
-- **Vite** (`^5.4.10`) : Serveur de développement rapide et bundler de production.
-- **JavaScript ES6+ / HTML5 / CSS3** : Architecture modulaire sans framework lourd pour préserver les performances.
-- **GitHub Actions & GitHub Pages** : Déploiement continu automatisé à chaque push sur la branche `main`.
-
-### Commandes d'installation et de build
-
-1. **Cloner le dépôt** :
-```bash
-git clone https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier.git
-cd Projet_ThreeJS_Morin_Chabalier
-```
-
-2. **Installer les dépendances** :
-```bash
-npm install
-```
-
-3. **Lancer le serveur de développement local** :
-```bash
-npm run dev
-```
-
-4. **Générer le build de production** :
-```bash
-npm run build
-```
-
-5. **Prévisualiser le build de production localement** :
-```bash
-npm run preview
-```
+- **Nakamoto, S. (2008).** *Bitcoin: A Peer-to-Peer Electronic Cash System* — https://bitcoin.org/bitcoin.pdf
+- **NIST (2015).** *FIPS 180-4, Secure Hash Standard (SHS)* — https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf
+- **Yaga, D. et al. (2018).** *NIST IR 8202, Blockchain Technology Overview* — https://doi.org/10.6028/NIST.IR.8202
+- **Bitcoin Developer Guide.** *Block Chain, P2P Network, Transactions & Mining* — https://developer.bitcoin.org/devguide/
+- **Ethereum.org.** *Consensus Mechanisms (PoW & PoS) & Energy Consumption* — https://ethereum.org/en/developers/docs/consensus-mechanisms/
+- **CNIL (2018).** *Blockchain et RGPD : quelles solutions pour un usage responsable en présence de données personnelles ?* — https://www.cnil.fr/fr/blockchain-et-rgpd-quelles-solutions-pour-un-usage-responsable-en-presence-de-donnees-personnelles
+- **Documentation Three.js, Vite & MDN Web Crypto API** — https://threejs.org/docs/ · https://vitejs.dev/guide/
+- **Anders Brownworth.** *Blockchain 101 — A Visual Demo* — https://andersbrownworth.com/blockchain/
