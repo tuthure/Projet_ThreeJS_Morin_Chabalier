@@ -19,12 +19,12 @@
 
 | Temps | Support | Intervenant | Contenu et points clés |
 |:---|:---|:---|:---|
-| `0:00 – 1:30` | Diapo 1-2 | Alban | Accroche, problématique (vulgariser 7 notions blockchain abstraites pour un public novice sans explication orale) et présentation de la métaphore du Convoi Ferroviaire Blindé. |
-| `1:30 – 3:00` | Diapo 3 | Arthur | Architecture du parcours (étapes 0 à 7), choix esthétiques low-poly procéduraux et lisibilité visuelle (codes couleurs cyan/émeraude, jaune ambre, rouge alerte). |
+| `0:00 – 1:30` | Parties 1-2 | Alban | Accroche, problématique (vulgariser 7 notions blockchain abstraites pour un public novice sans explication orale) et présentation de la métaphore du Convoi Ferroviaire Blindé. |
+| `1:30 – 3:00` | Partie 3 | Arthur | Architecture du parcours (étapes 0 à 7), choix esthétiques low-poly procéduraux et lisibilité visuelle (codes couleurs cyan/émeraude, jaune ambre, rouge alerte). |
 | `3:00 – 10:00` | Démo live | Alban & Arthur | Démonstration interactive des 7 notions sur le dispositif WebGL : Alban sur l'accueil et les notions 1 à 3, puis Arthur sur les notions 4 à 7. |
-| `10:00 – 12:00` | Diapo 4-5 | Arthur | Justification des choix de modélisation (`CHOIX-MODELISATION.md`) et limites techniques assumées (ce qui est calculé réellement vs ce qui est simplifié ou simulé pour la pédagogie). |
-| `12:00 – 14:00` | Diapo 6-7 | Alban | Protocole de tests utilisateurs (4 testeurs externes de 18 à 25 ans, `PROTOCOLE-TESTS.md`), score moyen de compréhension (4,25 / 5) et correctifs appliqués (clarification de l'absence de serveur central à l'étape 4, épuration de l'intérieur des wagons, ralentissement de l'étape 7). |
-| `14:00 – 15:30` | Diapo 8-9 | Alban & Arthur | Gestion de projet (GitHub Projects, milestones, fiches hebdomadaires), performances WebGL (60+ FPS mesurés) et usage transparent de l'IA générative (Gemini et Antigravity). |
+| `10:00 – 12:00` | Parties 4-5 | Arthur | Justification des choix de modélisation (`CHOIX-MODELISATION.md`) et limites techniques assumées (ce qui est calculé réellement vs ce qui est simplifié ou simulé pour la pédagogie). |
+| `12:00 – 14:00` | Parties 6-7 | Alban | Protocole de tests utilisateurs (4 testeurs externes de 18 à 25 ans, `PROTOCOLE-TESTS.md`), score moyen de compréhension (4,25 / 5) et correctifs appliqués (clarification de l'absence de serveur central à l'étape 4, épuration de l'intérieur des wagons, ralentissement de l'étape 7). |
+| `14:00 – 15:30` | Parties 8-9 | Alban & Arthur | Gestion de projet (GitHub Projects, milestones, fiches hebdomadaires), performances WebGL (60+ FPS mesurés) et usage transparent de l'IA générative (Gemini et Antigravity). |
 | `15:30 – 20:00` | Questions | Les deux | Échange et réponses aux questions du jury. |
 
 ---
