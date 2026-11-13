@@ -566,13 +566,13 @@ export class Environment {
       }
 
       const x = this.treeMinX + i * this.treeSpacing;
-      const isForeground = i % 6 === 0;
-      let z = isForeground ? 5.6 + (i % 3) * 0.95 : -5.4 - (i % 4) * 1.85;
+      // Tous les arbres restent derrière la voie ferrée afin de ne jamais gêner la caméra devant les gares ou le train
+      let z = -5.8 - (i % 5) * 1.85;
 
       // Zone d'exclusion elargie pres des portails de tunnels pour eviter tout chevauchement
       const nearTunnel = this.tunnels.some((tun) => Math.abs(x - tun.position.x) < 4.5);
       if (nearTunnel) {
-        z = z > 0 ? Math.max(z, 7.6) : Math.min(z, -7.8);
+        z = Math.min(z, -7.8);
       }
 
       const scaleRand = 0.85 + (i % 5) * 0.14;
@@ -612,7 +612,7 @@ export class Environment {
       rockGroup.add(smallRock);
 
       const x = this.treeMinX + i * (this.totalTreesWidth / 16) + 2.4;
-      const z = i % 3 === 0 ? 6.4 + (i % 2) * 1.1 : -6.2 - (i % 3) * 1.5;
+      const z = -4.8 - (i % 4) * 2.1;
       rockGroup.position.set(x, -0.22, z);
       this.group.add(rockGroup);
       this.trees.push(rockGroup);

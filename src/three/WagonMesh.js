@@ -266,7 +266,7 @@ export class WagonMesh extends THREE.Group {
       this.containerMaterials.push(mainCrateMat);
 
       const mainCrate = new THREE.Mesh(mainCrateGeo, mainCrateMat);
-      mainCrate.position.set(-0.46, 0.42, 0);
+      mainCrate.position.set(-0.64, 0.44, 0);
       this.cargoGroup.add(mainCrate);
 
       const secondaryCrateGeo = new THREE.BoxGeometry(0.6, 0.44, 0.6);
@@ -280,7 +280,7 @@ export class WagonMesh extends THREE.Group {
       this.containerMaterials.push(secondaryCrateMat);
 
       const secondaryCrate = new THREE.Mesh(secondaryCrateGeo, secondaryCrateMat);
-      secondaryCrate.position.set(0.48, 0.36, 0);
+      secondaryCrate.position.set(0.56, 0.38, 0);
       this.cargoGroup.add(secondaryCrate);
     }
 

@@ -456,7 +456,7 @@ export const step2 = {
         <nav class="step-nav-bar animate-fade">
           <button id="btn-step2-action-prev" class="btn-panel-ghost">
             <span class="btn-arrow">&larr;</span>
-            <span>Étape 1 : Structure</span>
+            <span>Étape 1 : Bloc</span>
           </button>
           <button id="btn-step2-action-next" class="btn-panel-primary">
             <span>Étape 3 : Immuabilité</span>

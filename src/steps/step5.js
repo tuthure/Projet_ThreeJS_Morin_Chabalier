@@ -110,17 +110,39 @@ export const step5 = {
     this.createMiningTooltips();
     this.setupWheelPointerEvents();
 
-    // Cadrage rapproché et centré sur la zone d'attelage et le Wagon #2 (avec le Wagon #1 visible à gauche)
-    if (cameraController) {
-      cameraController.moveTo(
-        new THREE.Vector3(6.65, 1.55, 5.15),
-        new THREE.Vector3(6.55, 0.45, 0),
-        1.15
-      );
-    }
+    // Cadrage rapproché et centré sur la molette du Nonce du Wagon #2 candidat
+    this.focusCameraOnWheel(1.0);
 
     this.startAnimationLoop();
     this.renderLeftPanel();
+  },
+
+  /**
+   * Cadre la caméra en gros plan sur la molette du Nonce et la plaque Hash du Wagon #2 candidat.
+   * @param {number} [duration=1.0]
+   */
+  focusCameraOnWheel(duration = 1.0) {
+    const { cameraController } = this.ctx || {};
+    if (!cameraController) return;
+    cameraController.moveTo(
+      new THREE.Vector3(8.55, 0.78, 3.25),
+      new THREE.Vector3(8.55, 0.28, 0.35),
+      duration
+    );
+  },
+
+  /**
+   * Recule la caméra en douceur lors de la validation pour montrer l'attelage avec le Wagon #1.
+   * @param {number} [duration=1.25]
+   */
+  focusCameraOnCoupling(duration = 1.25) {
+    const { cameraController } = this.ctx || {};
+    if (!cameraController) return;
+    cameraController.moveTo(
+      new THREE.Vector3(6.25, 1.55, 5.45),
+      new THREE.Vector3(6.15, 0.42, 0),
+      duration
+    );
   },
 
   exit() {
@@ -400,6 +422,7 @@ export const step5 = {
       this.foundNonce = this.currentNonce;
       this.foundHash = this.currentHash;
       this.realAttempts = this.attemptsDone;
+      this.focusCameraOnCoupling(1.25);
     }
 
     wagon2.colorHash.set(hashToColorHex(this.currentHash));
@@ -582,6 +605,7 @@ export const step5 = {
     }
 
     this.updateLiveMiningDOM();
+    this.focusCameraOnCoupling(1.25);
     this.renderLeftPanel('.keypoint-card');
   },
 
@@ -1066,6 +1090,7 @@ export const step5 = {
         if (this.isMining) return;
         this.difficulty = lvl;
         this.prepareConvoyForDifficulty(true);
+        this.focusCameraOnWheel(0.95);
         this.createMiningTooltips();
         this.updateLiveMiningDOM();
         this.renderLeftPanel();
@@ -1076,6 +1101,7 @@ export const step5 = {
       if (this.isMining) return;
       if (this.isMined) {
         this.prepareConvoyForDifficulty(true);
+        this.focusCameraOnWheel(0.95);
         this.createMiningTooltips();
         this.updateLiveMiningDOM();
         this.renderLeftPanel();

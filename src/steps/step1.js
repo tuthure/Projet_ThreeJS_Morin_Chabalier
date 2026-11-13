@@ -351,11 +351,11 @@ export const step1 = {
         const height = window.innerHeight;
 
         // Cibles 3D locales sur le Wagon #1
-        const pPrevPlate = wagon1.localToWorld(new THREE.Vector3(-1.185, 0.62, 0.15));
+        const pPrevPlate = wagon1.localToWorld(new THREE.Vector3(-1.185, 0.68, 0.15));
         const pPrevHook = wagon1.localToWorld(new THREE.Vector3(-1.42, 0.0, 0.0));
-        const pCargo = wagon1.localToWorld(new THREE.Vector3(-0.46, 0.68, 0.15));
-        const pNonce = wagon1.localToWorld(new THREE.Vector3(0.0, 0.2, 0.71));
-        const pHashPlate = wagon1.localToWorld(new THREE.Vector3(0.15, 0.62, 0.605));
+        const pCargo = wagon1.localToWorld(new THREE.Vector3(-0.78, 0.66, 0.08));
+        const pNonce = wagon1.localToWorld(new THREE.Vector3(0.0, 0.01, 0.713));
+        const pHashPlate = wagon1.localToWorld(new THREE.Vector3(0.34, 0.88, 0.605));
         const pHashSocket = wagon1.localToWorld(new THREE.Vector3(1.48, 0.0, 0.0));
 
         const prPrevPlate = pPrevPlate.project(camera);
@@ -400,20 +400,20 @@ export const step1 = {
           this.tooltipLayer.style.visibility = isCovered ? 'hidden' : 'visible';
 
           // Rangée supérieure (3 infobulles espacées proprement sans chevauchement)
-          const topBaseY = Math.min(prevPlateY, cargoY, hashPlateY) - 74;
+          const topBaseY = Math.min(prevPlateY, cargoY, hashPlateY) - 86;
 
-          const pillPrevX = Math.max(455, Math.min(prevPlateX, prevHookX) - 10);
-          const pillPrevY = topBaseY + 6;
+          const pillPrevX = Math.max(450, Math.min(prevPlateX, prevHookX) - 14);
+          const pillPrevY = topBaseY + 8;
 
-          const pillCargoX = Math.max(cargoX, pillPrevX + 195);
-          const pillCargoY = topBaseY - 24;
+          const pillCargoX = Math.max(cargoX, pillPrevX + 210);
+          const pillCargoY = topBaseY - 26;
 
-          const pillHashX = Math.max((hashPlateX + hashSocketX) * 0.5 + 15, pillCargoX + 195);
-          const pillHashY = topBaseY + 6;
+          const pillHashX = Math.max((hashPlateX + hashSocketX) * 0.5 + 18, pillCargoX + 215);
+          const pillHashY = topBaseY + 8;
 
-          // Rangée inférieure (infobulle Nonce sous le châssis)
+          // Rangée inférieure (infobulle Nonce nettement sous la molette pour garder le chiffre lisible)
           const pillNonceX = Math.max(465, nonceX);
-          const pillNonceY = nonceY + 66;
+          const pillNonceY = nonceY + 92;
 
           const setPillPos = (id, x, y) => {
             const el = document.getElementById(id);
@@ -603,7 +603,7 @@ export const step1 = {
             <span>Accueil</span>
           </button>
           <button id="btn-step1-action-next" class="btn-panel-primary">
-            <span>Étape 2 : Le Chaînage</span>
+            <span>Étape 2 : Chaînage</span>
             <span class="btn-arrow">&rarr;</span>
           </button>
         </nav>

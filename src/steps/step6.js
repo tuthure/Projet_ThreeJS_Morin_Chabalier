@@ -43,11 +43,12 @@ export const step6 = {
   winningNonce: 18,
   winningHash: '00e4a1...',
 
-  // Positions sur l'axe X du Wagon #2 (convoi completement attele en arriere-plan)
-  spawnWagon2X: 8.9,
-  unminedWagon2X: 7.6,
+  // Positions sur l'axe X du Wagon #2 et décalage du convoi vers la gauche pour visibilité simultanée
+  convoyOffsetX: -3.4,
+  spawnWagon2X: 9.0,
+  unminedWagon2X: 8.25,
   minedWagon2X: 7.6,
-  currentWagon2X: 7.6,
+  currentWagon2X: 8.25,
   currentWagon2Scale: 1.0,
   wasCoupled: false,
   couplerFlashRing: null,
@@ -55,8 +56,8 @@ export const step6 = {
 
   consensusGroup: null,
   lotteryHaloGroup: null,
-  lotteryHaloX: 3.1,
-  lotteryHaloZ: 2.35,
+  lotteryHaloX: 7.5,
+  lotteryHaloZ: 1.15,
   validators: [],
   tooltipLayer: null,
 
@@ -72,8 +73,8 @@ export const step6 = {
       tokens: 50,
       coinsMeshCount: 10,
       baseCrans: 24,
-      x: 3.1,
-      z: 2.35
+      x: 7.5,
+      z: 1.15
     },
     {
       id: 'gare-b',
@@ -86,8 +87,8 @@ export const step6 = {
       tokens: 35,
       coinsMeshCount: 7,
       baseCrans: 16,
-      x: 5.6,
-      z: 2.35
+      x: 10.0,
+      z: 1.15
     },
     {
       id: 'gare-c',
@@ -100,8 +101,8 @@ export const step6 = {
       tokens: 15,
       coinsMeshCount: 3,
       baseCrans: 8,
-      x: 8.1,
-      z: 2.35
+      x: 12.5,
+      z: 1.15
     }
   ],
 
@@ -141,6 +142,9 @@ export const step6 = {
         { lot: 'Fret #104', cargaison: "15 tonnes d'acier", quai: 'Quai A -> Quai B' },
         { lot: 'Fret #108', cargaison: "25 tonnes d'acier", quai: 'Quai B -> Quai C' }
       ]);
+      if (trainConvoy.group) {
+        trainConvoy.group.position.x = this.convoyOffsetX;
+      }
       if (cameraController) {
         cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
       }
@@ -152,11 +156,11 @@ export const step6 = {
     this.createStationTooltips();
     this.applyModeVisuals();
 
-    // Cadrage avec les 3 Gares (A, B, C) intégralement visibles dans les deux tiers droits devant le convoi
+    // Cadrage simultané : Wagon #2 candidat à gauche + Gares A, B, C alignées à droite
     if (cameraController) {
       cameraController.moveTo(
-        new THREE.Vector3(5.6, 3.05, 11.1),
-        new THREE.Vector3(5.6, 0.45, 0.85),
+        new THREE.Vector3(8.35, 2.85, 12.6),
+        new THREE.Vector3(8.35, 0.45, 0.45),
         1.25
       );
     }
@@ -167,6 +171,10 @@ export const step6 = {
 
   exit() {
     this.stopAnimationLoop();
+
+    if (this.ctx?.trainConvoy?.group) {
+      this.ctx.trainConvoy.group.position.x = 0;
+    }
 
     const wagon2 = this.ctx?.trainConvoy?.getWagon(2);
     if (wagon2) {
@@ -420,49 +428,50 @@ export const step6 = {
     buildingGroup.position.set(-0.36, 0.08, -0.30);
 
     const plinth = new THREE.Mesh(shared.plinthGeo, shared.stoneTrimMat);
-    plinth.position.set(-0.08, 0.07, 0);
+    plinth.position.set(-0.10, 0.07, 0);
     buildingGroup.add(plinth);
 
     const mainHall = new THREE.Mesh(shared.mainHallGeo, shared.brickMat);
-    mainHall.position.set(-0.08, 0.5, 0);
+    mainHall.position.set(-0.10, 0.48, 0);
     buildingGroup.add(mainHall);
 
     const cornice = new THREE.Mesh(shared.corniceGeo, shared.stoneTrimMat);
-    cornice.position.set(-0.08, 0.9, 0);
+    cornice.position.set(-0.10, 0.85, 0);
     buildingGroup.add(cornice);
 
+    // Toit pyramidal pose proprement sur la corniche (base a y = 0.88, sans toucher l'enseigne)
     const mainRoof = new THREE.Mesh(shared.roofPrismGeo, shared.slateRoofMat);
-    mainRoof.position.set(-0.08, 1.16, 0);
+    mainRoof.position.set(-0.10, 1.09, 0);
     mainRoof.rotation.y = Math.PI / 4;
-    mainRoof.scale.set(1.18, 1.0, 0.64);
+    mainRoof.scale.set(1.16, 1.0, 0.62);
     buildingGroup.add(mainRoof);
 
-    // Fenetres eclairees sur la facade avant (+Z) face a la camera
+    // Fenetres eclairees sur la facade avant (+Z)
     const windowMat = new THREE.MeshStandardMaterial({
       color: 0xfef08a,
       emissive: 0xf59e0b,
       emissiveIntensity: 1.0,
       roughness: 0.2
     });
-    [-0.44, -0.08, 0.28].forEach((wx) => {
+    [-0.44, -0.10, 0.24].forEach((wx) => {
       const win = new THREE.Mesh(shared.winGeo, windowMat);
-      win.position.set(wx, 0.45, 0.335);
+      win.position.set(wx, 0.34, 0.31);
       buildingGroup.add(win);
     });
 
-    // Marquise metallique et plaque nominative rehaussee au-dessus du toit/corniche
+    // Marquise metallique et plaque nominative sur le fronton avant (100% degagee du toit)
     const canopy = new THREE.Mesh(shared.canopyGeo, shared.darkMetalMat);
-    canopy.position.set(-0.08, 0.56, 0.32);
+    canopy.position.set(-0.10, 0.50, 0.28);
     buildingGroup.add(canopy);
 
-    [-0.64, -0.08, 0.48].forEach((px) => {
+    [-0.68, 0.48].forEach((px) => {
       const pillar = new THREE.Mesh(shared.pillarGeo, shared.darkMetalMat);
-      pillar.position.set(px, 0.28, 0.44);
+      pillar.position.set(px, 0.25, 0.42);
       buildingGroup.add(pillar);
     });
 
     const signBack = new THREE.Mesh(shared.signBackGeo, shared.darkMetalMat);
-    signBack.position.set(-0.04, 0.94, 0.38);
+    signBack.position.set(-0.10, 0.68, 0.44);
     buildingGroup.add(signBack);
 
     const signTex = this.createStationSignTexture(v.name);
@@ -470,26 +479,26 @@ export const step6 = {
       shared.signBoardGeo,
       new THREE.MeshBasicMaterial({ map: signTex })
     );
-    signMesh.position.set(-0.04, 0.94, 0.41);
+    signMesh.position.set(-0.10, 0.68, 0.465);
     buildingGroup.add(signMesh);
 
-    // Tour de l'horloge (beffroi) placee a l'arriere gauche pour degager la facade et le quai droit
+    // Tour de l'horloge (beffroi) placee a l'arriere gauche
     const tower = new THREE.Mesh(shared.towerBodyGeo, shared.brickMat);
-    tower.position.set(-0.56, 0.68, -0.14);
+    tower.position.set(-0.62, 0.68, -0.14);
     buildingGroup.add(tower);
 
     const towerRoof = new THREE.Mesh(shared.towerRoofGeo, shared.slateRoofMat);
-    towerRoof.position.set(-0.56, 1.56, -0.14);
+    towerRoof.position.set(-0.62, 1.56, -0.14);
     towerRoof.rotation.y = Math.PI / 4;
     buildingGroup.add(towerRoof);
 
     const clockFront = new THREE.Mesh(shared.clockFaceGeo, shared.clockMat);
-    clockFront.position.set(-0.56, 1.24, 0.08);
+    clockFront.position.set(-0.62, 1.24, 0.08);
     buildingGroup.add(clockFront);
 
     // Mat de signalisation avec balise lumineuse d'etat
     const signalMast = new THREE.Mesh(shared.signalMastGeo, shared.darkMetalMat);
-    signalMast.position.set(-0.80, 0.52, 0.24);
+    signalMast.position.set(-0.84, 0.52, 0.24);
     buildingGroup.add(signalMast);
 
     const beaconMat = new THREE.MeshStandardMaterial({
@@ -499,7 +508,7 @@ export const step6 = {
       roughness: 0.2
     });
     const beacon = new THREE.Mesh(shared.beaconGeo, beaconMat);
-    beacon.position.set(-0.80, 1.06, 0.24);
+    beacon.position.set(-0.84, 1.06, 0.24);
     buildingGroup.add(beacon);
 
     return { buildingGroup, beaconMat, windowMat };
@@ -541,19 +550,19 @@ export const step6 = {
     const dialGeo = new THREE.CircleGeometry(0.31, 32);
 
     const coinGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.09, 20);
-    const couplerTarget = new THREE.Vector3(7.6, 0.15, 0);
+    const couplerTarget = new THREE.Vector3(this.convoyOffsetX + this.minedWagon2X, 0.15, 0);
 
     const clockTexture = this.createClockTexture();
     const sharedStationAssets = {
-      plinthGeo: new THREE.BoxGeometry(1.32, 0.14, 0.70),
-      mainHallGeo: new THREE.BoxGeometry(1.24, 0.76, 0.62),
-      corniceGeo: new THREE.BoxGeometry(1.34, 0.06, 0.72),
-      roofPrismGeo: new THREE.ConeGeometry(0.96, 0.46, 4),
-      winGeo: new THREE.BoxGeometry(0.22, 0.32, 0.03),
-      canopyGeo: new THREE.BoxGeometry(1.42, 0.055, 0.38),
-      pillarGeo: new THREE.CylinderGeometry(0.026, 0.026, 0.54, 8),
-      signBackGeo: new THREE.BoxGeometry(1.18, 0.30, 0.04),
-      signBoardGeo: new THREE.PlaneGeometry(1.14, 0.26),
+      plinthGeo: new THREE.BoxGeometry(1.32, 0.14, 0.68),
+      mainHallGeo: new THREE.BoxGeometry(1.24, 0.68, 0.60),
+      corniceGeo: new THREE.BoxGeometry(1.34, 0.06, 0.70),
+      roofPrismGeo: new THREE.ConeGeometry(0.94, 0.42, 4),
+      winGeo: new THREE.BoxGeometry(0.20, 0.24, 0.03),
+      canopyGeo: new THREE.BoxGeometry(1.38, 0.05, 0.34),
+      pillarGeo: new THREE.CylinderGeometry(0.024, 0.024, 0.48, 8),
+      signBackGeo: new THREE.BoxGeometry(1.18, 0.28, 0.04),
+      signBoardGeo: new THREE.PlaneGeometry(1.14, 0.24),
       towerBodyGeo: new THREE.BoxGeometry(0.42, 1.34, 0.42),
       towerRoofGeo: new THREE.ConeGeometry(0.35, 0.46, 4),
       clockFaceGeo: new THREE.CircleGeometry(0.14, 20),
@@ -656,9 +665,9 @@ export const step6 = {
       }
       vGroup.add(posNodeGroup);
 
-      // Faisceau reliant la gare au premier plan vers le Wagon #2 sur les rails
+      // Faisceau reliant la gare à droite vers le Wagon #2 candidat sur les rails à gauche
       const linePoints = [
-        new THREE.Vector3(v.x + 0.68, -0.10, v.z + 0.12),
+        new THREE.Vector3(v.x - 0.6, -0.10, v.z - 0.35),
         couplerTarget.clone()
       ];
       const lineGeo = new THREE.BufferGeometry().setFromPoints(linePoints);
@@ -732,7 +741,7 @@ export const step6 = {
       opacity: 0
     });
     this.couplerFlashRing = new THREE.Mesh(flashGeo, flashMat);
-    this.couplerFlashRing.position.set(5.28, 0.05, 0);
+    this.couplerFlashRing.position.set(this.convoyOffsetX + 5.28, 0.05, 0);
     this.consensusGroup.add(this.couplerFlashRing);
 
     scene.add(this.consensusGroup);
@@ -755,7 +764,7 @@ export const step6 = {
   },
 
   /**
-   * Crée les 3 infobulles SVG au-dessus des 3 gares (Gare A, Gare B, Gare C).
+   * Crée les 3 infobulles SVG au-dessus des 3 gares et l'infobulle en direct du Wagon #2 candidat.
    */
   createStationTooltips() {
     if (!this.tooltipLayer) return;
@@ -769,6 +778,12 @@ export const step6 = {
       `
       )
       .join('');
+
+    const wagonSvgHTML = `
+      <line id="s6-line-wagon" stroke="#facc15" stroke-width="2" stroke-linecap="round" opacity="0.9" />
+      <circle id="s6-dot-out-wagon" r="6.5" fill="none" stroke="#facc15" stroke-width="1.5" opacity="0.85" />
+      <circle id="s6-dot-in-wagon" r="3" fill="#facc15" />
+    `;
 
     const pillsHTML = this.validatorData
       .map(
@@ -785,17 +800,31 @@ export const step6 = {
       )
       .join('');
 
+    const wagonPillHTML = `
+      <div id="tooltip-s6-wagon" class="scene-tooltip" style="--spot-color: #facc15; z-index: 12;">
+        <button type="button" class="scene-tooltip-pill">
+          <span class="scene-tooltip-dot"></span>
+          <span class="scene-tooltip-label">
+            <strong>Wagon #2</strong> · <span id="s6-wagon-status" style="color: #fde68a;">Nonce #0</span>
+          </span>
+        </button>
+      </div>
+    `;
+
     this.tooltipLayer.innerHTML = `
       <svg id="step6-tooltips-svg" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 10;">
         ${svgLinesHTML}
+        ${wagonSvgHTML}
       </svg>
       ${pillsHTML}
+      ${wagonPillHTML}
     `;
 
     this.validatorData.forEach((_, idx) => {
       const el = document.getElementById(`tooltip-s6-${idx}`);
       el?.addEventListener('pointerdown', (e) => e.stopPropagation());
     });
+    document.getElementById('tooltip-s6-wagon')?.addEventListener('pointerdown', (e) => e.stopPropagation());
 
     this.updateTooltipsDOM();
   },
@@ -1074,6 +1103,37 @@ export const step6 = {
     if (cursorEl) {
       cursorEl.style.left = `${this.lotteryCursorPercent.toFixed(1)}%`;
     }
+
+    // Mise à jour de l'infobulle en direct du Wagon #2 candidat
+    const wagonEl = document.getElementById('tooltip-s6-wagon');
+    const wagonStatusEl = document.getElementById('s6-wagon-status');
+    const wagonLineEl = document.getElementById('s6-line-wagon');
+    const wagonDotIn = document.getElementById('s6-dot-in-wagon');
+    const wagonDotOut = document.getElementById('s6-dot-out-wagon');
+    const block2 = this.ctx?.trainConvoy?.getBlock(2);
+    const currentWagonNonce = block2?.nonce ?? 0;
+
+    let wagonColor = '#facc15';
+    let wagonText = `Nonce #${currentWagonNonce} (en attente)`;
+    if (this.simState === 'running' || this.simState === 'pos_mining') {
+      wagonColor = '#f59e0b';
+      wagonText = `Nonce #${currentWagonNonce} (test en cours)`;
+    } else if (this.simState === 'lottery') {
+      wagonColor = '#facc15';
+      wagonText = 'Tirage de la gare...';
+    } else if (this.simState === 'done') {
+      wagonColor = '#10b981';
+      wagonText = `Validé · Nonce #${this.winningNonce}`;
+    }
+
+    if (wagonStatusEl) {
+      wagonStatusEl.textContent = wagonText;
+      wagonStatusEl.style.color = wagonColor;
+    }
+    if (wagonEl) wagonEl.style.setProperty('--spot-color', wagonColor);
+    if (wagonLineEl) wagonLineEl.setAttribute('stroke', wagonColor);
+    if (wagonDotIn) wagonDotIn.setAttribute('fill', wagonColor);
+    if (wagonDotOut) wagonDotOut.setAttribute('stroke', wagonColor);
   },
 
   startAnimationLoop() {
@@ -1248,10 +1308,10 @@ export const step6 = {
         this.lotteryHaloGroup.rotation.y += dt * 1.8;
       }
 
-      // 2. Convoi ferroviaire en arrière-plan : toujours proprement attelé et aligné sur les rails
+      // 2. Wagon #2 candidat bien visible à gauche : détaché pendant l'attente, puis s'attelle dès qu'une gare gagne
       if (wagon2) {
         const isValidated = this.simState === 'done';
-        const targetX = this.minedWagon2X;
+        const targetX = isValidated ? this.minedWagon2X : this.unminedWagon2X;
         this.currentWagon2X = THREE.MathUtils.lerp(this.currentWagon2X, targetX, Math.min(1, dt * 6.5));
         this.currentWagon2Scale = THREE.MathUtils.lerp(this.currentWagon2Scale, 1.0, Math.min(1, dt * 9.0));
         wagon2.position.x = this.currentWagon2X;
@@ -1266,8 +1326,13 @@ export const step6 = {
         }
 
         if (wagon2.couplerGroup && wagon2.defaultCouplerPosition) {
-          wagon2.couplerGroup.position.copy(wagon2.defaultCouplerPosition);
-          wagon2.couplerGroup.rotation.z = 0;
+          if (!isCoupledPosition) {
+            wagon2.couplerGroup.position.y = wagon2.defaultCouplerPosition.y - 0.12;
+            wagon2.couplerGroup.rotation.z = 0.12;
+          } else {
+            wagon2.couplerGroup.position.copy(wagon2.defaultCouplerPosition);
+            wagon2.couplerGroup.rotation.z = 0;
+          }
         }
 
         if (wagon2.beaconMaterial) {
@@ -1296,7 +1361,7 @@ export const step6 = {
         }
       }
 
-      // 4. Projection 2D des 3 infobulles au-dessus des 3 gares
+      // 4. Projection 2D de l'infobulle du Wagon #2 (à gauche) et des 3 gares (à droite)
       if (this.tooltipLayer && camera && this.validators.length === 3) {
         const width = window.innerWidth;
         const height = window.innerHeight;
@@ -1311,6 +1376,13 @@ export const step6 = {
           return { x: toX(pr), y: toY(pr) };
         });
 
+        let wagonPt = { x: 0, y: 0 };
+        if (wagon2) {
+          const prW = wagon2.localToWorld(new THREE.Vector3(0.0, 1.15, 0.0)).project(camera);
+          if (prW.z > 1) anyBehind = true;
+          wagonPt = { x: toX(prW), y: toY(prW) };
+        }
+
         if (anyBehind) {
           this.tooltipLayer.style.opacity = '0';
           this.tooltipLayer.style.visibility = 'hidden';
@@ -1319,9 +1391,27 @@ export const step6 = {
           this.tooltipLayer.style.opacity = isCovered ? '0' : '1';
           this.tooltipLayer.style.visibility = isCovered ? 'hidden' : 'visible';
 
-          const minX = 465;
-          const maxX = Math.max(minX + 320, width - 135);
-          const minGap = Math.min(200, (maxX - minX) / 2);
+          if (wagon2) {
+            const wPillX = Math.max(430, wagonPt.x);
+            const wPillY = wagonPt.y - 46;
+            const elWagon = document.getElementById('tooltip-s6-wagon');
+            if (elWagon) {
+              elWagon.style.transform = `translate3d(${wPillX.toFixed(1)}px, ${wPillY.toFixed(1)}px, 0) translate(-50%, -50%)`;
+            }
+            setLineAndDot(
+              's6-line-wagon',
+              's6-dot-in-wagon',
+              's6-dot-out-wagon',
+              wPillX,
+              wPillY + 14,
+              wagonPt.x,
+              wagonPt.y
+            );
+          }
+
+          const minX = wagon2 ? Math.max(580, wagonPt.x + 175) : 465;
+          const maxX = Math.max(minX + 300, width - 130);
+          const minGap = Math.min(185, (maxX - minX) / 2);
           const pillX0 = Math.max(minX, Math.min(maxX - minGap * 2, pts[0].x));
           const pillX1 = Math.max(pillX0 + minGap, Math.min(maxX - minGap, pts[1].x));
           const pillX2 = Math.max(pillX1 + minGap, Math.min(maxX, pts[2].x));
@@ -1469,7 +1559,7 @@ export const step6 = {
             <span>Étape 5 : Minage</span>
           </button>
           <button id="btn-step6-action-next" class="btn-panel-primary">
-            <span>Étape 7 : Attaque</span>
+            <span>Étape 7 : Attaque 51 %</span>
             <span class="btn-arrow">&rarr;</span>
           </button>
         </nav>

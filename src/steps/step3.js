@@ -632,10 +632,10 @@ export const step3 = {
         <nav class="step-nav-bar animate-fade">
           <button id="btn-step3-action-prev" class="btn-panel-ghost">
             <span class="btn-arrow">&larr;</span>
-            <span>Étape 2</span>
+            <span>Étape 2 : Chaînage</span>
           </button>
           <button id="btn-step3-action-next" class="btn-panel-primary">
-            <span>Étape 4 : Réseau distribué</span>
+            <span>Étape 4 : Réseau</span>
             <span class="btn-arrow">&rarr;</span>
           </button>
         </nav>
