@@ -574,12 +574,12 @@ export const step3 = {
       <div class="step-panel-scroll">
         ${!this.isBroken ? `
           <article class="step-card context-card animate-fade">
-            <h3 class="card-title">Que se passe-t-il si on modifie un wagon ?</h3>
+            <h3 class="card-title">Que signifie tricher et pourquoi cela casse la chaîne ?</h3>
             <p>
-              Chaque wagon transporte des échanges protégés par un code unique (son Hash).
+              Dans un registre financier ou logistique, tricher consiste à modifier discrètement une information déjà enregistrée dans un ancien wagon (par exemple changer le montant d'un virement ou effacer une livraison) pour s'enrichir à l'insu des autres.
             </p>
             <p>
-              Que se passe-t-il si quelqu'un essaie de tricher en changeant les chiffres à l'intérieur du <strong>Wagon #1</strong> ?
+              Chaque wagon transporte des échanges protégés par un code unique (son Hash). Voyons ce qui se passe si quelqu'un modifie les données du <strong>Wagon #1</strong> :
             </p>
           </article>
 

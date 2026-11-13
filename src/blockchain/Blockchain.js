@@ -7,6 +7,7 @@ import { Block } from './Block.js';
 export class Blockchain {
   constructor() {
     this.difficulty = 1;
+    this.lastMiningAttempts = 0;
     this.chain = [this.createGenesisBlock()];
   }
 
@@ -74,6 +75,7 @@ export class Blockchain {
   mineLatestBlock(difficulty = 1) {
     const latestBlock = this.getLatestBlock();
     const res = latestBlock.mineBlock(difficulty);
+    this.lastMiningAttempts = res.attempts || 0;
     return {
       ...res,
       block: latestBlock

@@ -199,6 +199,12 @@ export const step1 = {
     ['prev', 'cargo', 'nonce', 'hash'].forEach((id) => {
       const el = document.getElementById(`tooltip-spot-${id}`);
       el?.addEventListener('pointerdown', (e) => e.stopPropagation());
+      el?.addEventListener('mouseenter', () => {
+        if (el) el.style.zIndex = '25';
+      });
+      el?.addEventListener('mouseleave', () => {
+        if (el) el.style.zIndex = this.activeSpotId === id ? '20' : '12';
+      });
       el?.querySelector('.scene-tooltip-pill')?.addEventListener('click', (e) => {
         e.stopPropagation();
         const nextId = this.activeSpotId === id ? null : id;

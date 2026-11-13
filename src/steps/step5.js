@@ -56,8 +56,9 @@ export const step5 = {
   realAttempts: 0,
   foundNonce: 0,
   foundHash: '',
-  animFramesDone: 0,
-  animTotalFrames: 60,
+  miningStartTime: 0,
+  miningDurationMs: 0,
+  miningProgress: 0,
 
   init(context) {
     this.ctx = context;
@@ -76,6 +77,9 @@ export const step5 = {
     this.realAttempts = 0;
     this.foundNonce = 0;
     this.foundHash = '';
+    this.miningStartTime = 0;
+    this.miningDurationMs = 0;
+    this.miningProgress = 0;
     this.targetWheelAngle = 0;
     this.currentWheelAngle = 0;
     this.couplerFlashAlpha = 0;
@@ -122,7 +126,12 @@ export const step5 = {
     this.stopAnimationLoop();
     this.removeWheelPointerEvents();
 
-    // Remet le Wagon #2 à sa place et son échelle nominales en quittant l'étape
+    // Remet la Locomotive #0 et le Wagon #2 à leur état nominal en quittant l'étape
+    const loco0 = this.ctx?.trainConvoy?.getWagon(0);
+    if (loco0 && typeof loco0.updateStatus === 'function') {
+      loco0.updateStatus(true);
+    }
+
     const wagon2 = this.ctx?.trainConvoy?.getWagon(2);
     if (wagon2) {
       wagon2.position.x = this.minedWagon2X;
@@ -178,11 +187,13 @@ export const step5 = {
     block1.previousHash = block0.hash;
     block1.mineBlock(this.difficulty);
 
-    // 2. Prépare le Wagon #2 et pré-calcule son vrai Nonce gagnant (au moins 7 crans en Facile,
-    //    35 en Standard, 250 en Difficile pour éviter les tirages triviaux à 1 ou 2 essais).
+    // 2. Prépare le Wagon #2 et pré-calcule son vrai Nonce gagnant selon la difficulté choisie :
+    //    - Facile ("0") : 12 à 38 essais (~quelques dizaines)
+    //    - Standard ("00") : 160 à 420 essais (~plusieurs centaines)
+    //    - Difficile ("000") : 1 800 à 5 200 essais (~plusieurs milliers)
     block2.previousHash = block1.hash;
-    const minTargetNonce = this.difficulty === 1 ? 7 : this.difficulty === 2 ? 35 : 250;
-    const maxTargetNonce = this.difficulty === 1 ? 26 : Infinity;
+    const minTargetNonce = this.difficulty === 1 ? 12 : this.difficulty === 2 ? 160 : 1800;
+    const maxTargetNonce = this.difficulty === 1 ? 38 : this.difficulty === 2 ? 420 : 5200;
     const targetPrefix = '0'.repeat(this.difficulty);
 
     let winningNonce = 0;
@@ -198,14 +209,29 @@ export const step5 = {
       if (h.startsWith('0')) continue;
 
       let n = 0;
-      while (!h.startsWith(targetPrefix)) {
+      while (!h.startsWith(targetPrefix) && n <= maxTargetNonce) {
         n += 1;
         block2.nonce = n;
         h = block2.calculateHash();
       }
+      if (h.startsWith(targetPrefix)) {
+        winningNonce = n;
+        winningHash = h;
+      }
+    } while ((!winningHash || winningNonce < minTargetNonce || winningNonce > maxTargetNonce) && saltTry < 30);
+
+    // Secours rare si aucune graine n'est tombée dans l'intervalle cible
+    if (!winningHash || winningNonce < minTargetNonce) {
+      let n = minTargetNonce;
+      let h = '';
+      do {
+        n += 1;
+        block2.nonce = n;
+        h = block2.calculateHash();
+      } while (!h.startsWith(targetPrefix));
       winningNonce = n;
       winningHash = h;
-    } while ((winningNonce < minTargetNonce || winningNonce > maxTargetNonce) && saltTry < 40);
+    }
 
     // Remet le Wagon #2 à son état initial (Nonce = 0, non miné) avec cette même graine
     block2.nonce = 0;
@@ -219,12 +245,18 @@ export const step5 = {
     this.startMiningNonce = 0;
     this.currentHash = block2.hash;
     this.attemptsDone = 0;
+    this.miningProgress = 0;
     this.isMined = false;
     this.wasCoupled = false;
     this.isMining = false;
     this.couplerFlashAlpha = 0;
     this.targetWheelAngle = 0;
     this.currentWheelAngle = 0;
+
+    const loco0 = trainConvoy.getWagon(0);
+    if (loco0 && typeof loco0.updateStatus === 'function') {
+      loco0.updateStatus(true);
+    }
 
     // 3. Synchronise l'affichage des plaques et place immédiatement le nouveau wagon à distance à droite
     trainConvoy.sync();
@@ -494,27 +526,61 @@ export const step5 = {
 
   /**
    * Lance le minage automatique à partir du cran actuel jusqu'au Nonce gagnant :
-   * Le nombre de crans tournés correspond exactement au nombre d'essais restants.
+   * Le temps de recherche réel s'échelonne nettement selon la difficulté :
+   * - Facile ("0") : ~0,55 à 0,75 s
+   * - Standard ("00") : ~2,7 à 3,3 s
+   * - Difficile ("000") : ~6,4 à 7,5 s
    */
   startMining() {
     if (this.isMining || this.isMined) return;
 
     this.startMiningNonce = this.currentNonce;
-    const remainingCrans = Math.max(1, this.foundNonce - this.startMiningNonce);
-
     this.isMining = true;
-    this.animFramesDone = 0;
+    this.miningProgress = 0;
+    this.miningStartTime = performance.now();
 
-    // En difficulté 1, on laisse ~4 frames par cran pour voir chaque cran tourner un par un.
-    // En difficulté 2 et 3, la durée reste proportionnelle au nombre d'essais tout en restant rapide.
     if (this.difficulty === 1) {
-      this.animTotalFrames = Math.min(95, Math.max(24, remainingCrans * 4));
+      this.miningDurationMs = 550 + Math.random() * 200;
     } else if (this.difficulty === 2) {
-      this.animTotalFrames = Math.min(115, Math.max(45, Math.round(remainingCrans * 0.45)));
+      this.miningDurationMs = 2700 + Math.random() * 600;
     } else {
-      this.animTotalFrames = Math.min(150, Math.max(75, Math.round(remainingCrans * 0.05)));
+      this.miningDurationMs = 6400 + Math.random() * 1100;
     }
 
+    this.renderLeftPanel();
+  },
+
+  /**
+   * Finalise le verrouillage du minage et rétablit l'état normal de la locomotive.
+   */
+  finishMining() {
+    const { trainConvoy } = this.ctx;
+    const loco0 = trainConvoy?.getWagon(0);
+    const wagon2 = trainConvoy?.getWagon(2);
+    const block2 = trainConvoy?.getBlock(2);
+
+    this.currentNonce = this.foundNonce;
+    this.attemptsDone = this.foundNonce;
+    this.currentHash = this.foundHash;
+    this.miningProgress = 1;
+    this.targetWheelAngle = this.foundNonce * (Math.PI / 4);
+    this.currentWheelAngle = this.targetWheelAngle - Math.PI * 0.35;
+    this.isMining = false;
+    this.isMined = true;
+    this.hasEverMined = true;
+
+    if (loco0 && typeof loco0.updateStatus === 'function') {
+      loco0.updateStatus(true);
+    }
+
+    if (wagon2 && block2) {
+      block2.nonce = this.foundNonce;
+      block2.hash = this.foundHash;
+      wagon2.colorHash.set(hashToColorHex(this.foundHash));
+      wagon2.renderPlates();
+    }
+
+    this.updateLiveMiningDOM();
     this.renderLeftPanel();
   },
 
@@ -547,25 +613,51 @@ export const step5 = {
       lastStepTime = now;
 
       const { trainConvoy, camera } = this.ctx;
+      const loco0 = trainConvoy?.getWagon(0);
       const wagon1 = trainConvoy?.getWagon(1);
       const wagon2 = trainConvoy?.getWagon(2);
       const block2 = trainConvoy?.getBlock(2);
 
-      // 1. Animation du minage automatique (1 essai = +1 Nonce = +1 cran exact)
+      // 1. Animation du minage automatique pilotée par le temps réel écoulé
       if (this.isMining) {
-        this.animFramesDone += 1;
-        const progress = Math.min(this.animFramesDone / this.animTotalFrames, 1.0);
+        const elapsedMs = now - this.miningStartTime;
+        const rawProgress = Math.min(1.0, elapsedMs / Math.max(1, this.miningDurationMs));
+        const easedProgress = 1 - Math.pow(1 - rawProgress, 1.35);
+        this.miningProgress = rawProgress;
 
-        if (progress < 1.0) {
+        // Pulsation de surchauffe / effort sur la Locomotive #0 pendant le calcul
+        if (loco0) {
+          const heatPulse = 0.5 + 0.5 * Math.sin(now * 0.02);
+          if (Array.isArray(loco0.bodyMaterials)) {
+            loco0.bodyMaterials.forEach((mat) => {
+              mat.emissive.setHex(0xd97706);
+              mat.emissiveIntensity = 0.2 + heatPulse * 0.48;
+            });
+          }
+          if (loco0.beaconMaterial) {
+            loco0.beaconMaterial.color.setHex(0xf97316);
+            loco0.beaconMaterial.emissive.setHex(0xea580c);
+            loco0.beaconMaterial.emissiveIntensity = 1.6 + heatPulse * 1.4;
+          }
+          if (loco0.headlightSpot) {
+            loco0.headlightSpot.intensity = 4.0 + heatPulse * 2.5;
+          }
+        }
+
+        if (rawProgress < 1.0) {
           const nextNonce = Math.min(
             this.foundNonce - 1,
-            this.startMiningNonce + Math.max(1, Math.floor((this.foundNonce - this.startMiningNonce) * progress))
+            this.startMiningNonce + Math.max(1, Math.floor((this.foundNonce - this.startMiningNonce) * easedProgress))
           );
+
+          // Rotation rapide et continue de la molette pendant le calcul
+          const wheelSpeed = this.difficulty === 1 ? 14 : this.difficulty === 2 ? 26 : 38;
+          this.currentWheelAngle += dt * wheelSpeed;
+          this.targetWheelAngle = this.currentWheelAngle;
 
           if (nextNonce !== this.currentNonce) {
             this.currentNonce = nextNonce;
             this.attemptsDone = this.currentNonce;
-            this.targetWheelAngle = this.currentNonce * (Math.PI / 4);
 
             if (wagon2 && block2) {
               block2.nonce = this.currentNonce;
@@ -574,28 +666,12 @@ export const step5 = {
               wagon2.colorHash.set(hashToColorHex(this.currentHash));
               wagon2.renderPlates();
             }
-
-            this.updateLiveMiningDOM();
-          }
-        } else {
-          // Nonce gagnant atteint !
-          this.currentNonce = this.foundNonce;
-          this.attemptsDone = this.foundNonce;
-          this.currentHash = this.foundHash;
-          this.targetWheelAngle = this.foundNonce * (Math.PI / 4);
-          this.isMining = false;
-          this.isMined = true;
-          this.hasEverMined = true;
-
-          if (wagon2 && block2) {
-            block2.nonce = this.foundNonce;
-            block2.hash = this.foundHash;
-            wagon2.colorHash.set(hashToColorHex(this.foundHash));
-            wagon2.renderPlates();
           }
 
           this.updateLiveMiningDOM();
-          this.renderLeftPanel();
+        } else {
+          // Nonce gagnant atteint !
+          this.finishMining();
         }
       }
 
@@ -753,8 +829,11 @@ export const step5 = {
 
   updateLiveMiningDOM() {
     const nonceEl = document.getElementById('step5-nonce-val');
+    const attemptsEl = document.getElementById('step5-attempts-val');
     const hashEl = document.getElementById('step5-hash-val');
     const statusEl = document.getElementById('step5-status-val');
+    const progressFillEl = document.getElementById('s5-mining-progress-fill');
+    const progressLabelEl = document.getElementById('s5-mining-progress-label');
     const pillW1El = document.getElementById('s5-pill-w1-code');
     const pillHashEl = document.getElementById('s5-pill-hash-code');
     const pillBadgeEl = document.getElementById('s5-pill-hash-badge');
@@ -763,9 +842,19 @@ export const step5 = {
 
     const targetPrefix = '0'.repeat(this.difficulty);
     const avgLabel = this.getTheoreticalAverageLabel(this.difficulty);
+    const formattedAttempts = this.attemptsDone.toLocaleString('fr-FR');
 
     if (nonceEl) {
-      nonceEl.textContent = `${this.currentNonce} (${this.attemptsDone} cran${this.attemptsDone > 1 ? 's' : ''} · moy. ~${avgLabel})`;
+      nonceEl.textContent = this.isMined
+        ? `Nonce trouvé : ${this.foundNonce}`
+        : `${this.currentNonce.toLocaleString('fr-FR')} (moy. ~${avgLabel})`;
+    }
+    if (attemptsEl) {
+      attemptsEl.textContent = this.isMining
+        ? `Essais effectués : ${formattedAttempts}...`
+        : this.isMined
+          ? `${formattedAttempts} essais réels (moy. théorique : ${avgLabel})`
+          : `${formattedAttempts} cran${this.attemptsDone > 1 ? 's' : ''}`;
     }
     if (hashEl) {
       hashEl.textContent = `${this.currentHash.substring(0, 14)}...`;
@@ -776,6 +865,21 @@ export const step5 = {
         : this.isMined
           ? `Validé (débute par "${targetPrefix}") · Wagon attelé`
           : `Refusé (ne débute pas par "${targetPrefix}") · Wagon à l'écart`;
+    }
+    if (progressFillEl) {
+      const pct = this.isMined ? 100 : this.isMining ? Math.max(4, Math.round(this.miningProgress * 100)) : 0;
+      progressFillEl.style.width = `${pct}%`;
+      progressFillEl.classList.toggle('active', this.isMining);
+      progressFillEl.classList.toggle('done', this.isMined);
+    }
+    if (progressLabelEl) {
+      if (this.isMined) {
+        progressLabelEl.textContent = 'Verrouillage vert validé';
+      } else if (this.isMining) {
+        progressLabelEl.textContent = `Recherche active (${Math.round(this.miningProgress * 100)} %)`;
+      } else {
+        progressLabelEl.textContent = 'En attente de minage';
+      }
     }
 
     const block1 = this.ctx?.trainConvoy?.getBlock(1);
@@ -832,11 +936,24 @@ export const step5 = {
 
     const targetPrefix = '0'.repeat(this.difficulty);
     const avgLabel = this.getTheoreticalAverageLabel(this.difficulty);
+    const formattedAttempts = this.attemptsDone.toLocaleString('fr-FR');
+    const progressPct = this.isMined ? 100 : this.isMining ? Math.max(4, Math.round(this.miningProgress * 100)) : 0;
 
-    let nonceStatusHTML = `${this.currentNonce} (${this.attemptsDone} cran${this.attemptsDone > 1 ? 's' : ''} · moy. ~${avgLabel})`;
-    if (this.isMined) {
-      nonceStatusHTML = `Nonce ${this.foundNonce} trouvé en ${this.realAttempts} cran${this.realAttempts > 1 ? 's' : ''} (moy. ~${avgLabel})`;
-    }
+    const nonceStatusHTML = this.isMined
+      ? `Nonce trouvé : ${this.foundNonce}`
+      : `${this.currentNonce.toLocaleString('fr-FR')} (moy. ~${avgLabel})`;
+
+    const attemptsStatusHTML = this.isMining
+      ? `Essais effectués : ${formattedAttempts}...`
+      : this.isMined
+        ? `${formattedAttempts} essais réels (moy. théorique : ${avgLabel})`
+        : `${formattedAttempts} cran${this.attemptsDone > 1 ? 's' : ''}`;
+
+    const progressStatusText = this.isMined
+      ? 'Verrouillage vert validé'
+      : this.isMining
+        ? `Recherche active (${Math.round(this.miningProgress * 100)} %)`
+        : 'En attente de minage';
 
     inner.innerHTML = `
       <header class="step-panel-header">
@@ -884,7 +1001,7 @@ export const step5 = {
             <span>${this.isMining ? 'Recherche du bon Nonce...' : (this.isMined ? 'Recommencer avec un nouveau wagon' : 'Lancer le minage automatique')}</span>
           </button>
 
-          <div class="action-feedback-box ${this.isMined ? 'success' : (this.isMining || this.attemptsDone > 0 ? 'error' : '')}">
+          <div id="s5-feedback-box" class="action-feedback-box ${this.isMined ? 'success' : (this.isMining || this.attemptsDone > 0 ? 'error' : '')}">
             <div class="feedback-row">
               <span class="feedback-label">Code demandé :</span>
               <span class="feedback-val">Hash commençant par "${targetPrefix}"</span>
@@ -892,6 +1009,10 @@ export const step5 = {
             <div class="feedback-row">
               <span class="feedback-label">Molette Nonce :</span>
               <span id="step5-nonce-val" class="feedback-val">${nonceStatusHTML}</span>
+            </div>
+            <div class="feedback-row">
+              <span class="feedback-label">Essais effectués :</span>
+              <span id="step5-attempts-val" class="feedback-val">${attemptsStatusHTML}</span>
             </div>
             <div class="feedback-row">
               <span class="feedback-label">Hash #2 obtenu :</span>
@@ -902,6 +1023,12 @@ export const step5 = {
               <span id="step5-status-val" class="feedback-val ${this.isMined ? 'success-val' : (this.isMining || this.attemptsDone > 0 ? 'error-val' : '')}">
                 ${this.isMining ? 'Recherche du Nonce en cours...' : (this.isMined ? `Validé (débute par "${targetPrefix}") · Wagon attelé` : `Refusé (ne débute pas par "${targetPrefix}") · Wagon à l'écart`)}
               </span>
+            </div>
+            <div class="mining-progress-wrap">
+              <div class="mining-progress-track">
+                <div id="s5-mining-progress-fill" class="mining-progress-fill ${this.isMining ? 'active' : ''} ${this.isMined ? 'done' : ''}" style="width: ${progressPct}%;"></div>
+              </div>
+              <div id="s5-mining-progress-label" class="mining-progress-label">${progressStatusText}</div>
             </div>
           </div>
         </article>

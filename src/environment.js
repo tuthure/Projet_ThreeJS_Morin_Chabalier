@@ -47,6 +47,7 @@ export class Environment {
     this.setupPassingStations();
     this.setupTunnels();
     this.setupTrees();
+    this.setupSceneryDetails();
     this.setupPoles();
     this.setupSteam();
   }
@@ -112,15 +113,39 @@ export class Environment {
     ground.receiveShadow = true;
     this.group.add(ground);
 
-    const ballastGeo = new THREE.BoxGeometry(this.railLength, 0.18, 3.2);
+    const ballastGeo = new THREE.BoxGeometry(this.railLength, 0.16, 2.85);
     const ballastMat = new THREE.MeshStandardMaterial({
       color: 0x273549,
       roughness: 0.9,
       metalness: 0.15
     });
     const ballast = new THREE.Mesh(ballastGeo, ballastMat);
-    ballast.position.set(0, -0.45, 0);
+    ballast.position.set(0, -0.44, 0);
     this.group.add(ballast);
+
+    // Epaulements lateraux de ballast plus sombres pour delimiter nettement la plateforme
+    const shoulderGeo = new THREE.BoxGeometry(this.railLength, 0.09, 3.65);
+    const shoulderMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      roughness: 0.94,
+      metalness: 0.1
+    });
+    const shoulder = new THREE.Mesh(shoulderGeo, shoulderMat);
+    shoulder.position.set(0, -0.48, 0);
+    this.group.add(shoulder);
+
+    // Selles metalliques continues sous les deux rails
+    const padGeo = new THREE.BoxGeometry(this.railLength, 0.03, 0.18);
+    const padMat = new THREE.MeshStandardMaterial({
+      color: 0x475569,
+      metalness: 0.75,
+      roughness: 0.35
+    });
+    [-this.railDistance / 2, this.railDistance / 2].forEach((rz) => {
+      const pad = new THREE.Mesh(padGeo, padMat);
+      pad.position.set(0, -0.365, rz);
+      this.group.add(pad);
+    });
 
     const railGeo = new THREE.BoxGeometry(this.railLength, 0.12, 0.08);
     const railMat = new THREE.MeshStandardMaterial({
@@ -130,11 +155,11 @@ export class Environment {
     });
 
     const railLeft = new THREE.Mesh(railGeo, railMat);
-    railLeft.position.set(0, -0.32, -this.railDistance / 2);
+    railLeft.position.set(0, -0.31, -this.railDistance / 2);
     this.group.add(railLeft);
 
     const railRight = new THREE.Mesh(railGeo, railMat);
-    railRight.position.set(0, -0.32, this.railDistance / 2);
+    railRight.position.set(0, -0.31, this.railDistance / 2);
     this.group.add(railRight);
 
     this.setupDynamicSleepers();
@@ -238,14 +263,15 @@ export class Environment {
     });
 
     for (let i = 0; i < this.hillCount; i++) {
-      const radius = 9 + (i % 4) * 2;
+      const radius = 8 + (i % 4) * 1.6;
       const height = 5 + (i % 3) * 1.5;
       const hillGeo = new THREE.SphereGeometry(radius, 10, 7, 0, Math.PI * 2, 0, Math.PI / 2);
       const hill = new THREE.Mesh(hillGeo, hillMat);
-      hill.scale.set(1.5, height / radius, 1.0);
+      // Echelle Z bornee et position reculee (|z| >= 25) pour garantir une zone d'exclusion stricte devant la voie et les tunnels
+      hill.scale.set(1.45, height / radius, 0.72);
 
       const x = this.hillMinX + i * this.hillSpacing;
-      const z = -18 - (i % 2) * 4;
+      const z = -25 - (i % 3) * 3.5;
       hill.position.set(x, -0.5, z);
 
       this.group.add(hill);
@@ -425,12 +451,13 @@ export class Environment {
 
     const sideWallGeo = new THREE.BoxGeometry(3.8, 3.6, 0.9);
     const topArchGeo = new THREE.BoxGeometry(3.8, 1.1, 5.4);
-    const rockMassGeo = new THREE.ConeGeometry(4.2, 5.5, 6);
+    const rockMassGeo = new THREE.DodecahedronGeometry(2.6, 0);
+    const crestRockGeo = new THREE.ConeGeometry(2.8, 2.6, 6);
 
     for (let i = 0; i < this.tunnelCount; i++) {
       const tunnelGroup = new THREE.Group();
 
-      // Piliers lateraux (degagement large z = -2.25 et +2.25 pour laisser passer le train au centre)
+      // Piliers lateraux (gabarit ferrovire libre : -1.8 < z < +1.8, y < 3.3)
       const leftWall = new THREE.Mesh(sideWallGeo, stoneMat);
       leftWall.position.set(0, 1.8, -2.25);
       tunnelGroup.add(leftWall);
@@ -444,10 +471,21 @@ export class Environment {
       topArch.position.set(0, 3.85, 0);
       tunnelGroup.add(topArch);
 
-      // Massif rocheux adosse a l'arriere du tunnel
-      const rock = new THREE.Mesh(rockMassGeo, darkRockMat);
-      rock.position.set(0, 2.6, -4.2);
-      tunnelGroup.add(rock);
+      // Massifs rocheux places strictement a l'exterieur des parois et au-dessus de la voute
+      const rockBack = new THREE.Mesh(rockMassGeo, darkRockMat);
+      rockBack.scale.set(1.15, 1.25, 0.65);
+      rockBack.position.set(0, 2.2, -4.65);
+      tunnelGroup.add(rockBack);
+
+      const rockFront = new THREE.Mesh(rockMassGeo, darkRockMat);
+      rockFront.scale.set(0.95, 0.9, 0.55);
+      rockFront.position.set(0.15, 1.6, 4.35);
+      tunnelGroup.add(rockFront);
+
+      const rockTop = new THREE.Mesh(crestRockGeo, darkRockMat);
+      rockTop.scale.set(1.05, 1.0, 0.78);
+      rockTop.position.set(0, 5.65, 0);
+      tunnelGroup.add(rockTop);
 
       // Feux de signalisation ferroviaire verts sur les montants du portail
       [-1.85, 1.85].forEach((fx) => {
@@ -465,11 +503,12 @@ export class Environment {
   }
 
   /**
-   * Foret de sapins low-poly bordant la voie ferree (premier et second plan).
+   * Foret low-poly variee (sapins a etages et feuillus facettes) bordant la voie
+   * en respectant une zone d'exclusion stricte autour des rails, gares et tunnels.
    */
   setupTrees() {
-    this.treeCount = 38;
-    this.treeSpacing = 6.0;
+    this.treeCount = 40;
+    this.treeSpacing = 5.8;
     this.totalTreesWidth = this.treeCount * this.treeSpacing;
     this.treeMinX = -this.totalTreesWidth / 2;
     this.treeMaxX = this.totalTreesWidth / 2;
@@ -487,6 +526,12 @@ export class Environment {
       roughness: 0.85,
       flatShading: true
     });
+    const deciduousMat = new THREE.MeshStandardMaterial({
+      color: 0x166534,
+      roughness: 0.82,
+      flatShading: true
+    });
+    const roundCrownGeo = new THREE.DodecahedronGeometry(0.68, 0);
 
     for (let i = 0; i < this.treeCount; i++) {
       const tree = new THREE.Group();
@@ -495,23 +540,43 @@ export class Environment {
       trunk.position.y = 0.45;
       tree.add(trunk);
 
-      const mat = i % 2 === 0 ? foliageMat1 : foliageMat2;
-      const scales = [1.0, 0.75, 0.52];
-      const heights = [1.2, 1.8, 2.3];
+      if (i % 3 === 0) {
+        // Arbre feuillu low-poly a houppier facette
+        const crown = new THREE.Mesh(roundCrownGeo, deciduousMat);
+        crown.position.y = 1.25;
+        crown.scale.set(1.05, 1.18, 1.0);
+        tree.add(crown);
 
-      for (let s = 0; s < 3; s++) {
-        const coneGeo = new THREE.ConeGeometry(0.7 * scales[s], 0.9 * scales[s], 6);
-        const cone = new THREE.Mesh(coneGeo, mat);
-        cone.position.y = heights[s];
-        tree.add(cone);
+        const subCrown = new THREE.Mesh(roundCrownGeo, foliageMat2);
+        subCrown.scale.setScalar(0.62);
+        subCrown.position.set(0.28, 1.48, 0.15);
+        tree.add(subCrown);
+      } else {
+        // Sapin a etages
+        const mat = i % 2 === 0 ? foliageMat1 : foliageMat2;
+        const scales = [1.0, 0.75, 0.52];
+        const heights = [1.2, 1.8, 2.3];
+
+        for (let s = 0; s < 3; s++) {
+          const coneGeo = new THREE.ConeGeometry(0.7 * scales[s], 0.9 * scales[s], 6);
+          const cone = new THREE.Mesh(coneGeo, mat);
+          cone.position.y = heights[s];
+          tree.add(cone);
+        }
       }
 
-      const isForeground = i % 7 === 0;
-      const z = isForeground ? 4.4 + (i % 3) * 0.8 : -4.2 - (i % 4) * 1.8;
-      const scaleRand = 0.85 + (i % 5) * 0.15;
-      tree.scale.setScalar(scaleRand);
-
       const x = this.treeMinX + i * this.treeSpacing;
+      const isForeground = i % 6 === 0;
+      let z = isForeground ? 5.6 + (i % 3) * 0.95 : -5.4 - (i % 4) * 1.85;
+
+      // Zone d'exclusion elargie pres des portails de tunnels pour eviter tout chevauchement
+      const nearTunnel = this.tunnels.some((tun) => Math.abs(x - tun.position.x) < 4.5);
+      if (nearTunnel) {
+        z = z > 0 ? Math.max(z, 7.6) : Math.min(z, -7.8);
+      }
+
+      const scaleRand = 0.85 + (i % 5) * 0.14;
+      tree.scale.setScalar(scaleRand);
       tree.position.set(x, -0.5, z);
 
       this.group.add(tree);
@@ -520,7 +585,96 @@ export class Environment {
   }
 
   /**
-   * Poteaux electriques / catenaires avec isolateurs cyan et lanternes eclairantes.
+   * Elements d'enrichissement du decor low-poly (> 60 FPS) :
+   * - Rochers facettes sur les talus (hors zone d'exclusion)
+   * - Maisons eclairees supplementaires en contrebas
+   * - Viaduc ferroviaire a arches en pierre dans la vallee lointaine
+   */
+  setupSceneryDetails() {
+    const rockMat = new THREE.MeshStandardMaterial({
+      color: 0x334155,
+      roughness: 0.9,
+      flatShading: true
+    });
+    const rockGeo = new THREE.DodecahedronGeometry(0.65, 0);
+
+    // 1. Rochers facettes le long des talus (defilement 1x avec les arbres)
+    for (let i = 0; i < 16; i++) {
+      const rockGroup = new THREE.Group();
+      const mainRock = new THREE.Mesh(rockGeo, rockMat);
+      mainRock.scale.set(1.2 + (i % 3) * 0.3, 0.75 + (i % 2) * 0.35, 1.0);
+      mainRock.rotation.set(i * 0.4, i * 0.9, 0);
+      rockGroup.add(mainRock);
+
+      const smallRock = new THREE.Mesh(rockGeo, rockMat);
+      smallRock.scale.setScalar(0.55);
+      smallRock.position.set(0.6, -0.15, 0.25);
+      rockGroup.add(smallRock);
+
+      const x = this.treeMinX + i * (this.totalTreesWidth / 16) + 2.4;
+      const z = i % 3 === 0 ? 6.4 + (i % 2) * 1.1 : -6.2 - (i % 3) * 1.5;
+      rockGroup.position.set(x, -0.22, z);
+      this.group.add(rockGroup);
+      this.trees.push(rockGroup);
+    }
+
+    // 2. Viaduc a arches en pierre au loin (parallaxe 0.35x avec les collines)
+    const viaductGroup = new THREE.Group();
+    const stoneMat = new THREE.MeshStandardMaterial({
+      color: 0x334155,
+      roughness: 0.85,
+      flatShading: true
+    });
+    const deckGeo = new THREE.BoxGeometry(28, 0.65, 1.5);
+    const deck = new THREE.Mesh(deckGeo, stoneMat);
+    deck.position.y = 4.2;
+    viaductGroup.add(deck);
+
+    const pierGeo = new THREE.BoxGeometry(1.15, 4.4, 1.4);
+    for (let p = -12; p <= 12; p += 4.8) {
+      const pier = new THREE.Mesh(pierGeo, stoneMat);
+      pier.position.set(p, 2.0, 0);
+      viaductGroup.add(pier);
+    }
+    viaductGroup.position.set(22, -0.5, -31);
+    this.group.add(viaductGroup);
+    this.midHills.push(viaductGroup);
+
+    // 3. Petites maisons low-poly eclairees en contrebas avant-plan/second-plan (parallaxe villes)
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.85, flatShading: true });
+    const roofMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.7, flatShading: true });
+    const warmWinMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+    const houseBodyGeo = new THREE.BoxGeometry(1.3, 1.05, 1.1);
+    const houseRoofGeo = new THREE.ConeGeometry(1.02, 0.6, 4);
+    const houseWinGeo = new THREE.PlaneGeometry(0.22, 0.22);
+
+    for (let i = 0; i < 6; i++) {
+      const hGroup = new THREE.Group();
+      const body = new THREE.Mesh(houseBodyGeo, wallMat);
+      body.position.y = 0.52;
+      hGroup.add(body);
+
+      const roof = new THREE.Mesh(houseRoofGeo, roofMat);
+      roof.position.y = 1.35;
+      roof.rotation.y = Math.PI / 4;
+      hGroup.add(roof);
+
+      [-0.3, 0.3].forEach((wx) => {
+        const win = new THREE.Mesh(houseWinGeo, warmWinMat);
+        win.position.set(wx, 0.55, 0.56);
+        hGroup.add(win);
+      });
+
+      const x = this.townMinX + i * this.townSpacing + 14;
+      const z = -9.2 - (i % 2) * 1.8;
+      hGroup.position.set(x, -0.5, z);
+      this.group.add(hGroup);
+      this.towns.push(hGroup);
+    }
+  }
+
+  /**
+   * Portiques catenaires avec isolateurs, fil de contact et signaux ferroviaires.
    */
   setupPoles() {
     this.poleCount = 18;
@@ -534,6 +688,7 @@ export class Environment {
       roughness: 0.7,
       metalness: 0.4
     });
+    const wireMat = new THREE.MeshBasicMaterial({ color: 0x64748b });
     const lampMat = new THREE.MeshStandardMaterial({
       color: 0xfef08a,
       emissive: 0xf59e0b,
@@ -541,11 +696,18 @@ export class Environment {
       roughness: 0.2
     });
     const insulatorMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    const greenSigMat = new THREE.MeshBasicMaterial({ color: 0x10b981 });
+    const amberSigMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
 
     const mastGeo = new THREE.CylinderGeometry(0.06, 0.08, 4.5, 8);
-    const armGeo = new THREE.BoxGeometry(0.08, 0.08, 1.8);
+    const armGeo = new THREE.BoxGeometry(0.08, 0.08, 2.5);
+    const strutGeo = new THREE.BoxGeometry(0.05, 0.05, 1.3);
+    const wireGeo = new THREE.CylinderGeometry(0.014, 0.014, this.poleSpacing, 6);
     const insulatorGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.18, 8);
     const lampGeo = new THREE.SphereGeometry(0.1, 8, 8);
+    const sigPostGeo = new THREE.CylinderGeometry(0.04, 0.05, 2.2, 8);
+    const sigHeadGeo = new THREE.BoxGeometry(0.16, 0.44, 0.14);
+    const sigLensGeo = new THREE.SphereGeometry(0.055, 8, 8);
 
     for (let i = 0; i < this.poleCount; i++) {
       const poleGroup = new THREE.Group();
@@ -555,22 +717,48 @@ export class Environment {
       poleGroup.add(mast);
 
       const arm = new THREE.Mesh(armGeo, poleMat);
-      arm.position.set(0, 3.65, 0.2);
+      arm.position.set(0, 3.65, 0.75);
       poleGroup.add(arm);
 
+      const strut = new THREE.Mesh(strutGeo, poleMat);
+      strut.rotation.x = -0.45;
+      strut.position.set(0, 3.35, 0.55);
+      poleGroup.add(strut);
+
+      // Fil catenaire longitudinal vers le portique suivant
+      const wire = new THREE.Mesh(wireGeo, wireMat);
+      wire.rotation.z = Math.PI / 2;
+      wire.position.set(this.poleSpacing / 2, 3.55, 1.85);
+      poleGroup.add(wire);
+
       // Isolateurs haute tension cyan
-      [-0.5, 0.0, 0.85].forEach((oz) => {
+      [-0.2, 0.8, 1.85].forEach((oz) => {
         const ins = new THREE.Mesh(insulatorGeo, insulatorMat);
         ins.position.set(0, 3.78, oz);
         poleGroup.add(ins);
       });
 
       // Deux lanternes lumineuses ambrees
-      [-0.55, 0.55].forEach((offsetZ) => {
+      [-0.4, 0.9].forEach((offsetZ) => {
         const lamp = new THREE.Mesh(lampGeo, lampMat);
         lamp.position.set(0, 3.5, offsetZ);
         poleGroup.add(lamp);
       });
+
+      // Signal ferroviaire de cantonnement tous les 4 portiques
+      if (i % 4 === 1) {
+        const sigPost = new THREE.Mesh(sigPostGeo, poleMat);
+        sigPost.position.set(0.65, 1.1, 0.95);
+        poleGroup.add(sigPost);
+
+        const sigHead = new THREE.Mesh(sigHeadGeo, poleMat);
+        sigHead.position.set(0.65, 2.15, 0.95);
+        poleGroup.add(sigHead);
+
+        const sigBulb = new THREE.Mesh(sigLensGeo, i % 8 === 1 ? greenSigMat : amberSigMat);
+        sigBulb.position.set(0.65, 2.22, 1.03);
+        poleGroup.add(sigBulb);
+      }
 
       if (i % 3 === 0) {
         const light = new THREE.PointLight(0xfbbf24, 1.2, 7.0, 1.8);

@@ -42,11 +42,11 @@ export const step6 = {
   winningNonce: 18,
   winningHash: '00e4a1...',
 
-  // Positions sur l'axe X du Wagon #2 (arrivée -> attente à distance -> attelé)
-  spawnWagon2X: 9.35,
-  unminedWagon2X: 8.45,
+  // Positions sur l'axe X du Wagon #2 (convoi completement attele en arriere-plan)
+  spawnWagon2X: 8.9,
+  unminedWagon2X: 7.6,
   minedWagon2X: 7.6,
-  currentWagon2X: 8.45,
+  currentWagon2X: 7.6,
   currentWagon2Scale: 1.0,
   wasCoupled: false,
   couplerFlashRing: null,
@@ -54,8 +54,8 @@ export const step6 = {
 
   consensusGroup: null,
   lotteryHaloGroup: null,
-  lotteryHaloX: 2.8,
-  lotteryHaloZ: -2.45,
+  lotteryHaloX: 2.5,
+  lotteryHaloZ: 2.45,
   validators: [],
   tooltipLayer: null,
 
@@ -71,8 +71,8 @@ export const step6 = {
       tokens: 50,
       coinsMeshCount: 10,
       baseCrans: 24,
-      x: 2.8,
-      z: -2.45
+      x: 2.5,
+      z: 2.45
     },
     {
       id: 'gare-b',
@@ -86,7 +86,7 @@ export const step6 = {
       coinsMeshCount: 7,
       baseCrans: 16,
       x: 5.6,
-      z: -2.75
+      z: 2.45
     },
     {
       id: 'gare-c',
@@ -99,8 +99,8 @@ export const step6 = {
       tokens: 15,
       coinsMeshCount: 3,
       baseCrans: 8,
-      x: 8.4,
-      z: -2.45
+      x: 8.7,
+      z: 2.45
     }
   ],
 
@@ -151,11 +151,11 @@ export const step6 = {
     this.createStationTooltips();
     this.applyModeVisuals();
 
-    // Cadrage englobant les 3 Gares (A, B, C) et la jonction Wagon #1 <-> Wagon #2
+    // Cadrage avec les 3 Gares (A, B, C) bien visibles au premier plan devant le convoi
     if (cameraController) {
       cameraController.moveTo(
-        new THREE.Vector3(5.85, 2.75, 6.7),
-        new THREE.Vector3(5.75, 0.55, -0.75),
+        new THREE.Vector3(5.6, 2.55, 8.35),
+        new THREE.Vector3(5.6, 0.35, 0.95),
         1.15
       );
     }
@@ -329,8 +329,180 @@ export const step6 = {
   },
 
   /**
-   * Construit les 3 plateformes (Gare A, Gare B, Gare C), leurs molettes Nonce,
-   * leurs piles de jetons en caution et le projecteur 3D de tirage au sort PoS.
+   * Cree une texture Canvas pour l'horloge du beffroi de gare.
+   */
+  createClockTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#fef9c3';
+    ctx.beginPath();
+    ctx.arc(64, 64, 58, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = '#b45309';
+    ctx.stroke();
+
+    ctx.strokeStyle = '#1e293b';
+    for (let i = 0; i < 12; i++) {
+      const angle = (i * Math.PI) / 6;
+      const r1 = i % 3 === 0 ? 40 : 45;
+      const r2 = 52;
+      ctx.lineWidth = i % 3 === 0 ? 4 : 2;
+      ctx.beginPath();
+      ctx.moveTo(64 + Math.cos(angle) * r1, 64 + Math.sin(angle) * r1);
+      ctx.lineTo(64 + Math.cos(angle) * r2, 64 + Math.sin(angle) * r2);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(64, 64);
+    ctx.lineTo(42, 46);
+    ctx.stroke();
+
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(64, 64);
+    ctx.lineTo(88, 42);
+    ctx.stroke();
+
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath();
+    ctx.arc(64, 64, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.needsUpdate = true;
+    return tex;
+  },
+
+  /**
+   * Cree le panneau frontal de nom de gare ("GARE A", "GARE B", "GARE C").
+   * @param {string} title
+   */
+  createStationSignTexture(title) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, 256, 64);
+
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(4, 4, 248, 56);
+
+    ctx.fillStyle = '#f8fafc';
+    ctx.font = 'bold 28px "Segoe UI", Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(title.toUpperCase(), 128, 33);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.needsUpdate = true;
+    return tex;
+  },
+
+  /**
+   * Construit le batiment de gare ferroviaire en 3D (inspire de l'etape 4)
+   * a placer derriere le parvis technique de chaque gare au premier plan.
+   */
+  createStationBuildingMesh(v, shared) {
+    const buildingGroup = new THREE.Group();
+    buildingGroup.position.set(0, 0.08, -0.34);
+
+    const plinth = new THREE.Mesh(shared.plinthGeo, shared.stoneTrimMat);
+    plinth.position.set(-0.14, 0.07, 0);
+    buildingGroup.add(plinth);
+
+    const mainHall = new THREE.Mesh(shared.mainHallGeo, shared.brickMat);
+    mainHall.position.set(-0.14, 0.5, 0);
+    buildingGroup.add(mainHall);
+
+    const cornice = new THREE.Mesh(shared.corniceGeo, shared.stoneTrimMat);
+    cornice.position.set(-0.14, 0.9, 0);
+    buildingGroup.add(cornice);
+
+    const mainRoof = new THREE.Mesh(shared.roofPrismGeo, shared.slateRoofMat);
+    mainRoof.position.set(-0.14, 1.16, 0);
+    mainRoof.rotation.y = Math.PI / 4;
+    mainRoof.scale.set(1.22, 1.0, 0.62);
+    buildingGroup.add(mainRoof);
+
+    // Fenetres eclairees sur la facade avant (+Z) face a la camera
+    const windowMat = new THREE.MeshStandardMaterial({
+      color: 0xfef08a,
+      emissive: 0xf59e0b,
+      emissiveIntensity: 1.0,
+      roughness: 0.2
+    });
+    [-0.56, -0.14, 0.28].forEach((wx) => {
+      const win = new THREE.Mesh(shared.winGeo, windowMat);
+      win.position.set(wx, 0.45, 0.345);
+      buildingGroup.add(win);
+    });
+
+    // Marquise metallique et plaque nominative visible
+    const canopy = new THREE.Mesh(shared.canopyGeo, shared.darkMetalMat);
+    canopy.position.set(-0.08, 0.56, 0.34);
+    buildingGroup.add(canopy);
+
+    [-0.78, -0.08, 0.62].forEach((px) => {
+      const pillar = new THREE.Mesh(shared.pillarGeo, shared.darkMetalMat);
+      pillar.position.set(px, 0.28, 0.46);
+      buildingGroup.add(pillar);
+    });
+
+    const signTex = this.createStationSignTexture(v.name);
+    const signMesh = new THREE.Mesh(
+      shared.signBoardGeo,
+      new THREE.MeshBasicMaterial({ map: signTex })
+    );
+    signMesh.position.set(-0.08, 0.68, 0.56);
+    buildingGroup.add(signMesh);
+
+    // Tour de l'horloge (beffroi) a droite du batiment
+    const tower = new THREE.Mesh(shared.towerBodyGeo, shared.brickMat);
+    tower.position.set(0.76, 0.68, 0);
+    buildingGroup.add(tower);
+
+    const towerRoof = new THREE.Mesh(shared.towerRoofGeo, shared.slateRoofMat);
+    towerRoof.position.set(0.76, 1.56, 0);
+    towerRoof.rotation.y = Math.PI / 4;
+    buildingGroup.add(towerRoof);
+
+    const clockFront = new THREE.Mesh(shared.clockFaceGeo, shared.clockMat);
+    clockFront.position.set(0.76, 1.06, 0.245);
+    buildingGroup.add(clockFront);
+
+    // Mat de signalisation avec balise lumineuse d'etat
+    const signalMast = new THREE.Mesh(shared.signalMastGeo, shared.darkMetalMat);
+    signalMast.position.set(-1.02, 0.52, 0.14);
+    buildingGroup.add(signalMast);
+
+    const beaconMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      emissive: 0x0284c7,
+      emissiveIntensity: 1.6,
+      roughness: 0.2
+    });
+    const beacon = new THREE.Mesh(shared.beaconGeo, beaconMat);
+    beacon.position.set(-1.02, 1.06, 0.14);
+    buildingGroup.add(beacon);
+
+    return { buildingGroup, beaconMat, windowMat };
+  },
+
+  /**
+   * Construit les 3 gares au premier plan (Gare A, Gare B, Gare C), leurs batiments 3D,
+   * leurs molettes Nonce, leurs piles de jetons en caution et le projecteur PoS.
    */
   buildConsensusScene() {
     const { scene } = this.ctx;
@@ -343,51 +515,79 @@ export const step6 = {
     this.consensusGroup = new THREE.Group();
     this.validators = [];
 
-    const platformGeo = new THREE.CylinderGeometry(0.95, 1.08, 0.18, 24);
+    const platformGeo = new THREE.BoxGeometry(2.45, 0.16, 2.05);
     const platformMat = new THREE.MeshStandardMaterial({
       color: 0x1e293b,
       roughness: 0.65,
       metalness: 0.3
     });
 
-    const wheelStandGeo = new THREE.BoxGeometry(0.36, 0.72, 0.18);
+    const ringGeo = new THREE.RingGeometry(1.18, 1.32, 32);
+
+    const wheelStandGeo = new THREE.BoxGeometry(0.32, 0.56, 0.14);
     const wheelStandMat = new THREE.MeshStandardMaterial({
       color: 0x0f172a,
       metalness: 0.85,
       roughness: 0.3
     });
 
-    const wheelGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.12, 24);
-    const toothGeo = new THREE.BoxGeometry(0.085, 0.13, 0.11);
-    const dialGeo = new THREE.CircleGeometry(0.38, 32);
+    const wheelGeo = new THREE.CylinderGeometry(0.34, 0.34, 0.11, 24);
+    const toothGeo = new THREE.BoxGeometry(0.075, 0.11, 0.095);
+    const dialGeo = new THREE.CircleGeometry(0.31, 32);
 
-    const coinGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.11, 20);
-    const couplerTarget = new THREE.Vector3(5.28, 0.05, 0);
+    const coinGeo = new THREE.CylinderGeometry(0.34, 0.34, 0.09, 20);
+    const couplerTarget = new THREE.Vector3(7.6, 0.15, 0);
+
+    const clockTexture = this.createClockTexture();
+    const sharedStationAssets = {
+      plinthGeo: new THREE.BoxGeometry(1.62, 0.14, 0.72),
+      mainHallGeo: new THREE.BoxGeometry(1.52, 0.76, 0.64),
+      corniceGeo: new THREE.BoxGeometry(1.64, 0.06, 0.74),
+      roofPrismGeo: new THREE.ConeGeometry(1.12, 0.46, 4),
+      winGeo: new THREE.BoxGeometry(0.24, 0.34, 0.03),
+      canopyGeo: new THREE.BoxGeometry(1.86, 0.055, 0.42),
+      pillarGeo: new THREE.CylinderGeometry(0.028, 0.028, 0.54, 8),
+      signBoardGeo: new THREE.PlaneGeometry(0.95, 0.24),
+      towerBodyGeo: new THREE.BoxGeometry(0.46, 1.34, 0.46),
+      towerRoofGeo: new THREE.ConeGeometry(0.38, 0.48, 4),
+      clockFaceGeo: new THREE.CircleGeometry(0.15, 20),
+      signalMastGeo: new THREE.CylinderGeometry(0.028, 0.032, 1.04, 8),
+      beaconGeo: new THREE.SphereGeometry(0.1, 12, 12),
+      brickMat: new THREE.MeshStandardMaterial({ color: 0x9a3412, roughness: 0.72 }),
+      stoneTrimMat: new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.6 }),
+      slateRoofMat: new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.55, flatShading: true }),
+      darkMetalMat: new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.75, roughness: 0.3 }),
+      clockMat: new THREE.MeshBasicMaterial({ map: clockTexture })
+    };
 
     this.validatorData.forEach((v) => {
       const vGroup = new THREE.Group();
-      vGroup.position.set(v.x, -0.4, v.z);
+      vGroup.position.set(v.x, -0.44, v.z);
 
-      // Socle circulaire de la gare
+      // Socle / parvis de gare au premier plan
       const platform = new THREE.Mesh(platformGeo, platformMat);
       vGroup.add(platform);
 
-      // Anneau lumineux périphérique
-      const ringGeo = new THREE.RingGeometry(0.98, 1.15, 32);
+      // Anneau lumineux peripherique au sol
       const ringMat = new THREE.MeshBasicMaterial({
         color: 0x38bdf8,
         side: THREE.DoubleSide
       });
       const ring = new THREE.Mesh(ringGeo, ringMat);
       ring.rotation.x = -Math.PI / 2;
-      ring.position.y = 0.1;
+      ring.position.set(0, 0.09, 0.48);
       vGroup.add(ring);
 
-      // --- 1. Grande molette crantée du Nonce (visible sur les 3 gares en PoW, et uniquement sur la gare élue en PoS) ---
+      // Batiment de gare 3D a l'arriere du socle
+      const { buildingGroup, beaconMat, windowMat } = this.createStationBuildingMesh(v, sharedStationAssets);
+      vGroup.add(buildingGroup);
+
+      // --- 1. Molette crantee du Nonce sur le parvis avant (+Z), directement face a la camera ---
       const powNodeGroup = new THREE.Group();
+      powNodeGroup.position.set(0, 0, 0.56);
 
       const stand = new THREE.Mesh(wheelStandGeo, wheelStandMat);
-      stand.position.set(0, 0.42, -0.06);
+      stand.position.set(0, 0.34, -0.05);
       powNodeGroup.add(stand);
 
       const wheelMat = new THREE.MeshStandardMaterial({
@@ -399,7 +599,7 @@ export const step6 = {
       });
       const wheelMesh = new THREE.Mesh(wheelGeo, wheelMat);
       wheelMesh.rotation.x = Math.PI / 2;
-      wheelMesh.position.set(0, 0.65, 0.08);
+      wheelMesh.position.set(0, 0.54, 0.06);
       powNodeGroup.add(wheelMesh);
 
       const toothMat = new THREE.MeshStandardMaterial({
@@ -412,12 +612,11 @@ export const step6 = {
       for (let i = 0; i < 8; i++) {
         const angle = (i * Math.PI) / 4;
         const tooth = new THREE.Mesh(toothGeo, toothMat);
-        tooth.position.set(Math.cos(angle) * 0.44, 0, Math.sin(angle) * 0.44);
+        tooth.position.set(Math.cos(angle) * 0.36, 0, Math.sin(angle) * 0.36);
         tooth.rotation.y = -angle + Math.PI / 2;
         wheelMesh.add(tooth);
       }
 
-      // Cadran central fixe (toujours droit pendant que les crans tournent)
       const dialCanvas = document.createElement('canvas');
       dialCanvas.width = 256;
       dialCanvas.height = 256;
@@ -428,13 +627,14 @@ export const step6 = {
         dialGeo,
         new THREE.MeshBasicMaterial({ map: dialTex, transparent: true })
       );
-      dialMesh.position.set(0, 0.65, 0.145);
+      dialMesh.position.set(0, 0.54, 0.125);
       powNodeGroup.add(dialMesh);
 
       vGroup.add(powNodeGroup);
 
-      // --- 2. Pile de jetons déposés en caution (50, 35 ou 15 jetons) ---
+      // --- 2. Pile de jetons deposes en caution sur le parvis avant (+Z) ---
       const posNodeGroup = new THREE.Group();
+      posNodeGroup.position.set(0, 0, 0.56);
       const coinMat = new THREE.MeshStandardMaterial({
         color: 0xfacc15,
         emissive: 0xb45309,
@@ -445,14 +645,14 @@ export const step6 = {
 
       for (let c = 0; c < v.coinsMeshCount; c++) {
         const coin = new THREE.Mesh(coinGeo, coinMat);
-        coin.position.set(0, 0.16 + c * 0.12, 0);
+        coin.position.set(0, 0.12 + c * 0.095, 0);
         posNodeGroup.add(coin);
       }
       vGroup.add(posNodeGroup);
 
-      // Faisceau reliant la gare au point d'attelage du Wagon #2
+      // Faisceau reliant la gare au premier plan vers le Wagon #2 sur les rails
       const linePoints = [
-        new THREE.Vector3(v.x, -0.28, v.z + 0.95),
+        new THREE.Vector3(v.x, -0.15, v.z - 0.72),
         couplerTarget.clone()
       ];
       const lineGeo = new THREE.BufferGeometry().setFromPoints(linePoints);
@@ -475,6 +675,8 @@ export const step6 = {
         dialCanvas,
         dialTex,
         ringMat,
+        beaconMat,
+        windowMat,
         coinMat,
         lineMat,
         currentCrans: 0,
@@ -485,9 +687,9 @@ export const step6 = {
       });
     });
 
-    // Halo / projecteur 3D mobile qui se déplace de gare en gare pendant le tirage au sort PoS
+    // Halo / projecteur 3D mobile de tirage au sort PoS
     this.lotteryHaloGroup = new THREE.Group();
-    const haloRingGeo = new THREE.RingGeometry(1.16, 1.34, 36);
+    const haloRingGeo = new THREE.RingGeometry(1.26, 1.44, 36);
     const haloRingMat = new THREE.MeshBasicMaterial({
       color: 0xfacc15,
       side: THREE.DoubleSide,
@@ -498,7 +700,7 @@ export const step6 = {
     haloRing.rotation.x = -Math.PI / 2;
     this.lotteryHaloGroup.add(haloRing);
 
-    const haloBeamGeo = new THREE.CylinderGeometry(1.12, 1.12, 1.45, 28, 1, true);
+    const haloBeamGeo = new THREE.CylinderGeometry(1.22, 1.22, 1.85, 28, 1, true);
     const haloBeamMat = new THREE.MeshBasicMaterial({
       color: 0xfacc15,
       transparent: true,
@@ -507,10 +709,10 @@ export const step6 = {
       depthWrite: false
     });
     const haloBeam = new THREE.Mesh(haloBeamGeo, haloBeamMat);
-    haloBeam.position.y = 0.72;
+    haloBeam.position.y = 0.92;
     this.lotteryHaloGroup.add(haloBeam);
 
-    this.lotteryHaloGroup.position.set(this.validatorData[0].x, -0.29, this.validatorData[0].z);
+    this.lotteryHaloGroup.position.set(this.validatorData[0].x, -0.34, this.validatorData[0].z + 0.18);
     this.lotteryHaloGroup.visible = false;
     this.lotteryHaloGroup.userData = { haloRingMat, haloBeamMat };
     this.consensusGroup.add(this.lotteryHaloGroup);
@@ -524,7 +726,7 @@ export const step6 = {
       opacity: 0
     });
     this.couplerFlashRing = new THREE.Mesh(flashGeo, flashMat);
-    this.couplerFlashRing.position.copy(couplerTarget);
+    this.couplerFlashRing.position.set(5.28, 0.05, 0);
     this.consensusGroup.add(this.couplerFlashRing);
 
     scene.add(this.consensusGroup);
@@ -730,11 +932,11 @@ export const step6 = {
 
         v.posNodeGroup.visible = true;
         if (showWinnerWheel) {
-          v.posNodeGroup.position.set(-0.56, 0, 0.18);
+          v.posNodeGroup.position.set(-0.62, 0, 0.56);
           v.posNodeGroup.scale.setScalar(0.72);
         } else {
           const isHigh = this.simState === 'lottery' && idx === this.rouletteHighlightIndex;
-          v.posNodeGroup.position.set(0, isHigh ? 0.09 : 0, 0);
+          v.posNodeGroup.position.set(0, isHigh ? 0.09 : 0, 0.56);
           v.posNodeGroup.scale.setScalar(isHigh ? 1.08 : 1.0);
         }
       }
@@ -765,6 +967,11 @@ export const step6 = {
       v.ringMat.color.setHex(colorHex);
       v.lineMat.color.setHex(colorHex);
       v.lineMat.opacity = lineOpacity;
+      if (v.beaconMat) {
+        v.beaconMat.color.setHex(colorHex);
+        v.beaconMat.emissive.setHex(colorHex);
+        v.beaconMat.emissiveIntensity = this.simState === 'done' && !isWinner && !isPoW ? 0.4 : 1.7;
+      }
     });
 
     // Projecteur / halo 3D de tirage au sort PoS
@@ -1031,14 +1238,14 @@ export const step6 = {
         const targetV = this.validatorData[targetIdx];
         this.lotteryHaloX = THREE.MathUtils.lerp(this.lotteryHaloX, targetV.x, Math.min(1, dt * 16));
         this.lotteryHaloZ = THREE.MathUtils.lerp(this.lotteryHaloZ, targetV.z, Math.min(1, dt * 16));
-        this.lotteryHaloGroup.position.set(this.lotteryHaloX, -0.29, this.lotteryHaloZ);
+        this.lotteryHaloGroup.position.set(this.lotteryHaloX, -0.34, this.lotteryHaloZ + 0.18);
         this.lotteryHaloGroup.rotation.y += dt * 1.8;
       }
 
-      // 2. Déplacement du Wagon #2 : avance et s'attelle quand la gare a validé le bloc (simState === 'done')
+      // 2. Convoi ferroviaire en arrière-plan : toujours proprement attelé et aligné sur les rails
       if (wagon2) {
         const isValidated = this.simState === 'done';
-        const targetX = isValidated ? this.minedWagon2X : this.unminedWagon2X;
+        const targetX = this.minedWagon2X;
         this.currentWagon2X = THREE.MathUtils.lerp(this.currentWagon2X, targetX, Math.min(1, dt * 6.5));
         this.currentWagon2Scale = THREE.MathUtils.lerp(this.currentWagon2Scale, 1.0, Math.min(1, dt * 9.0));
         wagon2.position.x = this.currentWagon2X;
@@ -1053,13 +1260,8 @@ export const step6 = {
         }
 
         if (wagon2.couplerGroup && wagon2.defaultCouplerPosition) {
-          if (!isCoupledPosition) {
-            wagon2.couplerGroup.position.y = wagon2.defaultCouplerPosition.y - 0.12;
-            wagon2.couplerGroup.rotation.z = 0.12;
-          } else {
-            wagon2.couplerGroup.position.copy(wagon2.defaultCouplerPosition);
-            wagon2.couplerGroup.rotation.z = 0;
-          }
+          wagon2.couplerGroup.position.copy(wagon2.defaultCouplerPosition);
+          wagon2.couplerGroup.rotation.z = 0;
         }
 
         if (wagon2.beaconMaterial) {
@@ -1096,10 +1298,8 @@ export const step6 = {
         const toY = (v) => (-v.y * 0.5 + 0.5) * height;
 
         let anyBehind = false;
-        const pts = this.validators.map((v, idx) => {
-          const hasWheel = this.mode === 'pow' || ((this.simState === 'pos_mining' || this.simState === 'done') && idx === this.winnerIndex);
-          const topY = hasWheel ? 1.15 : 0.22 + v.data.coinsMeshCount * 0.12;
-          const worldP = new THREE.Vector3(v.data.x, -0.4 + topY, v.data.z);
+        const pts = this.validators.map((v) => {
+          const worldP = new THREE.Vector3(v.data.x, -0.44 + 1.55, v.data.z - 0.15);
           const pr = worldP.project(camera);
           if (pr.z > 1) anyBehind = true;
           return { x: toX(pr), y: toY(pr) };
@@ -1120,7 +1320,7 @@ export const step6 = {
 
           pts.forEach((pt, idx) => {
             const px = pillXs[idx];
-            const py = pt.y - 52;
+            const py = pt.y - 36;
             const el = document.getElementById(`tooltip-s6-${idx}`);
             if (el) {
               el.style.transform = `translate3d(${px.toFixed(1)}px, ${py.toFixed(1)}px, 0) translate(-50%, -50%)`;
@@ -1185,7 +1385,7 @@ export const step6 = {
     const modeExplanationHTML = isPoW
       ? `
         <div class="share-meaning-banner">
-          <strong>Part de puissance (50 %, 35 %, 15 %) :</strong> plus une gare possède d'ordinateurs, plus sa molette tourne vite pour trouver le bon Nonce en premier.
+          Chaque gare abrite une salle de serveurs qui vérifie et valide les transactions du réseau. Plus une gare possède d'ordinateurs puissants, plus sa molette teste de combinaisons à la seconde pour trouver le bon Nonce (<strong>50 %, 35 %, 15 %</strong>).
         </div>
       `
       : `

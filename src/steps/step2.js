@@ -451,7 +451,7 @@ export const step2 = {
           <article class="step-card keypoint-card animate-fade">
             <h4 class="card-title keypoint-title">Point clé : L'effet domino</h4>
             <p class="keypoint-text">
-              Chaque wagon est lié à celui d'avant par son code. Pour tricher sur un ancien wagon, il faudrait obligatoirement recalculer et raccrocher <strong>tous les wagons qui suivent</strong> jusqu'au bout du train.
+              Chaque wagon est verrouillé à celui d'avant par son empreinte numérique. Si quelqu'un tentait de modifier le contenu d'un ancien wagon, son empreinte changerait aussitôt et il faudrait recalculer et raccrocher tous les wagons suivants jusqu'au bout du train (nous allons le tester à l'étape suivante).
             </p>
           </article>
         ` : ''}
