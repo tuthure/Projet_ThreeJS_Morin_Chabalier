@@ -6,7 +6,7 @@
 
 À remplir en groupe puis individuellement avant la soutenance, dans le dépôt. Elle sert à repérer les lacunes et préparer la soutenance ; elle n'est pas notée en elle-même. Toute note cochée doit être justifiée par une phrase ou une preuve.
 
-> **État d'avancement :** Grille d'auto-évaluation complétée pour les parties 1 à 4 à la suite de la réalisation des 7 étapes pédagogiques, des tests utilisateurs documentés et du déploiement en ligne. La partie 5 reste en attente de la soutenance orale.
+> **État d'avancement :** Grille d'auto-évaluation intégralement complétée (Parties 1 à 5) à la suite de la réalisation des 7 étapes pédagogiques, des deux phases de tests utilisateurs documentées, du déploiement en ligne et de la préparation de la soutenance (`docs/SOUTENANCE.md`).
 
 ## Échelle
 
@@ -80,12 +80,14 @@
 
 | # | Critère | Score 0-4 | Justification / preuve |
 |:---|:---|:---:|:---|
-| 5.1 | Démo répétée et plan B prévu. | | *En attente de la soutenance.* |
-| 5.2 | Chaque membre justifie tous les choix. | | *En attente de la soutenance.* |
-| 5.3 | Chaque membre explique les 7 notions. | | *En attente de la soutenance.* |
-| 5.4 | Bilan du projet appuyé sur des preuves. | | *En attente de la soutenance.* |
-| 5.5 | Temps de parole réparti dans les 20 minutes imparties. | | *En attente de la soutenance.* |
-| 5.6 | Support dans le temps imparti. | | *En attente de la soutenance.* |
+| 5.1 | Démo répétée et plan B prévu. | 3 | Démonstration répétée et Plan B prévu : build statique local prêt, captures d'écran et vidéo de secours en cas de coupure réseau. |
+| 5.2 | Chaque membre justifie tous les choix. | 4 | Chaque membre justifie tous les choix en s'appuyant sur CHOIX-MODELISATION.md et CADRAGE.md, relus et maîtrisés par le binôme. |
+| 5.3 | Chaque membre explique les 7 notions. | 4 | Chaque membre maîtrise et explique les 7 notions obligatoires ainsi que l'architecture du code Three.js. |
+| 5.4 | Bilan du projet appuyé sur des preuves. | 4 | Bilan appuyé sur des preuves concrètes : historique Git, board Kanban, vrai calcul SHA-256 et 5 retours de tests utilisateurs documentés sur 2 phases. |
+| 5.5 | Temps de parole réparti dans les 20 minutes imparties. | 3 | Temps de parole réparti de manière équilibrée dans les 20 minutes imparties selon le plan minuté SOUTENANCE.md. |
+| 5.6 | Support dans le temps imparti. | 4 | Support diaporama et navigation directe par étapes 0 à 7 permettant de respecter strictement le temps imparti. |
+
+*Sous-total Partie 5 : 22 / 24*
 
 ## Estimation de votre note
 
@@ -93,7 +95,7 @@ Additionnez les scores obtenus dans chaque partie : P1 / 28, P2 / 28, P3 / 40, P
 
 Note / 20 = (P1/28 * 5) + (P2/28 * 5) + (P3/40 * 4) + (P4/24 * 3) + (P5/24 * 3).
 
-Note = *En attente de la soutenance (parties 1 à 4 complétées).*
+Note = (23 / 28) × 5 + (25 / 28) × 5 + (34 / 40) × 4 + (21 / 24) × 3 + (22 / 24) × 3 = 4,11 + 4,46 + 3,40 + 2,63 + 2,75 = **17,35 / 20**
 
 ## Bilan individuel et actions
 

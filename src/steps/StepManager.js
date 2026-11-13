@@ -167,3 +167,46 @@ export class StepManager {
     }
   }
 }
+
+/**
+ * Remplace le contenu du volet gauche en conservant sa position de défilement
+ * lors des rafraîchissements internes à une même étape.
+ * @param {HTMLElement} panel - Conteneur #step-panel-left
+ * @param {HTMLElement} inner - Nouvel élément .step-panel-inner
+ * @param {string|null} [scrollTargetSelector=null] - Sélecteur optionnel d'un bloc résultat à garder visible
+ */
+export function updateLeftPanelPreserveScroll(panel, inner, scrollTargetSelector = null) {
+  if (!panel || !inner) return;
+
+  const oldInner = panel.querySelector('.step-panel-inner');
+  const oldScroll = oldInner ? oldInner.querySelector('.step-panel-scroll') : null;
+  const savedScrollTop = oldScroll ? oldScroll.scrollTop : panel.scrollTop;
+  const isRefresh = Boolean(oldInner);
+
+  if (oldInner) {
+    oldInner.remove();
+  }
+
+  // Évite le clignotement de ré-apparition lors d'une mise à jour interne
+  if (isRefresh) {
+    inner.querySelectorAll('.animate-fade').forEach((el) => {
+      el.classList.remove('animate-fade');
+    });
+  }
+
+  panel.prepend(inner);
+
+  const newScroll = inner.querySelector('.step-panel-scroll');
+  if (newScroll && savedScrollTop > 0) {
+    newScroll.scrollTop = savedScrollTop;
+  }
+
+  if (scrollTargetSelector) {
+    const targetEl = inner.querySelector(scrollTargetSelector);
+    if (targetEl && typeof targetEl.scrollIntoView === 'function') {
+      requestAnimationFrame(() => {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    }
+  }
+}

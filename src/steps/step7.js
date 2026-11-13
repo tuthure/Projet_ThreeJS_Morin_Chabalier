@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { updateLeftPanelPreserveScroll } from './StepManager.js';
 
 /**
  * Étape 7 : Attaque des 51 % et règle de la chaîne la plus longue.
@@ -72,10 +73,10 @@ export const step7 = {
     // Crée la Locomotive (#0), le Wagon #1 (tronc commun) et les Wagons #2, #3, #4 (branche honnête)
     if (trainConvoy) {
       trainConvoy.resetConvoy([
-        { emetteur: 'Arthur', destinataire: 'Vendeur', montant: 20, unite: 'MMI-Coin' },
-        { emetteur: 'Alban', destinataire: 'Equipe-R507', montant: 30, unite: 'MMI-Coin' },
-        { emetteur: 'Gare-A', destinataire: 'Confirmation-1', montant: 15, unite: 'MMI-Coin' },
-        { emetteur: 'Gare-B', destinataire: 'Confirmation-2', montant: 25, unite: 'MMI-Coin' }
+        { lot: 'Fret #104', cargaison: "15 tonnes d'acier", quai: 'Quai A -> Quai B' },
+        { lot: 'Convoi express', cargaison: '40 palettes matériel', quai: 'Quai B -> Quai C' },
+        { lot: 'Livraison quai B', cargaison: 'Pièces mécaniques', quai: 'Quai B -> Quai D' },
+        { lot: 'Fret #109', cargaison: '18 tonnes de cuivre', quai: 'Quai D -> Quai E' }
       ]);
       if (cameraController) {
         cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
@@ -777,7 +778,7 @@ export const step7 = {
           else this.hasTestedAttack51 = true;
 
           this.updateTooltipsDOM();
-          this.renderLeftPanel();
+          this.renderLeftPanel('#s7-result-box');
         }
       }
 
@@ -948,14 +949,11 @@ export const step7 = {
     }
   },
 
-  renderLeftPanel() {
+  renderLeftPanel(scrollTargetSelector = null) {
     const panel = document.getElementById('step-panel-left');
     if (!panel) return;
 
     panel.classList.add('active');
-
-    const oldInner = panel.querySelector('.step-panel-inner');
-    if (oldInner) oldInner.remove();
 
     const inner = document.createElement('div');
     inner.className = 'step-panel-inner';
@@ -1031,7 +1029,7 @@ export const step7 = {
             <span>${buttonLabel}</span>
           </button>
 
-          ${resultHTML}
+          <div id="s7-result-box">${resultHTML}</div>
         </article>
 
         ${(this.hasTestedNormal || this.hasTestedAttack51) ? `
@@ -1056,7 +1054,7 @@ export const step7 = {
       </div>
     `;
 
-    panel.prepend(inner);
+    updateLeftPanelPreserveScroll(panel, inner, scrollTargetSelector);
     this.setupEvents();
   },
 

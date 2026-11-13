@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { updateLeftPanelPreserveScroll } from './StepManager.js';
 
 /**
  * Étape 1 : Structure d'un Bloc.
@@ -48,8 +49,19 @@ export const step1 = {
 
     if (trainConvoy) {
       trainConvoy.resetConvoy([
-        { emetteur: 'Arthur', destinataire: 'Alban', montant: 15, unite: 'MMI-Coin' }
+        { lot: 'Fret #104', cargaison: "15 tonnes d'acier", quai: 'Quai A -> Quai B' }
       ]);
+      const loco0 = trainConvoy.getWagon(0);
+      const wagon1 = trainConvoy.getWagon(1);
+      if (loco0) {
+        loco0.colorHash.set('#facc15');
+        if (typeof loco0.updateStatus === 'function') {
+          loco0.updateStatus(true);
+        }
+      }
+      if (wagon1 && typeof wagon1.applyStep1AnatomyColors === 'function') {
+        wagon1.applyStep1AnatomyColors(true);
+      }
       if (cameraController) {
         cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
       }
@@ -67,6 +79,16 @@ export const step1 = {
    */
   exit() {
     this.stopAnimationLoop();
+
+    const { trainConvoy } = this.ctx || {};
+    const loco0 = trainConvoy?.getWagon(0);
+    const wagon1 = trainConvoy?.getWagon(1);
+    if (wagon1 && typeof wagon1.applyStep1AnatomyColors === 'function') {
+      wagon1.applyStep1AnatomyColors(false);
+    }
+    if (loco0 && typeof loco0.updateStatus === 'function') {
+      loco0.updateStatus(true);
+    }
 
     if (this.tooltipLayer) {
       this.tooltipLayer.remove();
@@ -107,10 +129,10 @@ export const step1 = {
     const block1 = trainConvoy?.getBlock(1);
     if (!wagon1 || !block1) return;
 
-    const colorCargo = '#f97316';
-    const colorPrev = '#' + wagon1.colorPrevHash.getHexString();
-    const colorNonce = '#f59e0b';
-    const colorHash = '#' + wagon1.colorHash.getHexString();
+    const colorPrev = '#facc15';
+    const colorCargo = '#38bdf8';
+    const colorHash = '#10b981';
+    const colorNonce = '#c084fc';
 
     const prevShort = block1.previousHash ? block1.previousHash.substring(0, 8) : '00a89f41';
     const hashShort = block1.hash ? block1.hash.substring(0, 8) : 'e55c70ac';
@@ -167,7 +189,7 @@ export const step1 = {
         </button>
         <div class="scene-tooltip-card">
           <div class="scene-tooltip-card-title">2. Données / Transactions</div>
-          <p class="scene-tooltip-card-text">Les échanges rangés dans le wagon vitré (ici : 15 MMI-Coin d'Arthur vers Alban), visibles par tout le monde.</p>
+          <p class="scene-tooltip-card-text">Les chargements rangés dans le wagon vitré (ici : Fret #104 : 15 tonnes d'acier), visibles par tout le monde.</p>
         </div>
       </div>
 
@@ -495,17 +517,13 @@ export const step1 = {
 
     panel.classList.add('active');
 
-    const oldInner = panel.querySelector('.step-panel-inner');
-    if (oldInner) oldInner.remove();
-
     const { trainConvoy } = this.ctx;
-    const wagon1 = trainConvoy?.getWagon(1);
     const block1 = trainConvoy?.getBlock(1);
 
-    const colorCargo = '#f97316';
-    const colorPrev = wagon1 ? '#' + wagon1.colorPrevHash.getHexString() : '#38bdf8';
-    const colorNonce = '#f59e0b';
-    const colorHash = wagon1 ? '#' + wagon1.colorHash.getHexString() : '#10b981';
+    const colorPrev = '#facc15';
+    const colorCargo = '#38bdf8';
+    const colorHash = '#10b981';
+    const colorNonce = '#c084fc';
 
     const hashShort = block1?.hash ? block1.hash.substring(0, 10) : 'e55c70ac14';
     const prevShort = block1?.previousHash ? block1.previousHash.substring(0, 10) : '00a89f41b2';
@@ -539,7 +557,7 @@ export const step1 = {
             <button type="button" class="anatomy-item-btn" data-part="cargo" style="--item-color: ${colorCargo};">
               <span class="anatomy-dot"></span>
               <span class="anatomy-name">2. Transactions (Caisses)</span>
-              <code class="anatomy-code">15 MMI-Coin</code>
+              <code class="anatomy-code">Fret #104 : 15 t d'acier</code>
             </button>
 
             <button type="button" class="anatomy-item-btn" data-part="nonce" style="--item-color: ${colorNonce};">
@@ -571,7 +589,7 @@ export const step1 = {
               <strong>Hash</strong> = SHA-256( <span style="color: ${colorPrev}">PreviousHash</span> + <span style="color: ${colorCargo}">Transactions</span> + <span style="color: ${colorNonce}">Nonce</span> )
             </div>
             <div class="formula-example">
-              SHA-256( "<code>${prevShort}</code>" + "<code>15 MMI-Coin</code>" + "<code>${nonceVal}</code>" ) = <strong style="color: ${colorHash}"><code>${hashShort}...</code></strong>
+              SHA-256( "<code style="color: ${colorPrev}">${prevShort}</code>" + "<code style="color: ${colorCargo}">Fret #104 : 15 tonnes d'acier</code>" + "<code style="color: ${colorNonce}">${nonceVal}</code>" ) = <strong style="color: ${colorHash}"><code>${hashShort}...</code></strong>
             </div>
           </div>
           <p class="keypoint-subtext">
@@ -592,7 +610,7 @@ export const step1 = {
       </div>
     `;
 
-    panel.prepend(inner);
+    updateLeftPanelPreserveScroll(panel, inner);
     this.setupEvents();
   },
 

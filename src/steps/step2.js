@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { updateLeftPanelPreserveScroll } from './StepManager.js';
 
 /**
  * Étape 2 : Chaînage Cryptographique.
@@ -48,8 +49,8 @@ export const step2 = {
 
     if (trainConvoy) {
       trainConvoy.resetConvoy([
-        { emetteur: 'Arthur', destinataire: 'Alban', montant: 15, unite: 'MMI-Coin' },
-        { emetteur: 'Alban', destinataire: 'Equipe-R507', montant: 30, unite: 'MMI-Coin' }
+        { lot: 'Fret #104', cargaison: "15 tonnes d'acier", quai: 'Quai A -> Quai B' },
+        { lot: 'Convoi express', cargaison: '40 palettes matériel', quai: 'Quai B -> Quai C' }
       ]);
       if (cameraController) {
         cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
@@ -222,15 +223,14 @@ export const step2 = {
     if (trainConvoy.blockchain.chain.length >= 4) return;
 
     trainConvoy.addBlock({
-      emetteur: 'Alban',
-      destinataire: 'Charlie',
-      montant: 8,
-      unite: 'MMI-Coin'
+      lot: 'Livraison quai B',
+      cargaison: 'Pièces mécaniques',
+      quai: 'Quai B -> Quai C'
     });
 
     this.updateCameraView(true);
     this.createChainTooltips();
-    this.renderLeftPanel();
+    this.renderLeftPanel('.keypoint-card');
   },
 
   /**
@@ -390,14 +390,11 @@ export const step2 = {
   /**
    * Génère le volet pédagogique gauche pour l'étape 2.
    */
-  renderLeftPanel() {
+  renderLeftPanel(scrollTargetSelector = null) {
     const panel = document.getElementById('step-panel-left');
     if (!panel) return;
 
     panel.classList.add('active');
-
-    const oldInner = panel.querySelector('.step-panel-inner');
-    if (oldInner) oldInner.remove();
 
     const inner = document.createElement('div');
     inner.className = 'step-panel-inner';
@@ -469,7 +466,7 @@ export const step2 = {
       </div>
     `;
 
-    panel.prepend(inner);
+    updateLeftPanelPreserveScroll(panel, inner, scrollTargetSelector);
     this.setupEvents();
   },
 

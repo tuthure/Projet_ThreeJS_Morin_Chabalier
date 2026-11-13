@@ -85,6 +85,10 @@ export class WagonMesh extends THREE.Group {
     this.couplerBeamMaterial = null;
     this.couplerGroup = null;
     this.nonceWheel = null;
+    this.nonceWheelMaterial = null;
+    this.nonceToothMaterial = null;
+    this.nonceDialAccentColor = '#f59e0b';
+    this.step1AnatomyMode = false;
     this.beaconMaterial = null;
 
     // Identifiants pour le raycaster et l'inspection interactive
@@ -456,6 +460,7 @@ export class WagonMesh extends THREE.Group {
       emissive: 0x451a03,
       emissiveIntensity: 0.25
     });
+    this.nonceWheelMaterial = wheelMat;
     this.nonceWheel = new THREE.Mesh(wheelGeo, wheelMat);
     this.nonceWheel.rotation.x = Math.PI / 2;
     this.nonceWheel.position.set(0, 0.2, 0.68);
@@ -470,6 +475,7 @@ export class WagonMesh extends THREE.Group {
       emissive: 0xb45309,
       emissiveIntensity: 0.35
     });
+    this.nonceToothMaterial = toothMat;
     for (let i = 0; i < 8; i++) {
       const angle = (i * Math.PI) / 4;
       const tooth = new THREE.Mesh(toothGeo, toothMat);
@@ -694,14 +700,15 @@ export class WagonMesh extends THREE.Group {
       ctx.arc(128, 128, 120, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.strokeStyle = '#f59e0b';
+      const dialAccent = this.nonceDialAccentColor || '#f59e0b';
+      ctx.strokeStyle = dialAccent;
       ctx.lineWidth = 8;
       ctx.beginPath();
       ctx.arc(128, 128, 116, 0, Math.PI * 2);
       ctx.stroke();
 
       // Graduations industrielles rayonnantes sur le bord
-      ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
+      ctx.strokeStyle = this.step1AnatomyMode ? 'rgba(192, 132, 252, 0.55)' : 'rgba(245, 158, 11, 0.45)';
       ctx.lineWidth = 3;
       for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
         const x1 = 128 + Math.cos(angle) * 98;
@@ -715,14 +722,14 @@ export class WagonMesh extends THREE.Group {
       }
 
       // Libelle "NONCE" au-dessus du chiffre
-      ctx.fillStyle = '#f59e0b';
+      ctx.fillStyle = dialAccent;
       ctx.font = 'bold 26px monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('NONCE', 128, 72);
 
       // Nombre du Nonce au centre de la molette (net et sans doublons)
-      ctx.fillStyle = '#fef08a';
+      ctx.fillStyle = this.step1AnatomyMode ? '#f3e8ff' : '#fef08a';
       ctx.font = 'bold 72px monospace';
       ctx.fillText(String(this.block.nonce), 128, 142);
 
@@ -748,6 +755,87 @@ export class WagonMesh extends THREE.Group {
   }
 
   /**
+   * Applique ou retire la charte pédagogique des 4 couleurs distinctes à l'étape 1 :
+   * - PreviousHash : Jaune / Or (#facc15)
+   * - Transactions (Chargement) : Cyan / Bleu électrique (#38bdf8)
+   * - Hash du bloc : Vert émeraude (#10b981)
+   * - Molette du Nonce : Violet / Magenta (#c084fc)
+   * @param {boolean} enabled
+   */
+  applyStep1AnatomyColors(enabled) {
+    this.step1AnatomyMode = enabled;
+
+    if (enabled) {
+      this.colorPrevHash.set('#facc15');
+      this.colorHash.set('#10b981');
+      this.nonceDialAccentColor = '#c084fc';
+
+      if (this.containerMaterials[0]) {
+        this.containerMaterials[0].color.setHex(0x0ea5e9);
+        this.containerMaterials[0].emissive.setHex(0x0284c7);
+        this.containerMaterials[0].emissiveIntensity = 0.25;
+      }
+      if (this.containerMaterials[1]) {
+        this.containerMaterials[1].color.setHex(0x38bdf8);
+        this.containerMaterials[1].emissive.setHex(0x0369a1);
+        this.containerMaterials[1].emissiveIntensity = 0.22;
+      }
+
+      if (this.nonceWheelMaterial) {
+        this.nonceWheelMaterial.color.setHex(0x6b21a8);
+        this.nonceWheelMaterial.emissive.setHex(0x581c87);
+        this.nonceWheelMaterial.emissiveIntensity = 0.35;
+      }
+      if (this.nonceToothMaterial) {
+        this.nonceToothMaterial.color.setHex(0xc084fc);
+        this.nonceToothMaterial.emissive.setHex(0x9333ea);
+        this.nonceToothMaterial.emissiveIntensity = 0.45;
+      }
+
+      if (this.rearRingMaterial) {
+        this.rearRingMaterial.color.copy(this.colorHash);
+        this.rearRingMaterial.emissive.copy(this.colorHash);
+      }
+      if (this.frontRingMaterial) {
+        this.frontRingMaterial.color.copy(this.colorPrevHash);
+        this.frontRingMaterial.emissive.copy(this.colorPrevHash);
+      }
+      if (this.couplerBeamMaterial) {
+        this.couplerBeamMaterial.color.copy(this.colorPrevHash);
+        this.couplerBeamMaterial.emissive.copy(this.colorPrevHash);
+      }
+
+      this.renderPlates();
+    } else {
+      this.nonceDialAccentColor = '#f59e0b';
+
+      if (this.containerMaterials[0]) {
+        this.containerMaterials[0].color.setHex(0xf97316);
+        this.containerMaterials[0].emissive.setHex(0xc2410c);
+        this.containerMaterials[0].emissiveIntensity = 0.2;
+      }
+      if (this.containerMaterials[1]) {
+        this.containerMaterials[1].color.setHex(0xd97706);
+        this.containerMaterials[1].emissive.setHex(0x92400e);
+        this.containerMaterials[1].emissiveIntensity = 0.15;
+      }
+
+      if (this.nonceWheelMaterial) {
+        this.nonceWheelMaterial.color.setHex(0x78350f);
+        this.nonceWheelMaterial.emissive.setHex(0x451a03);
+        this.nonceWheelMaterial.emissiveIntensity = 0.25;
+      }
+      if (this.nonceToothMaterial) {
+        this.nonceToothMaterial.color.setHex(0xf59e0b);
+        this.nonceToothMaterial.emissive.setHex(0xb45309);
+        this.nonceToothMaterial.emissiveIntensity = 0.35;
+      }
+
+      this.updateStatus(this.isValid);
+    }
+  }
+
+  /**
    * Met a jour l'etat visuel du wagon selon la validite de la blockchain.
    * @param {boolean} isValid - Indique si le bloc et la chaine amont sont valides.
    */
@@ -755,7 +843,7 @@ export class WagonMesh extends THREE.Group {
     this.isValid = isValid;
 
     // Recalcule toujours les teintes deterministes derivees des hashs
-    if (this.block) {
+    if (this.block && !this.step1AnatomyMode) {
       const hexHash = hashToColorHex(this.block.hash);
       const hexPrev = hashToColorHex(this.block.previousHash || '0000000000000000');
       this.colorHash.set(hexHash);

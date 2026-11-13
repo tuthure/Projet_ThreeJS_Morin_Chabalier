@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { hashToColorHex } from '../three/WagonMesh.js';
+import { updateLeftPanelPreserveScroll } from './StepManager.js';
 
 /**
  * Étape 5 : Validation et minage (Proof of Work).
@@ -95,8 +96,8 @@ export const step5 = {
 
     if (trainConvoy) {
       trainConvoy.resetConvoy([
-        { emetteur: 'Arthur', destinataire: 'Alban', montant: 15, unite: 'MMI-Coin' },
-        { emetteur: 'Alban', destinataire: 'Equipe-R507', montant: 30, unite: 'MMI-Coin' }
+        { lot: 'Fret #104', cargaison: "15 tonnes d'acier", quai: 'Quai A -> Quai B' },
+        { lot: 'Convoi express', cargaison: '40 palettes matériel', quai: 'Quai B -> Quai C' }
       ]);
       if (cameraController) {
         cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
@@ -581,7 +582,7 @@ export const step5 = {
     }
 
     this.updateLiveMiningDOM();
-    this.renderLeftPanel();
+    this.renderLeftPanel('.keypoint-card');
   },
 
   startAnimationLoop() {
@@ -922,14 +923,11 @@ export const step5 = {
     }
   },
 
-  renderLeftPanel() {
+  renderLeftPanel(scrollTargetSelector = null) {
     const panel = document.getElementById('step-panel-left');
     if (!panel) return;
 
     panel.classList.add('active');
-
-    const oldInner = panel.querySelector('.step-panel-inner');
-    if (oldInner) oldInner.remove();
 
     const inner = document.createElement('div');
     inner.className = 'step-panel-inner';
@@ -963,6 +961,9 @@ export const step5 = {
       <div class="step-panel-scroll">
         <article class="step-card context-card animate-fade">
           <h3 class="card-title">À quoi sert le minage (la molette du Nonce) ?</h3>
+          <p>
+            Le minage est réalisé directement par les gares du réseau (via leurs ordinateurs). Chacune fait tourner sa molette pour tester des milliers de combinaisons jusqu'à trouver le code qui verrouille le wagon et empêche toute triche.
+          </p>
           <div class="share-meaning-banner" style="border-left-color: #f59e0b; margin-top: 4px; margin-bottom: 10px;">
             L'objectif du minage n'est pas de créer de l'argent, mais de <strong>rendre la validation mathématiquement très coûteuse, ce qui empêche les tricheurs de réécrire l'historique</strong>.
           </div>
@@ -1055,7 +1056,7 @@ export const step5 = {
       </div>
     `;
 
-    panel.prepend(inner);
+    updateLeftPanelPreserveScroll(panel, inner, scrollTargetSelector);
     this.setupEvents();
   },
 

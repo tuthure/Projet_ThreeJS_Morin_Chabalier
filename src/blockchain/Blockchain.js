@@ -34,7 +34,7 @@ export class Blockchain {
     const block = new Block(
       0,
       Date.now(),
-      { type: 'GENESIS', label: 'Origine du convoi', transactions: 0 },
+      { type: 'GENESIS', label: 'Mise en service de la locomotive Genesis #0', transactions: 0 },
       '0',
       0
     );

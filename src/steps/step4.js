@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { updateLeftPanelPreserveScroll } from './StepManager.js';
 
 /**
  * Étape 4 : Réseau et décentralisation.
@@ -1033,7 +1034,7 @@ export const step4 = {
             if (st.online) st.state = 'synced';
           });
           this.refreshNetworkVisuals();
-          this.renderLeftPanel();
+          this.renderLeftPanel('.keypoint-card');
         }
       }
 
@@ -1138,14 +1139,11 @@ export const step4 = {
     }
   },
 
-  renderLeftPanel() {
+  renderLeftPanel(scrollTargetSelector = null) {
     const panel = document.getElementById('step-panel-left');
     if (!panel) return;
 
     panel.classList.add('active');
-
-    const oldInner = panel.querySelector('.step-panel-inner');
-    if (oldInner) oldInner.remove();
 
     const inner = document.createElement('div');
     inner.className = 'step-panel-inner';
@@ -1246,7 +1244,7 @@ export const step4 = {
       </div>
     `;
 
-    panel.prepend(inner);
+    updateLeftPanelPreserveScroll(panel, inner, scrollTargetSelector);
     this.setupEvents();
   },
 
@@ -1261,7 +1259,7 @@ export const step4 = {
     });
 
     document.getElementById('btn-step4-broadcast')?.addEventListener('click', () => {
-      this.broadcastTransaction('15 MMI-Coin vers Alban');
+      this.broadcastTransaction('Livraison quai B : Pièces mécaniques');
     });
 
     document.getElementById('btn-step4-action-prev')?.addEventListener('click', () => {

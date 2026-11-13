@@ -40,8 +40,8 @@ export const step0 = {
 
     // 1. Initialise le convoi avec la locomotive (Bloc 0) et deux wagons de transactions
     const initialBlocks = [
-      { emetteur: 'Alice', destinataire: 'Bob', montant: 10, unite: 'jetons' },
-      { emetteur: 'Lucas', destinataire: 'Emma', montant: 25, unite: 'jetons' }
+      { lot: 'Fret #104', cargaison: "15 tonnes d'acier", quai: 'Quai A -> Quai B' },
+      { lot: 'Convoi express', cargaison: '40 palettes matériel', quai: 'Quai B -> Quai C' }
     ];
     if (trainConvoy) {
       trainConvoy.resetConvoy(initialBlocks);

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { hashToColorHex } from '../three/WagonMesh.js';
+import { updateLeftPanelPreserveScroll } from './StepManager.js';
 
 /**
  * Etape 3 : Immuabilite et detection de falsification.
@@ -53,8 +54,8 @@ export const step3 = {
 
     if (trainConvoy) {
       trainConvoy.resetConvoy([
-        { emetteur: 'Arthur', destinataire: 'Alban', montant: 15, unite: 'MMI-Coin' },
-        { emetteur: 'Alban', destinataire: 'Equipe-R507', montant: 30, unite: 'MMI-Coin' }
+        { lot: 'Fret #104', cargaison: "15 tonnes d'acier", quai: 'Quai A -> Quai B' },
+        { lot: 'Convoi express', cargaison: '40 palettes matériel', quai: 'Quai B -> Quai C' }
       ]);
       if (cameraController) {
         cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
@@ -461,10 +462,9 @@ export const step3 = {
     const wagon1 = trainConvoy.getWagon(1);
     if (block1 && wagon1) {
       block1.data = {
-        emetteur: 'Arthur',
-        destinataire: 'Attaquant',
-        montant: 9999,
-        unite: 'MMI-Coin'
+        lot: 'Fret #104',
+        cargaison: "999 tonnes d'or (FALSIFIE)",
+        quai: 'Quai A -> Quai Pirate'
       };
       // Modifier une donnee modifie obligatoirement son hash SHA-256
       block1.hash = block1.calculateHash();
@@ -493,7 +493,7 @@ export const step3 = {
       );
     }
 
-    this.renderLeftPanel();
+    this.renderLeftPanel('.hash-contrast-box');
   },
 
   /**
@@ -528,7 +528,7 @@ export const step3 = {
       );
     }
 
-    this.renderLeftPanel();
+    this.renderLeftPanel('#step3-restore-status');
 
     const statusEl = document.getElementById('step3-restore-status');
     if (statusEl) {
@@ -543,14 +543,11 @@ export const step3 = {
    * Genere le volet pedagogique gauche pour l'etape 3.
    * Interface sobre et epuree, sans infobulles ou cartes redondantes.
    */
-  renderLeftPanel() {
+  renderLeftPanel(scrollTargetSelector = null) {
     const panel = document.getElementById('step-panel-left');
     if (!panel) return;
 
     panel.classList.add('active');
-
-    const oldInner = panel.querySelector('.step-panel-inner');
-    if (oldInner) oldInner.remove();
 
     const { trainConvoy } = this.ctx;
     const wagon1 = trainConvoy?.getWagon(1);
@@ -645,7 +642,7 @@ export const step3 = {
       </div>
     `;
 
-    panel.prepend(inner);
+    updateLeftPanelPreserveScroll(panel, inner, scrollTargetSelector);
     this.setupEvents();
   },
 
