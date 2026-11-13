@@ -1052,14 +1052,14 @@ export const step5 = {
             L'objectif n'est pas de créer de l'argent, mais de <strong>rendre la validation mathématiquement coûteuse</strong> pour empêcher les tricheurs de réécrire l'historique.
           </div>
           <p>
-            Pour entrer dans le train, le <strong>Wagon #2</strong> à droite doit avoir un Hash qui commence par <strong>"${targetPrefix}"</strong> (bloqué à <code>${this.currentHash.substring(0, 4)}...</code>).
+            Pour entrer dans le train, le <strong>Wagon #2</strong> à droite doit avoir un Hash qui commence par <strong>"${targetPrefix}"</strong> (bloqué à <code>${this.currentHash.substring(0, 4)}…</code>).
           </p>
           <div class="block-formula-box">
             <div class="formula-func">
               <strong>SHA-256</strong>( PreviousHash + Transactions + <span style="color: #f59e0b; font-weight: 700;">Nonce</span> ) = <strong>Hash</strong>
             </div>
             <div class="formula-example">
-              On ne peut changer ni le <code>PreviousHash</code> ni les <code>Transactions</code> : il faut donc tourner le <strong style="color: #f59e0b;">Nonce</strong> cran par cran jusqu'à obtenir <code>${targetPrefix}...</code>.
+              On ne peut changer ni le <code>PreviousHash</code> ni les <code>Transactions</code> : il faut donc tourner le <strong style="color: #f59e0b;">Nonce</strong> cran par cran jusqu'à obtenir <code>${targetPrefix}…</code>
             </div>
           </div>
         </article>

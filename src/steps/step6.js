@@ -2002,18 +2002,16 @@ export const step6 = {
       `
       : `
         <div class="share-meaning-banner" style="border-left-color: #a855f7;">
-          <strong>Tirage au sort :</strong> le réseau sélectionne d'abord une seule gare selon sa caution de jetons.
+          <strong>Tirage au sort :</strong> le réseau sélectionne d'abord une seule gare selon sa caution de jetons (plus de jetons, plus de chances de gagner).
           <div style="margin-top: 5px; color: #cbd5e1;">
             Seule la gare élue prépare son wagon et l'attelle, sans aucune compétition d'énergie.
           </div>
         </div>
-        <div class="pos-lottery-box">
-          <div class="pos-lottery-track">
-            <div id="s6-seg-0" class="pos-lottery-segment seg-a ${(this.simState === 'pos_selected' || this.simState === 'pos_zoom_in' || this.simState === 'pos_loading' || this.simState === 'pos_zoom_out' || this.simState === 'pos_coupling' || isDone) && this.winnerIndex === 0 ? 'winner' : ''}">Gare A (50 %)</div>
-            <div id="s6-seg-1" class="pos-lottery-segment seg-b ${(this.simState === 'pos_selected' || this.simState === 'pos_zoom_in' || this.simState === 'pos_loading' || this.simState === 'pos_zoom_out' || this.simState === 'pos_coupling' || isDone) && this.winnerIndex === 1 ? 'winner' : ''}">Gare B (35 %)</div>
-            <div id="s6-seg-2" class="pos-lottery-segment seg-c ${(this.simState === 'pos_selected' || this.simState === 'pos_zoom_in' || this.simState === 'pos_loading' || this.simState === 'pos_zoom_out' || this.simState === 'pos_coupling' || isDone) && this.winnerIndex === 2 ? 'winner' : ''}">C (15 %)</div>
-            <div id="step6-lottery-cursor" class="pos-lottery-cursor" style="left: ${this.lotteryCursorPercent.toFixed(1)}%;"></div>
-          </div>
+        <div class="pos-lottery-track">
+          <div id="s6-seg-0" class="pos-lottery-segment seg-a ${(this.simState === 'pos_selected' || this.simState === 'pos_zoom_in' || this.simState === 'pos_loading' || this.simState === 'pos_zoom_out' || this.simState === 'pos_coupling' || isDone) && this.winnerIndex === 0 ? 'winner' : ''}">Gare A (50 %)</div>
+          <div id="s6-seg-1" class="pos-lottery-segment seg-b ${(this.simState === 'pos_selected' || this.simState === 'pos_zoom_in' || this.simState === 'pos_loading' || this.simState === 'pos_zoom_out' || this.simState === 'pos_coupling' || isDone) && this.winnerIndex === 1 ? 'winner' : ''}">Gare B (35 %)</div>
+          <div id="s6-seg-2" class="pos-lottery-segment seg-c ${(this.simState === 'pos_selected' || this.simState === 'pos_zoom_in' || this.simState === 'pos_loading' || this.simState === 'pos_zoom_out' || this.simState === 'pos_coupling' || isDone) && this.winnerIndex === 2 ? 'winner' : ''}">C (15 %)</div>
+          <div id="step6-lottery-cursor" class="pos-lottery-cursor" style="left: ${this.lotteryCursorPercent.toFixed(1)}%;"></div>
         </div>
       `;
 
@@ -2044,7 +2042,7 @@ export const step6 = {
         <article class="step-card context-card animate-fade">
           <h3 class="card-title">Comment choisir la gare gagnante ?</h3>
           <p>
-            Le convoi roule en arrière-plan. Au premier plan, les <strong>Gares A, B et C</strong> préparent chacune leur wagon candidat avec leurs propres caisses. Comparez la <strong>course (PoW)</strong> et le <strong>tirage au sort (PoS)</strong>.
+            Le convoi roule en arrière-plan. Au premier plan, les <strong>Gares A, B et C</strong> préparent chacune leur wagon candidat avec leurs propres caisses. Comparez les deux mécanismes de consensus : <strong>POW (Proof Of Work)</strong> et le <strong>Proof of Stake (PoS)</strong>.
           </p>
         </article>
 

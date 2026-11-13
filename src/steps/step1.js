@@ -597,14 +597,14 @@ export const step1 = {
             <div class="calc-row-terms">
               <div class="calc-col" style="--col-color: ${colorPrev};">
                 <span class="calc-term">PreviousHash</span>
-                <span class="calc-example">(${prevShort}...)</span>
+                <span class="calc-example">(${prevShort}…)</span>
               </div>
 
               <span class="calc-plus">+</span>
 
               <div class="calc-col" style="--col-color: ${colorCargo};">
                 <span class="calc-term">Transactions</span>
-                <span class="calc-example">(15 tonnes d'acier)</span>
+                <span class="calc-example">(15t d'acier)</span>
               </div>
 
               <span class="calc-plus">+</span>
