@@ -16,7 +16,7 @@ Ce document constitue le livrable officiel de cadrage et de justification des ch
 | Lien vers la démo en ligne | https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/ |
 | Lien vers GitHub Projects | https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier/projects |
 | Lien du formulaire de test | https://forms.gle/SrQx1cJVSrnMt7sc9 |
-| Version et date de mise à jour | v0.5 — 06/11/2026 |
+| Version et date de mise à jour | v1.0 — 13/11/2026 |
 
 ---
 
@@ -355,8 +355,8 @@ Les mécanismes de *slashing* (confiscation de la caution en cas de fraude en Po
 
 ### 4.7 — Cycle de vie d'une transaction et scénario d'attaque illustré : création, propagation, validation, inclusion dans un bloc, confirmation, puis illustration d'une attaque et de sa détection/limitation
 
-**Issues liées :** #13  
-**Séquence(s) concernée(s) :** Étape 7 (`src/steps/step7.js` — en cours de finalisation)
+**Issues liées :** #13, #17  
+**Séquence(s) concernée(s) :** Étape 7 (`src/steps/step7.js`)
 
 #### a) Objectif pédagogique
 > L'utilisateur doit comprendre comment le réseau tranche entre deux historiques concurrents grâce à la **règle de la chaîne la plus longue** (ou accumulant le plus de travail), et pourquoi un attaquant isolé (20 % de puissance) échoue à remplacer une transaction confirmée alors qu'un attaquant contrôlant la majorité du réseau (**attaque des 51 %**) parvient à assembler une branche pirate plus longue qui finit par s'imposer sur l'aiguillage.
@@ -392,6 +392,7 @@ Les mécanismes de *slashing* (confiscation de la caution en cas de fraude en Po
 | Observation | Modification | Issue |
 |:---|:---|:---|
 | Tant que l'une des branches restait attachée d'avance au Wagon #1 pendant la course, on avait l'impression que le vainqueur était joué d'avance. | Découplage symétrique des deux branches sur l'aiguillage en Y pendant la course, suivi du glissement physique de la seule branche gagnante vers le rail central à la fin. | #13, #17 |
+| Lors de la session de test (`PROTOCOLE-TESTS.md`), le testeur 4 a trouvé le texte de fin trop dense et l'animation de course entre les deux trains trop rapide à suivre. | Raccourcissement des textes explicatifs du volet gauche et ralentissement de la course sur l'aiguillage en Y pour laisser le temps d'observer l'écart entre la branche honnête et la branche pirate. | #17 |
 
 #### g) Limites assumées
 La course est condensée sur l'assemblage de 3 blocs en quelques secondes afin que l'utilisateur observe clairement l'écart de vitesse et le basculement de l'aiguillage sans attente excessive.
@@ -442,9 +443,22 @@ Le protocole complet est détaillé dans le fichier dédié [`docs/PROTOCOLE-TES
 
 ## 8. Sources et références
 
-- **Cours et supports pédagogiques** : Ressource R507 *Dispositifs interactifs* — BUT MMI 3e année (IUT de Béziers).
-- **Documentation technique Three.js** : https://threejs.org/docs/ (BufferGeometry, MeshPhysicalMaterial, Raycaster, OrbitControls, ToneMapping).
-- **Documentation Vite** : https://vitejs.dev/guide/ (Configuration du bundling et déploiement statique GitHub Pages).
-- **Références fondamentales Blockchain** :
-  - S. Nakamoto (2008), *Bitcoin: A Peer-to-Peer Electronic Cash System* (chaînage par hash, preuve de travail et règle de la chaîne la plus longue).
-  - Anders Brownworth, *Blockchain 101 - A Visual Demo* (inspiration sur la démonstration interactive du couple Nonce / Hash et de la rupture en cascade, transposée ici en espace 3D ferroviaire).
+### Fondements et architecture Bitcoin
+- **Satoshi Nakamoto (2008), *Bitcoin: A Peer-to-Peer Electronic Cash System*** (https://bitcoin.org/bitcoin.pdf) : référence fondatrice utilisée pour modéliser fidèlement la structure interne d'un bloc (étape 1), le chaînage séquentiel par empreinte `Previous Hash` (étape 2), la preuve de travail par recherche de Nonce (étape 5) et la règle de la chaîne valide la plus longue lors d'une bifurcation ou d'une attaque des 51 % (étape 7).
+
+### Cryptographie et fonctions de hachage
+- **NIST FIPS 180-4 (2015), *Secure Hash Standard (SHS)*** (https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf) : spécification officielle du SHA-256 ayant servi à illustrer les trois propriétés cryptographiques mises en scène aux étapes 1, 2 et 3 : déterminisme (un même chargement produit toujours le même sceau), non-réversibilité (impossible de déduire les caisses à partir de la plaque de hash) et effet avalanche (un seul caractère modifié change intégralement l'empreinte et rompt l'attelage).
+
+### Guides techniques développeurs
+- ***Bitcoin Developer Guide — Block Chain, Transactions & Mining*** (https://developer.bitcoin.org/devguide/) : documentation technique mobilisée pour structurer le cycle de vie d'une transaction depuis sa diffusion sur le réseau jusqu'à son inclusion dans un bloc et l'accumulation des confirmations (étapes 4, 5 et 7).
+- **Dylan Yaga, Peter Mell, Nik Roby & Karen Scarfone (2018), *NIST IR 8202 — Blockchain Technology Overview*** (https://doi.org/10.6028/NIST.IR.8202) : synthèse pédagogique de référence sur les registres distribués sans tiers de confiance, utilisée pour concevoir la topologie pair-à-pair des 6 gares autonomes à l'étape 4 et délimiter les simplifications pédagogiques assumées.
+
+### Mécanismes de consensus (PoW vs PoS)
+- **Documentation officielle *Ethereum.org — Consensus Mechanisms : Proof-of-Work (PoW) & Proof-of-Stake (PoS)*** (https://ethereum.org/en/developers/docs/consensus-mechanisms/) : référence utilisée à l'étape 6 pour comparer de manière factuelle l'effort mécanique énergivore des mineurs en Preuve de Travail avec la sélection pondérée des validateurs immobilisant une caution (*staking*) en Preuve d'Enjeu.
+
+### Outils techniques, cours et inspirations interactives
+- **Cours et supports pédagogiques R507** : ressource *Dispositifs interactifs* — BUT MMI 3e année (IUT de Béziers), cadrage des 7 notions obligatoires et du protocole d'évaluation utilisateur.
+- **Documentation officielle *Three.js*** (https://threejs.org/docs/) : mise en œuvre du rendu WebGL, des géométries procédurales low-poly (`BufferGeometry`, `MeshStandardMaterial`, `MeshPhysicalMaterial`), du `Raycaster`, de `OrbitControls` et du tone mapping.
+- **MDN Web Docs — *Web Crypto API (`SubtleCrypto.digest`)*** (https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest) : documentation de référence sur les primitives cryptographiques et le calcul d'empreintes côté navigateur.
+- **Documentation officielle *Vite*** (https://vitejs.dev/guide/) : configuration du bundler ES Modules et du pipeline de déploiement statique sur GitHub Pages.
+- **Anders Brownworth, *Blockchain 101 — A Visual Demo*** (https://andersbrownworth.com/blockchain/) : inspiration pédagogique sur la manipulation directe du couple Données / Nonce / Hash et la propagation visuelle de l'invalidation en cascade, transposée ici en environnement 3D ferroviaire.
