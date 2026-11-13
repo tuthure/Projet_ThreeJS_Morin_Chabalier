@@ -29,6 +29,7 @@ export class TrainConvoy {
     this.blockchain = new Blockchain();
     this.wagonMeshes = [];
     this.originalDataBackup = new Map();
+    this.wheelPhase = 0;
 
     this.group = new THREE.Group();
     this.scene.add(this.group);
@@ -299,22 +300,27 @@ export class TrainConvoy {
   }
 
   /**
-   * Animation douce d'oscillation verticale reproduisant la suspension sur rails.
+   * Animation douce d'oscillation verticale et rotation des roues selon la vitesse sur rails.
    * @param {number} elapsedTime - Temps ecoule en secondes.
    * @param {number} [speed=0] - Vitesse de translation du convoi.
+   * @param {number} [delta=0.016] - Pas de temps de la frame courante.
    */
-  animateSuspension(elapsedTime, speed = 0) {
-    const isRolling = speed > 0.5;
-    const freq = isRolling ? 4.2 : 1.8;
-    const amp = isRolling ? 0.038 : 0.022;
+  animateSuspension(elapsedTime, speed = 0, delta = 0.016) {
+    this.wheelPhase += (speed / 0.25) * delta;
+    const speedFactor = Math.min(1, speed / 3.5);
+    const freq = 4.2;
+    const amp = speedFactor * 0.016;
 
     if (this.locomotiveMesh) {
       this.locomotiveMesh.position.y = Math.sin(elapsedTime * freq - 0.7) * amp;
-      this.locomotiveMesh.animate(elapsedTime, speed);
+      this.locomotiveMesh.animate(elapsedTime, speed, this.wheelPhase);
     }
     for (let i = 0; i < this.wagonMeshes.length; i++) {
       const wagon = this.wagonMeshes[i];
       wagon.position.y = Math.sin(elapsedTime * freq + i * 0.7) * amp;
+      if (typeof wagon.animateWheels === 'function') {
+        wagon.animateWheels(this.wheelPhase);
+      }
     }
   }
 

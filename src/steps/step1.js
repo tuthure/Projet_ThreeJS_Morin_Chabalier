@@ -44,7 +44,7 @@ export const step1 = {
     }
 
     if (environment) {
-      environment.setSpeed(0);
+      environment.setSpeed(4.5);
     }
 
     if (trainConvoy) {

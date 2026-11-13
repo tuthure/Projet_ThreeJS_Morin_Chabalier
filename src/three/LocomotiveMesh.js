@@ -31,6 +31,7 @@ export class LocomotiveMesh extends THREE.Group {
     this.headlightSpot = null;
     this.headlightLens = null;
     this.rods = [];
+    this.wheels = [];
 
     // Badges et plaques d'identification du Bloc Genesis
     this.badges = {
@@ -97,14 +98,29 @@ export class LocomotiveMesh extends THREE.Group {
     });
 
     const xPositions = [-0.85, 0, 0.85];
+    const spokeGeo = new THREE.BoxGeometry(0.42, 0.032, 0.16);
+    const spokeMat = new THREE.MeshStandardMaterial({
+      color: 0x94a3b8,
+      metalness: 0.9,
+      roughness: 0.25
+    });
 
     xPositions.forEach((x) => {
       // Roues gauche (+Z) et droite (-Z)
       [-0.66, 0.66].forEach((z) => {
+        const wheelGroup = new THREE.Group();
+        wheelGroup.position.set(x, -0.18, z);
+
         const wheel = new THREE.Mesh(wheelGeo, wheelMat);
         wheel.rotation.x = Math.PI / 2;
-        wheel.position.set(x, -0.18, z);
-        this.add(wheel);
+        wheelGroup.add(wheel);
+
+        // Rayons croises pour rendre la rotation bien visible en mouvement
+        const spokeA = new THREE.Mesh(spokeGeo, spokeMat);
+        wheelGroup.add(spokeA);
+        const spokeB = new THREE.Mesh(spokeGeo, spokeMat);
+        spokeB.rotation.z = Math.PI / 2;
+        wheelGroup.add(spokeB);
 
         // Moyeu central dore / laiton
         const capGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.18, 12);
@@ -115,8 +131,10 @@ export class LocomotiveMesh extends THREE.Group {
         });
         const cap = new THREE.Mesh(capGeo, capMat);
         cap.rotation.x = Math.PI / 2;
-        cap.position.set(x, -0.18, z);
-        this.add(cap);
+        wheelGroup.add(cap);
+
+        this.wheels.push(wheelGroup);
+        this.add(wheelGroup);
       });
 
       // Essieu transversal
@@ -585,17 +603,28 @@ export class LocomotiveMesh extends THREE.Group {
   }
 
   /**
-   * Anime les bielles laterales pour donner vie a la motrice ferroviaire.
+   * Anime les roues motrices et les bielles laterales selon la vitesse du convoi.
    * @param {number} elapsedTime
    * @param {number} [speed=0] - Vitesse de translation du convoi.
+   * @param {number} [wheelPhase=0] - Angle cumule des roues.
    */
-  animate(elapsedTime, speed = 0) {
-    const timeScale = speed > 0.5 ? elapsedTime * 8.5 : elapsedTime * 3.5;
-    const offsetX = Math.sin(timeScale) * 0.05;
-    const offsetY = Math.cos(timeScale) * 0.03;
-    this.rods.forEach((rod) => {
-      rod.position.x = offsetX;
-      rod.position.y = -0.18 + offsetY;
+  animate(elapsedTime, speed = 0, wheelPhase = 0) {
+    this.wheels.forEach((wheelGroup) => {
+      wheelGroup.rotation.z = wheelPhase;
     });
+
+    if (speed > 0.05) {
+      const offsetX = Math.sin(wheelPhase) * 0.05;
+      const offsetY = Math.cos(wheelPhase) * 0.03;
+      this.rods.forEach((rod) => {
+        rod.position.x = offsetX;
+        rod.position.y = -0.18 + offsetY;
+      });
+    } else {
+      this.rods.forEach((rod) => {
+        rod.position.x = THREE.MathUtils.lerp(rod.position.x, 0, 0.12);
+        rod.position.y = THREE.MathUtils.lerp(rod.position.y, -0.18, 0.12);
+      });
+    }
   }
 }

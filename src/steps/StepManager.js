@@ -126,7 +126,13 @@ export class StepManager {
     this.currentStepNum = targetNum;
     this.currentStep = this.steps.get(targetNum) || null;
 
-    // 3. Entree dans la nouvelle etape
+    // 3. Regle le mouvement du convoi selon l'etape (en marche sur 0, 1, 2, 4 ; arret progressif sur 3, 5, 6, 7)
+    if (this.ctx.environment) {
+      const movingSteps = [0, 1, 2, 4];
+      this.ctx.environment.setSpeed(movingSteps.includes(targetNum) ? 4.5 : 0, false);
+    }
+
+    // 4. Entree dans la nouvelle etape
     if (this.currentStep && typeof this.currentStep.enter === 'function') {
       // Décale le centre optique de la caméra pour l'espace libre à droite du volet gauche (largeur 420px -> décalage +210px)
       if (this.ctx.cameraController) {

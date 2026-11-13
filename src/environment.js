@@ -169,7 +169,7 @@ export class Environment {
    * Traverses en bois mobiles recyclees en continu.
    */
   setupDynamicSleepers() {
-    this.sleeperCount = 150;
+    this.sleeperCount = 180;
     this.sleeperSpacing = 1.1;
     this.totalSleepersWidth = this.sleeperCount * this.sleeperSpacing;
     this.sleeperMinX = -this.totalSleepersWidth / 2;
@@ -495,7 +495,7 @@ export class Environment {
       });
 
       const x = this.tunnelMinX + i * this.tunnelSpacing + 45;
-      tunnelGroup.position.set(x, -0.5, 0);
+      tunnelGroup.position.set(x, -0.5, -11.5);
 
       this.group.add(tunnelGroup);
       this.tunnels.push(tunnelGroup);
@@ -507,8 +507,8 @@ export class Environment {
    * en respectant une zone d'exclusion stricte autour des rails, gares et tunnels.
    */
   setupTrees() {
-    this.treeCount = 40;
-    this.treeSpacing = 5.8;
+    this.treeCount = 36;
+    this.treeSpacing = 5.5;
     this.totalTreesWidth = this.treeCount * this.treeSpacing;
     this.treeMinX = -this.totalTreesWidth / 2;
     this.treeMaxX = this.totalTreesWidth / 2;
@@ -566,13 +566,13 @@ export class Environment {
       }
 
       const x = this.treeMinX + i * this.treeSpacing;
-      // Tous les arbres restent derrière la voie ferrée afin de ne jamais gêner la caméra devant les gares ou le train
-      let z = -5.8 - (i % 5) * 1.85;
+      // Tous les arbres restent derrière la voie ferrée afin de ne jamais gêner le train, les gares ou la caméra
+      let z = -7.2 - (i % 5) * 1.85;
 
       // Zone d'exclusion elargie pres des portails de tunnels pour eviter tout chevauchement
       const nearTunnel = this.tunnels.some((tun) => Math.abs(x - tun.position.x) < 4.5);
       if (nearTunnel) {
-        z = Math.min(z, -7.8);
+        z = Math.min(z, -14.5);
       }
 
       const scaleRand = 0.85 + (i % 5) * 0.14;
@@ -612,7 +612,7 @@ export class Environment {
       rockGroup.add(smallRock);
 
       const x = this.treeMinX + i * (this.totalTreesWidth / 16) + 2.4;
-      const z = -4.8 - (i % 4) * 2.1;
+      const z = -6.2 - (i % 4) * 1.9;
       rockGroup.position.set(x, -0.22, z);
       this.group.add(rockGroup);
       this.trees.push(rockGroup);

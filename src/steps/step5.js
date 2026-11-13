@@ -45,6 +45,9 @@ export const step5 = {
   difficulty: 1, // 1 ("0"), 2 ("00") ou 3 ("000") zéros requis
   isMining: false,
   isMined: false,
+  canAdvanceToCouple: false,
+  zoomOutTriggered: false,
+  minedAtTime: 0,
   wasCoupled: false,
   hasEverMined: false,
   candidateCounter: 0,
@@ -71,6 +74,9 @@ export const step5 = {
     this.difficulty = 1;
     this.isMining = false;
     this.isMined = false;
+    this.canAdvanceToCouple = false;
+    this.zoomOutTriggered = false;
+    this.minedAtTime = 0;
     this.hasEverMined = false;
     this.candidateCounter = 0;
     this.activeSpotId = null;
@@ -133,21 +139,48 @@ export const step5 = {
 
   /**
    * Recule la caméra en douceur lors de la validation pour montrer l'attelage avec le Wagon #1.
-   * @param {number} [duration=1.25]
+   * @param {number} [duration=0.8]
+   * @param {Function|null} [onComplete=null]
    */
-  focusCameraOnCoupling(duration = 1.25) {
+  focusCameraOnCoupling(duration = 0.8, onComplete = null) {
     const { cameraController } = this.ctx || {};
-    if (!cameraController) return;
+    if (!cameraController) {
+      if (typeof onComplete === 'function') onComplete();
+      return;
+    }
     cameraController.moveTo(
       new THREE.Vector3(6.25, 1.55, 5.45),
       new THREE.Vector3(6.15, 0.42, 0),
-      duration
+      duration,
+      onComplete
     );
+  },
+
+  /**
+   * Applique ou retire la couleur verte de verrouillage sur la molette du Wagon #2.
+   * @param {boolean} locked
+   */
+  setWheelLockedVisual(locked) {
+    const wagon2 = this.ctx?.trainConvoy?.getWagon(2);
+    if (!wagon2) return;
+    wagon2.nonceDialAccentColor = locked ? '#10b981' : '#f59e0b';
+    if (wagon2.nonceWheelMaterial) {
+      wagon2.nonceWheelMaterial.color.setHex(locked ? 0x065f46 : 0x78350f);
+      wagon2.nonceWheelMaterial.emissive.setHex(locked ? 0x059669 : 0x451a03);
+      wagon2.nonceWheelMaterial.emissiveIntensity = locked ? 0.55 : 0.25;
+    }
+    if (wagon2.nonceToothMaterial) {
+      wagon2.nonceToothMaterial.color.setHex(locked ? 0x10b981 : 0xf59e0b);
+      wagon2.nonceToothMaterial.emissive.setHex(locked ? 0x059669 : 0xb45309);
+      wagon2.nonceToothMaterial.emissiveIntensity = locked ? 0.65 : 0.35;
+    }
+    wagon2.renderPlates();
   },
 
   exit() {
     this.stopAnimationLoop();
     this.removeWheelPointerEvents();
+    this.setWheelLockedVisual(false);
 
     // Remet la Locomotive #0 et le Wagon #2 à leur état nominal en quittant l'étape
     const loco0 = this.ctx?.trainConvoy?.getWagon(0);
@@ -270,11 +303,15 @@ export const step5 = {
     this.attemptsDone = 0;
     this.miningProgress = 0;
     this.isMined = false;
+    this.canAdvanceToCouple = false;
+    this.zoomOutTriggered = false;
+    this.minedAtTime = 0;
     this.wasCoupled = false;
     this.isMining = false;
     this.couplerFlashAlpha = 0;
     this.targetWheelAngle = 0;
     this.currentWheelAngle = 0;
+    this.setWheelLockedVisual(false);
 
     const loco0 = trainConvoy.getWagon(0);
     if (loco0 && typeof loco0.updateStatus === 'function') {
@@ -418,11 +455,14 @@ export const step5 = {
 
     if (this.currentHash.startsWith(targetPrefix)) {
       this.isMined = true;
+      this.canAdvanceToCouple = false;
+      this.zoomOutTriggered = false;
+      this.minedAtTime = performance.now();
       this.hasEverMined = true;
       this.foundNonce = this.currentNonce;
       this.foundHash = this.currentHash;
       this.realAttempts = this.attemptsDone;
-      this.focusCameraOnCoupling(1.25);
+      this.setWheelLockedVisual(true);
     }
 
     wagon2.colorHash.set(hashToColorHex(this.currentHash));
@@ -591,6 +631,9 @@ export const step5 = {
     this.currentWheelAngle = this.targetWheelAngle - Math.PI * 0.35;
     this.isMining = false;
     this.isMined = true;
+    this.canAdvanceToCouple = false;
+    this.zoomOutTriggered = false;
+    this.minedAtTime = performance.now();
     this.hasEverMined = true;
 
     if (loco0 && typeof loco0.updateStatus === 'function') {
@@ -604,8 +647,8 @@ export const step5 = {
       wagon2.renderPlates();
     }
 
+    this.setWheelLockedVisual(true);
     this.updateLiveMiningDOM();
-    this.focusCameraOnCoupling(1.25);
     this.renderLeftPanel('.keypoint-card');
   },
 
@@ -700,11 +743,28 @@ export const step5 = {
         }
       }
 
+      // 1B. Séquence caméra après découverte du Nonce :
+      //     (1) Pause 0,4 s sur la molette verrouillée en vert
+      //     (2) Dézoom caméra (0,8 s) vers le convoi
+      //     (3) Déplacement et attelage du Wagon #2 une fois le dézoom terminé
+      if (this.isMined) {
+        const sinceMined = now - this.minedAtTime;
+        if (!this.zoomOutTriggered && sinceMined >= 400) {
+          this.zoomOutTriggered = true;
+          this.focusCameraOnCoupling(0.8, () => {
+            this.canAdvanceToCouple = true;
+          });
+        }
+        if (!this.canAdvanceToCouple && sinceMined >= 1300) {
+          this.canAdvanceToCouple = true;
+        }
+      }
+
       // 2. Position et échelle du Wagon #2 :
       //    - Apparition à distance (9.45 -> 8.55)
-      //    - Une fois miné, avance vers la gauche (8.55 -> 7.60) pour s'atteler au Wagon #1
+      //    - Une fois miné ET le dézoom terminé, avance vers la gauche (8.55 -> 7.60) pour s'atteler au Wagon #1
       if (wagon2) {
-        const targetX = this.isMined ? this.minedWagon2X : this.unminedWagon2X;
+        const targetX = this.isMined && this.canAdvanceToCouple ? this.minedWagon2X : this.unminedWagon2X;
         this.currentWagon2X = THREE.MathUtils.lerp(this.currentWagon2X, targetX, Math.min(1, dt * 6.5));
         this.currentWagon2Scale = THREE.MathUtils.lerp(this.currentWagon2Scale, 1.0, Math.min(1, dt * 9.0));
         wagon2.position.x = this.currentWagon2X;
@@ -720,7 +780,7 @@ export const step5 = {
           wagon2.nonceWheel.rotation.set(Math.PI / 2, this.currentWheelAngle, 0);
           const wheelMat = wagon2.nonceWheel.material;
           if (wheelMat) {
-            wheelMat.emissiveIntensity = this.isHoveringWheel ? 0.65 : 0.25;
+            wheelMat.emissiveIntensity = this.isMined ? 0.55 : (this.isHoveringWheel ? 0.65 : 0.25);
           }
         }
 
@@ -986,7 +1046,7 @@ export const step5 = {
         <article class="step-card context-card animate-fade">
           <h3 class="card-title">À quoi sert le minage (la molette du Nonce) ?</h3>
           <p>
-            Le minage est réalisé directement par les gares du réseau (via leurs ordinateurs). Chacune fait tourner sa molette pour tester des milliers de combinaisons jusqu'à trouver le code qui verrouille le wagon et empêche toute triche.
+            Dans une blockchain, il n'y a pas d'administrateur central pour valider les wagons : ce sont les ordinateurs des gares (les mineurs) qui s'en chargent. Ici, vous incarnez l'opérateur d'une gare : choisissez une difficulté, puis tournez la molette manuellement ou lancez le minage automatique pour tester des milliers de combinaisons jusqu'à trouver le code qui verrouille le wagon.
           </p>
           <div class="share-meaning-banner" style="border-left-color: #f59e0b; margin-top: 4px; margin-bottom: 10px;">
             L'objectif du minage n'est pas de créer de l'argent, mais de <strong>rendre la validation mathématiquement très coûteuse, ce qui empêche les tricheurs de réécrire l'historique</strong>.

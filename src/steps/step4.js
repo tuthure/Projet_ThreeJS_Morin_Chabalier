@@ -39,14 +39,14 @@ export const step4 = {
   // Sauvegarde de visibilité du décor linéaire pour isoler la carte du territoire
   _savedEnvVisibility: null,
 
-  // Coordonnées des 6 gares sur le territoire dégagé (Archipel du Réseau)
+  // Coordonnées des 6 gares de part et d'autre de la voie ferrée centrale (z = 0 libre pour le train en marche)
   stationCoords: [
-    { code: 'A', name: 'Gare A', region: 'Ouest', pos: new THREE.Vector3(-8.2, 0, 0.0) },
-    { code: 'B', name: 'Gare B', region: 'Nord-Ouest', pos: new THREE.Vector3(-2.6, 0, -4.8) },
+    { code: 'A', name: 'Gare A', region: 'Ouest', pos: new THREE.Vector3(-8.2, 0, -4.4) },
+    { code: 'B', name: 'Gare B', region: 'Nord-Ouest', pos: new THREE.Vector3(-2.6, 0, -5.0) },
     { code: 'C', name: 'Gare C', region: 'Sud-Ouest', pos: new THREE.Vector3(-2.6, 0, 4.8) },
-    { code: 'D', name: 'Gare D', region: 'Nord-Est', pos: new THREE.Vector3(3.6, 0, -4.8) },
+    { code: 'D', name: 'Gare D', region: 'Nord-Est', pos: new THREE.Vector3(3.6, 0, -5.0) },
     { code: 'E', name: 'Gare E', region: 'Sud-Est', pos: new THREE.Vector3(3.6, 0, 4.8) },
-    { code: 'F', name: 'Gare F', region: 'Est', pos: new THREE.Vector3(9.2, 0, 0.0) }
+    { code: 'F', name: 'Gare F', region: 'Est', pos: new THREE.Vector3(9.2, 0, 4.4) }
   ],
 
   // Liaisons primaires (flux direct de gauche à droite sans croisement)
@@ -86,14 +86,23 @@ export const step4 = {
       cameraController.setViewOffset(210);
     }
 
-    // Arrête le défilement et isole la zone "Territoire / Archipel Réseau" du train
+    // Maintient le convoi en mouvement continu et masque uniquement les gares de passage génériques
     if (environment) {
-      environment.setSpeed(0, true);
+      environment.setSpeed(4.5);
       this.isolateTerritoryEnvironment(true);
     }
 
-    if (trainConvoy && trainConvoy.group) {
-      trainConvoy.group.visible = false;
+    if (trainConvoy) {
+      trainConvoy.resetConvoy([
+        { lot: 'Fret #104', cargaison: "15 tonnes d'acier", quai: 'Quai A -> Quai B' },
+        { lot: 'Convoi express', cargaison: '40 palettes matériel', quai: 'Quai B -> Quai C' }
+      ]);
+      if (trainConvoy.group) {
+        trainConvoy.group.visible = true;
+      }
+      if (cameraController) {
+        cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
+      }
     }
 
     this.buildNetworkMesh();
@@ -147,7 +156,8 @@ export const step4 = {
     const env = this.ctx?.environment;
     if (!env) return;
 
-    const arrayKeys = ['trees', 'poles', 'passingStations', 'tunnels', 'sleepers', 'towns', 'steamParticles'];
+    // Masque uniquement les gares de passage du décor pour éviter toute collision avec les 6 gares du réseau
+    const arrayKeys = ['passingStations'];
     if (isolate) {
       this._savedEnvVisibility = [];
       arrayKeys.forEach((key) => {
@@ -157,15 +167,6 @@ export const step4 = {
           });
         }
       });
-      // Masque le ballast et les deux rails du convoi principal (situés entre y = -0.46 et y = -0.30)
-      if (env.group && Array.isArray(env.group.children)) {
-        env.group.children.forEach((child) => {
-          if (child.isMesh && child.position.y > -0.48 && child.position.y < -0.28) {
-            this._savedEnvVisibility.push({ child, visible: child.visible });
-            child.visible = false;
-          }
-        });
-      }
     } else if (this._savedEnvVisibility) {
       arrayKeys.forEach((key) => {
         if (Array.isArray(env[key])) {
@@ -173,9 +174,6 @@ export const step4 = {
             obj.visible = true;
           });
         }
-      });
-      this._savedEnvVisibility.forEach(({ child, visible }) => {
-        child.visible = visible;
       });
       this._savedEnvVisibility = null;
     }

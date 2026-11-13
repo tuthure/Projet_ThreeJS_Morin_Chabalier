@@ -58,6 +58,7 @@ export const step6 = {
   lotteryHaloGroup: null,
   lotteryHaloX: 7.5,
   lotteryHaloZ: 1.15,
+  powTickAccum: 0,
   validators: [],
   tooltipLayer: null,
 
@@ -66,6 +67,8 @@ export const step6 = {
       id: 'gare-a',
       name: 'Gare A',
       share: 50,
+      weight: 0.50,
+      cransPerSec: 10,
       probLabel: '50 %',
       powShareLabel: '50 % de puissance (10 crans/s)',
       posShareLabel: '50 jetons sur 100 (50 %)',
@@ -73,6 +76,11 @@ export const step6 = {
       tokens: 50,
       coinsMeshCount: 10,
       baseCrans: 24,
+      candidateCargo: {
+        lot: 'LOT-A-502',
+        cargaison: 'Turbines et bobines haute tension',
+        quai: 'Quai Nord A'
+      },
       x: 7.5,
       z: 1.15
     },
@@ -80,6 +88,8 @@ export const step6 = {
       id: 'gare-b',
       name: 'Gare B',
       share: 35,
+      weight: 0.35,
+      cransPerSec: 7,
       probLabel: '35 %',
       powShareLabel: '35 % de puissance (7 crans/s)',
       posShareLabel: '35 jetons sur 100 (35 %)',
@@ -87,6 +97,11 @@ export const step6 = {
       tokens: 35,
       coinsMeshCount: 7,
       baseCrans: 16,
+      candidateCargo: {
+        lot: 'LOT-B-318',
+        cargaison: 'Rails acier et signalisation ferroviaire',
+        quai: 'Quai Central B'
+      },
       x: 10.0,
       z: 1.15
     },
@@ -94,6 +109,8 @@ export const step6 = {
       id: 'gare-c',
       name: 'Gare C',
       share: 15,
+      weight: 0.15,
+      cransPerSec: 3,
       probLabel: '15 %',
       powShareLabel: '15 % de puissance (3 crans/s)',
       posShareLabel: '15 jetons sur 100 (15 %)',
@@ -101,6 +118,11 @@ export const step6 = {
       tokens: 15,
       coinsMeshCount: 3,
       baseCrans: 8,
+      candidateCargo: {
+        lot: 'LOT-C-149',
+        cargaison: 'Batteries industrielles et transformateurs',
+        quai: 'Quai Sud C'
+      },
       x: 12.5,
       z: 1.15
     }
@@ -215,7 +237,7 @@ export const step6 = {
    * une graine SHA-256 telle que le vrai Nonce gagnant du Wagon #2 soit exactement targetWinningNonce.
    * Si le wagon précédent était déjà attelé, le fait disparaître et fait arriver un nouveau wagon de la droite.
    */
-  prepareCandidateWagon(animateSpawn = false, targetWinningNonce = 18) {
+  prepareCandidateWagon(animateSpawn = false, targetWinningNonce = 18, stationIndex = null) {
     const { trainConvoy } = this.ctx;
     if (!trainConvoy || !trainConvoy.blockchain) return;
 
@@ -228,12 +250,47 @@ export const step6 = {
 
     this.roundCounter += 1;
 
+    if (stationIndex !== null && this.validatorData[stationIndex]?.candidateCargo) {
+      block2.data = { ...this.validatorData[stationIndex].candidateCargo };
+    } else {
+      block2.data = {
+        lot: `CANDIDAT-${this.roundCounter}`,
+        cargaison: 'Chargement en attente de validation',
+        quai: 'Reseau'
+      };
+    }
+
     block0.mineBlock(1);
     block1.previousHash = block0.hash;
     block1.mineBlock(1);
     block2.previousHash = block1.hash;
 
-    // Cherche une graine où Nonce = 0 ne commence pas par '0' et Nonce = targetWinningNonce commence par '0'
+    this.solveCandidateSaltForNonce(block2, targetWinningNonce);
+
+    // Place le Wagon #2 à son état initial non miné (Nonce = 0)
+    block2.nonce = 0;
+    block2.hash = block2.calculateHash();
+    trainConvoy.sync();
+
+    if (wagon2.nonceWheel) {
+      wagon2.nonceWheel.rotation.set(Math.PI / 2, 0, 0);
+    }
+
+    if (animateSpawn) {
+      this.currentWagon2X = this.spawnWagon2X;
+      this.currentWagon2Scale = 0.01;
+    } else {
+      this.currentWagon2X = this.unminedWagon2X;
+      this.currentWagon2Scale = 1.0;
+    }
+    wagon2.position.x = this.currentWagon2X;
+    wagon2.scale.setScalar(this.currentWagon2Scale);
+  },
+
+  /**
+   * Calcule une graine SHA-256 pour que block2 ait un hash commençant par '0' exactement à targetWinningNonce.
+   */
+  solveCandidateSaltForNonce(block2, targetWinningNonce) {
     let saltTry = 0;
     let foundHash = '';
     do {
@@ -257,25 +314,20 @@ export const step6 = {
 
     this.winningNonce = targetWinningNonce;
     this.winningHash = foundHash;
+  },
 
-    // Place le Wagon #2 à son état initial non miné (Nonce = 0)
-    block2.nonce = 0;
-    block2.hash = block2.calculateHash();
-    trainConvoy.sync();
+  /**
+   * Assigne au Wagon #2 le chargement propre à la gare gagnante et valide son SHA-256 au Nonce gagnant.
+   */
+  finalizeCandidateBlockForWinner(stationIndex, winningCrans) {
+    const block2 = this.ctx?.trainConvoy?.blockchain?.chain?.[2];
+    if (!block2) return;
 
-    if (wagon2.nonceWheel) {
-      wagon2.nonceWheel.rotation.set(Math.PI / 2, 0, 0);
+    const cargo = this.validatorData[stationIndex]?.candidateCargo;
+    if (cargo) {
+      block2.data = { ...cargo };
     }
-
-    if (animateSpawn) {
-      this.currentWagon2X = this.spawnWagon2X;
-      this.currentWagon2Scale = 0.01;
-    } else {
-      this.currentWagon2X = this.unminedWagon2X;
-      this.currentWagon2Scale = 1.0;
-    }
-    wagon2.position.x = this.currentWagon2X;
-    wagon2.scale.setScalar(this.currentWagon2Scale);
+    this.solveCandidateSaltForNonce(block2, winningCrans);
   },
 
   /**
@@ -899,36 +951,42 @@ export const step6 = {
     const wasAlreadyAttached = this.simState === 'done' || this.wasCoupled;
     this.wasCoupled = false;
     this.couplerFlashAlpha = 0;
+    this.powTickAccum = 0;
 
-    this.winnerIndex = this.pickWeightedWinner();
-
-    // Calcule le nombre de crans de chaque gare (en PoW, proportionnel à leur vitesse 10 / 7 / 3 crans/s)
-    const jitter = 0.9 + Math.random() * 0.25;
-    this.validators.forEach((v, idx) => {
-      v.currentCrans = 0;
-      v.currentAngle = 0;
-      if (this.mode === 'pow') {
-        v.targetCrans = Math.max(6, Math.round(v.data.baseCrans * jitter));
+    if (this.mode === 'pow') {
+      // En PoW : course probabiliste réelle à chaque cran (vitesses 10 / 7 / 3 crans/s => 50 % / 35 % / 15 %)
+      this.winnerIndex = 0;
+      this.validators.forEach((v) => {
+        v.cranFloat = 0;
+        v.currentCrans = 0;
+        v.targetCrans = 0;
+        v.currentAngle = 0;
         v.wheelScale = 1;
-      } else {
+        v.currentHash = this.randomRejectedHash();
+        if (v.wheelMesh) v.wheelMesh.rotation.set(Math.PI / 2, 0, 0);
+        this.renderStationWheelDial(v.dialCanvas, v.dialTex, 0, '#f59e0b');
+      });
+
+      this.prepareCandidateWagon(wasAlreadyAttached, 18, null);
+      this.simState = 'running';
+      this.simTimer = 0;
+    } else {
+      this.winnerIndex = this.pickWeightedWinner();
+      this.validators.forEach((v, idx) => {
+        v.cranFloat = 0;
+        v.currentCrans = 0;
+        v.currentAngle = 0;
         // En PoS, seule la gare tirée au sort tournera sa molette (entre 9 et 15 crans)
         v.targetCrans = idx === this.winnerIndex ? 9 + Math.floor(Math.random() * 7) : 0;
         v.wheelScale = 0.01;
-      }
-      v.currentHash = this.randomRejectedHash();
-      if (v.wheelMesh) v.wheelMesh.rotation.set(Math.PI / 2, 0, 0);
-      this.renderStationWheelDial(v.dialCanvas, v.dialTex, 0, '#f59e0b');
-    });
+        v.currentHash = this.randomRejectedHash();
+        if (v.wheelMesh) v.wheelMesh.rotation.set(Math.PI / 2, 0, 0);
+        this.renderStationWheelDial(v.dialCanvas, v.dialTex, 0, '#f59e0b');
+      });
 
-    // Le vrai Nonce gagnant du Wagon #2 est exactement le nombre de crans de la gare gagnante
-    const targetWinningNonce = this.validators[this.winnerIndex].targetCrans;
-    this.prepareCandidateWagon(wasAlreadyAttached, targetWinningNonce);
+      const targetWinningNonce = this.validators[this.winnerIndex].targetCrans;
+      this.prepareCandidateWagon(wasAlreadyAttached, targetWinningNonce, this.winnerIndex);
 
-    if (this.mode === 'pow') {
-      this.simState = 'running';
-      this.simTimer = 0;
-      this.simDuration = 1.65;
-    } else {
       this.simState = 'lottery';
       this.simTimer = 0;
       this.simDuration = 1.75;
@@ -1167,37 +1225,61 @@ export const step6 = {
       const { trainConvoy, camera } = this.ctx;
       const wagon2 = trainConvoy?.getWagon(2);
 
-      // 1A. Mode PoW : Course simultanée des 3 molettes à vitesses différentes (10 / 7 / 3 crans/s)
+      // 1A. Mode PoW : Course simultanée à probabilités réelles (10 / 7 / 3 crans/s => 50 / 35 / 15 %)
       if (this.simState === 'running') {
         this.simTimer += dt;
-        const progress = Math.min(this.simTimer / this.simDuration, 1.0);
+        const stepDt = 0.06;
+        this.powTickAccum += dt;
+        let winIdx = -1;
 
-        if (progress < 1.0) {
+        while (this.powTickAccum >= stepDt && winIdx === -1) {
+          this.powTickAccum -= stepDt;
+
+          const incrementedIndices = [];
           this.validators.forEach((v, idx) => {
-            const newCrans = Math.max(1, Math.floor(v.targetCrans * progress));
-            if (newCrans !== v.currentCrans) {
-              v.currentCrans = newCrans;
+            v.cranFloat = (v.cranFloat || 0) + v.data.cransPerSec * stepDt;
+            const nextCrans = Math.floor(v.cranFloat);
+            if (nextCrans > v.currentCrans) {
+              v.currentCrans = nextCrans;
               v.currentHash = this.randomRejectedHash();
               this.renderStationWheelDial(v.dialCanvas, v.dialTex, v.currentCrans, '#f59e0b');
-              if (idx === this.winnerIndex) {
+              incrementedIndices.push(idx);
+              if (idx === 0) {
                 this.syncWagon2WithNonce(v.currentCrans, false);
               }
             }
-            const targetAngle = v.currentCrans * (Math.PI / 4);
-            v.currentAngle = THREE.MathUtils.lerp(v.currentAngle, targetAngle, Math.min(1, dt * 18));
-            if (v.wheelMesh) {
-              v.wheelMesh.rotation.set(Math.PI / 2, v.currentAngle, 0);
-            }
           });
-          this.updateTooltipsDOM();
-        } else {
-          // Fin de la course PoW : la gare gagnante atteint winningNonce et met à jour le Wagon #2 avec ce Nonce exact
+
+          // Tirage aléatoire indépendant à chaque nouveau cran après 0.75 s de montée en cadence
+          if (this.simTimer >= 0.75 && incrementedIndices.length > 0) {
+            for (let i = incrementedIndices.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [incrementedIndices[i], incrementedIndices[j]] = [incrementedIndices[j], incrementedIndices[i]];
+            }
+            for (const idx of incrementedIndices) {
+              if (Math.random() < 0.048) {
+                winIdx = idx;
+                break;
+              }
+            }
+          }
+
+          if (winIdx === -1 && this.simTimer >= 4.2) {
+            winIdx = this.pickWeightedWinner();
+          }
+        }
+
+        if (winIdx !== -1) {
+          this.winnerIndex = winIdx;
+          const winValidator = this.validators[winIdx];
+          const winCrans = Math.max(1, winValidator.currentCrans);
+          this.finalizeCandidateBlockForWinner(winIdx, winCrans);
+
           this.simState = 'done';
           this.hasTestedPoW = true;
           const shortWinHash = `${this.winningHash.substring(0, 6)}...`;
 
           this.validators.forEach((v, idx) => {
-            v.currentCrans = v.targetCrans;
             const isWinner = idx === this.winnerIndex;
             v.currentHash = isWinner ? shortWinHash : this.randomRejectedHash();
             this.renderStationWheelDial(
@@ -1215,6 +1297,15 @@ export const step6 = {
           this.applyModeVisuals();
           this.updateTooltipsDOM();
           this.renderLeftPanel('#s6-result-box');
+        } else {
+          this.validators.forEach((v) => {
+            const targetAngle = v.currentCrans * (Math.PI / 4);
+            v.currentAngle = THREE.MathUtils.lerp(v.currentAngle, targetAngle, Math.min(1, dt * 18));
+            if (v.wheelMesh) {
+              v.wheelMesh.rotation.set(Math.PI / 2, v.currentAngle, 0);
+            }
+          });
+          this.updateTooltipsDOM();
         }
       }
 
@@ -1483,6 +1574,9 @@ export const step6 = {
         <div class="share-meaning-banner">
           Chaque gare abrite une salle de serveurs qui vérifie et valide les transactions du réseau. Plus une gare possède d'ordinateurs puissants, plus sa molette teste de combinaisons à la seconde pour trouver le bon Nonce (<strong>50 %, 35 %, 15 %</strong>).
         </div>
+        <div class="panel-hint-row">
+          En vrai, chaque gare compose son propre wagon candidat avec des cargaisons (transactions) légèrement différentes : leurs calculs SHA-256 produisent donc des empreintes et des Nonces différents. La gare qui trouve un hash valide en premier accroche son wagon.
+        </div>
       `
       : `
         <div class="share-meaning-banner">
@@ -1498,16 +1592,17 @@ export const step6 = {
         </div>
       `;
 
+    const winnerLot = winner?.data?.candidateCargo?.lot || 'Wagon #2';
     const resultHTML = isDone
       ? isPoW
         ? `
           <p style="margin: 10px 0 0 0;">
-            La <strong>${winner.name}</strong> a trouvé le <strong>Nonce #${this.winningNonce}</strong> en premier et accroche le Wagon #2. Les 2 autres gares ont dépensé de l'électricité pour rien...
+            La <strong>${winner.name}</strong> a trouvé le <strong>Nonce #${this.winningNonce}</strong> en premier et accroche son wagon (${winnerLot}). Les 2 autres gares ont dépensé de l'électricité pour rien...
           </p>
         `
         : `
           <p style="margin: 10px 0 0 0;">
-            La <strong>${winner.name}</strong> a été tirée au sort : seule sa molette a tourné jusqu'au <strong>Nonce #${this.winningNonce}</strong>. Les 2 autres gares sont restées au repos sans gaspiller d'énergie.
+            La <strong>${winner.name}</strong> a été tirée au sort : seule sa molette a tourné jusqu'au <strong>Nonce #${this.winningNonce}</strong> pour atteler ${winnerLot}. Les 2 autres gares sont restées au repos sans gaspiller d'énergie.
           </p>
         `
       : '';

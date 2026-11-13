@@ -71,6 +71,7 @@ export class WagonMesh extends THREE.Group {
     this.containerMaterials = [];
     this.glassMaterials = [];
     this.edgeMaterials = [];
+    this.wheels = [];
 
     // Badges textures et canevas
     this.badges = {
@@ -165,11 +166,26 @@ export class WagonMesh extends THREE.Group {
       wheelPositions.push([x, -0.18, -0.66]);
     });
 
+    const spokeGeo = new THREE.BoxGeometry(0.40, 0.03, 0.15);
+    const spokeMat = new THREE.MeshStandardMaterial({
+      color: 0x94a3b8,
+      metalness: 0.9,
+      roughness: 0.25
+    });
+
     wheelPositions.forEach(([x, y, z]) => {
+      const wheelGroup = new THREE.Group();
+      wheelGroup.position.set(x, y, z);
+
       const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
       wheel.rotation.x = Math.PI / 2;
-      wheel.position.set(x, y, z);
-      this.add(wheel);
+      wheelGroup.add(wheel);
+
+      const spokeA = new THREE.Mesh(spokeGeo, spokeMat);
+      wheelGroup.add(spokeA);
+      const spokeB = new THREE.Mesh(spokeGeo, spokeMat);
+      spokeB.rotation.z = Math.PI / 2;
+      wheelGroup.add(spokeB);
 
       // Boite d'essieu metallique (moyeu)
       const capGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.18, 12);
@@ -180,8 +196,10 @@ export class WagonMesh extends THREE.Group {
       });
       const cap = new THREE.Mesh(capGeo, capMat);
       cap.rotation.x = Math.PI / 2;
-      cap.position.set(x, y, z);
-      this.add(cap);
+      wheelGroup.add(cap);
+
+      this.wheels.push(wheelGroup);
+      this.add(wheelGroup);
     });
 
     // Essieux transversaux reliant les paires de roues
@@ -198,6 +216,16 @@ export class WagonMesh extends THREE.Group {
       axle.position.set(x, -0.18, 0);
       this.add(axle);
     });
+  }
+
+  /**
+   * Fait tourner les 4 roues du wagon en synchronisation avec le convoi.
+   * @param {number} wheelPhase
+   */
+  animateWheels(wheelPhase) {
+    for (let i = 0; i < this.wheels.length; i++) {
+      this.wheels[i].rotation.z = wheelPhase;
+    }
   }
 
   /**

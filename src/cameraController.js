@@ -31,6 +31,7 @@ export class CameraController {
 
     this.startTarget = new THREE.Vector3();
     this.targetTarget = new THREE.Vector3();
+    this.onTransitionComplete = null;
 
     // Décalage visuel horizontal (en pixels) pour centrer la scène dans l'espace utile libre (ex: à droite du volet gauche)
     this.viewOffsetX = 0;
@@ -73,7 +74,7 @@ export class CameraController {
   /**
    * Declenche une transition fluide vers une nouvelle position et cible
    */
-  moveTo(position, target, duration = 1.2) {
+  moveTo(position, target, duration = 1.2, onComplete = null) {
     this.startPosition.copy(this.camera.position);
     this.targetPosition.copy(position);
 
@@ -82,6 +83,7 @@ export class CameraController {
 
     this.transitionTime = 0;
     this.transitionDuration = Math.max(0.2, duration);
+    this.onTransitionComplete = typeof onComplete === 'function' ? onComplete : null;
     this.isTransitioning = true;
     this.controls.enabled = false;
   }
@@ -119,6 +121,11 @@ export class CameraController {
       if (progress >= 1.0) {
         this.isTransitioning = false;
         this.controls.enabled = true;
+        if (this.onTransitionComplete) {
+          const cb = this.onTransitionComplete;
+          this.onTransitionComplete = null;
+          cb();
+        }
       }
     }
 

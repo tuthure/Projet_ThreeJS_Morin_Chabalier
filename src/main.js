@@ -164,8 +164,8 @@ function animate() {
   // Mise a jour du decor ferroviaire defilant
   environment.update(delta, elapsedTime);
 
-  // Suspension et legere oscillation des wagons adaptee a la vitesse
-  trainConvoy.animateSuspension(elapsedTime, environment.currentSpeed);
+  // Suspension et rotation des roues adaptees a la vitesse du convoi
+  trainConvoy.animateSuspension(elapsedTime, environment.currentSpeed, delta);
 
   // Rendu WebGL
   renderer.render(scene, camera);
