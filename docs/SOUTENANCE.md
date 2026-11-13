@@ -70,8 +70,7 @@
 | Scénario d'incident | Parade immédiate |
 |:---|:---|
 | Coupure Wi-Fi ou GitHub Pages inaccessible | Bascule immédiate sur le serveur local préparé en amont (`npm run preview` sur le build `dist/` déjà compilé, ou `npm run dev`), accessible hors-ligne sur `http://localhost:4173`. |
-| Problème WebGL ou pilote graphique sur le poste de la salle | Connexion directe de l'un de nos ordinateurs portables en HDMI (testé à 60 FPS). Si le poste fixe est imposé et que WebGL échoue, bascule sur la vidéo de démonstration pré-enregistrée (capture complète des étapes 0 à 7 en 1080p sans son, commentée en direct) et sur les captures d'écran intégrées au diaporama. |
-| Ralentissement ponctuel ou perte de contexte WebGL | Rechargement de l'onglet et accès direct à l'étape en cours via la barre de navigation inférieure (chaque étape 0 à 7 est chargeable indépendamment sans refaire tout le parcours). |
+| Problème WebGL ou autre | Connexion directe de l'un de nos ordinateurs en HDMI. On lance la vidéo de démonstration pré-enregistrée (capture complète des étapes 0 à 7 en 1080p sans son) et on la commente/met sur pause en direct. |
 
 ---
 
