@@ -126,9 +126,9 @@ export class StepManager {
     this.currentStepNum = targetNum;
     this.currentStep = this.steps.get(targetNum) || null;
 
-    // 3. Regle le mouvement du convoi selon l'etape (en marche sur 0, 1, 2, 4 ; arret progressif sur 3, 5, 6, 7)
+    // 3. Regle le mouvement du convoi selon l'etape (en marche sur 0, 1, 2, 4, 6 ; arret progressif sur 3, 5, 7)
     if (this.ctx.environment) {
-      const movingSteps = [0, 1, 2, 4];
+      const movingSteps = [0, 1, 2, 4, 6];
       this.ctx.environment.setSpeed(movingSteps.includes(targetNum) ? 4.5 : 0, false);
     }
 
