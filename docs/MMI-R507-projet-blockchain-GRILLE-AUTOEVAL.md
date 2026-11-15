@@ -83,7 +83,7 @@
 | 5.1 | Démo répétée et plan B prévu. | 2 | Plan B opérationnel (build statique local, captures d'écran et vidéo de secours prêts) ; la répétition générale chronométrée (#25) reste à réaliser le 19 novembre à 9h30 avant le passage oral. |
 | 5.2 | Chaque membre justifie tous les choix. | 4 | Chaque membre justifie tous les choix en s'appuyant sur `CHOIX-MODELISATION.md` et `CADRAGE.md`, relus et maîtrisés par le binôme. |
 | 5.3 | Chaque membre explique les 7 notions. | 4 | Chaque membre maîtrise et explique les 7 notions obligatoires, l'épilogue cryptomonnaie ainsi que l'architecture du code Three.js. |
-| 5.4 | Bilan du projet appuyé sur des preuves. | 4 | Bilan appuyé sur des preuves concrètes : historique Git, board Kanban, fiches de suivi (`SEMAINE-01.md` à `SEMAINE-08.md`), vrai calcul SHA-256 et 6 retours de tests utilisateurs documentés sur 2 phases. |
+| 5.4 | Bilan du projet appuyé sur des preuves. | 4 | Bilan appuyé sur des preuves concrètes : historique Git, board Kanban, fiches de suivi (`SEMAINE-01.md` à `SEMAINE-06.md`), vrai calcul SHA-256 et 6 retours de tests utilisateurs documentés sur 2 phases. |
 | 5.5 | Temps de parole réparti dans les 20 minutes imparties. | 3 | Temps de parole réparti de manière équilibrée dans les 20 minutes imparties selon le plan minuté `SOUTENANCE.md`. |
 | 5.6 | Support dans le temps imparti. | 3 | Le support diaporama et la navigation directe par étapes 0 à 8 sont calibrés pour respecter les 20 minutes, sous réserve du chronométrage final lors de la répétition générale (#25). |
 
@@ -109,7 +109,7 @@ Note provisoire globale (avant passage de la soutenance) = `4,11 + 4,29 + 3,20 +
 | Nom / prénom | Contribution, apprentissages, usage de l'IA, difficulté pour la soutenance |
 |:---|:---|
 | Arthur Morin | Architecture technique Three.js, modélisation procédurale 3D (locomotive, wagons vitrés, archipel de 6 gares, aiguillage en Y), raycasting 3D, animations des étapes 0 à 8 et intégration Vite. |
-| Alban Chabalier | Gestion de projet (GitHub Projects, suivis hebdomadaires S1 à S8 dont `SEMAINE-08.md`), conception UX/UI, scénarisation pédagogique, rédaction de `CADRAGE.md`, `CHOIX-MODELISATION.md` et du `README.md`, conduite des tests utilisateurs (6 testeurs sur 2 phases) et synthèse `PROTOCOLE-TESTS.md`. |
+| Alban Chabalier | Gestion de projet (GitHub Projects, suivis hebdomadaires S1 à S6 dont `SEMAINE-06.md`), conception UX/UI, scénarisation pédagogique, rédaction de `CADRAGE.md`, `CHOIX-MODELISATION.md` et du `README.md`, conduite des tests utilisateurs (6 testeurs sur 2 phases) et synthèse `PROTOCOLE-TESTS.md`. |
 
 | Les 3 actions de clôture avant la soutenance | Responsable | Échéance |
 |:---|:---|:---|

@@ -16,7 +16,7 @@ Ce document constitue le livrable officiel de cadrage et de justification des ch
 | Lien vers la démo en ligne | https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/ |
 | Lien vers GitHub Projects | https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier/projects |
 | Lien du formulaire de test | https://forms.gle/SrQx1cJVSrnMt7sc9 |
-| Livrables associés | [`PROTOCOLE-TESTS.md`](PROTOCOLE-TESTS.md) · [`SOUTENANCE.md`](SOUTENANCE.md) · [`MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md`](MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md) · [`docs/suivi-hebdo/`](suivi-hebdo/) |
+| Livrables associés | [`PROTOCOLE-TESTS.md`](PROTOCOLE-TESTS.md) · [`SOUTENANCE.md`](SOUTENANCE.md) · [`MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md`](MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md) · [`docs/suivi/`](suivi/) |
 | Version et date de mise à jour | v1.1 — 13/11/2026 (densification complète des 7 fiches notions, synthèse des tests utilisateurs à 4,25/5 et bibliographie primaire annotée) |
 
 ---

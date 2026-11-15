@@ -75,7 +75,7 @@ Le détail des justifications visuelles, des alternatives écartées et des limi
 ## 7. Organisation et suivi sur le Kanban
 
 - **Branches et commits** : développement sur `main` avec historique linéaire lisible et messages conventionnels sans emoji.
-- **Fiches hebdomadaires** : bilans rédigés et archivés dans [`docs/suivi-hebdo/`](suivi-hebdo/) (`SEMAINE-01.md` à `SEMAINE-05.md`).
+- **Fiches hebdomadaires** : bilans rédigés et archivés dans [`docs/suivi/`](suivi/) (`SEMAINE-01.md` à `SEMAINE-06.md`).
 - **État actualisé du board GitHub Projects** :
   - **Terminé (`CLOSED`)** : cadrage initial, initialisation Vite/Three.js, notions 1 à 7 (y compris l'issue `#13 — Notion 7`), protocole et sessions 1 et 2 de tests utilisateurs (`#17`, `#18`), mesures de performance (`#19`), finalisation de `CHOIX-MODELISATION.md` (`#20`), `README.md` (`#21`), `GRILLE-AUTOEVAL.md` (`#22`), préparation du support de soutenance (`#23`) et réalisation de la vidéo de démonstration de secours (`#24`).
   - **À faire (`OPEN`)** : uniquement l'issue `#25` (*Répétition générale de la soutenance*), programmée le 19 novembre 2026 à 9h30 avant le passage devant le jury.

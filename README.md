@@ -32,7 +32,7 @@ Chaque membre maîtrise l'ensemble des 7 notions obligatoires et l'architecture 
 | Protocole et bilan des tests | [`docs/PROTOCOLE-TESTS.md`](docs/PROTOCOLE-TESTS.md) | Questionnaire complet, résultats détaillés des 4 testeurs externes (4,25 / 5) et 5 correctifs appliqués. |
 | Plan de soutenance | [`docs/SOUTENANCE.md`](docs/SOUTENANCE.md) | Répartition minutée (20 min), script de démo en direct (7 min), plan B et réponses aux questions du jury. |
 | Grille d'auto-évaluation | [`docs/MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md`](docs/MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md) | Auto-évaluation factuelle critère par critère avant soutenance. |
-| Fiches de suivi hebdomadaire | [`docs/suivi-hebdo/`](docs/suivi-hebdo/) | Suivi hebdomadaire de la progression, des commits et des décisions (`SEMAINE-01.md` à `SEMAINE-05.md`). |
+| Fiches de suivi hebdomadaire | [`docs/suivi/`](docs/suivi/) | Suivi hebdomadaire de la progression, des commits et des décisions (`SEMAINE-01.md` à `SEMAINE-06.md`). |
 
 ---
 
@@ -66,7 +66,7 @@ Le dispositif s'adresse à un **utilisateur non initié** découvrant l'applicat
 
 ## Gestion de projet, calendrier et jalons
 
-Le suivi est organisé sur **GitHub Projects** avec un tableau Kanban à 5 colonnes (`Backlog`, `À faire`, `En cours`, `À vérifier`, `Terminé`), des issues assignées liées aux commits et des bilans hebdomadaires dans [`docs/suivi-hebdo/`](docs/suivi-hebdo/).
+Le suivi est organisé sur **GitHub Projects** avec un tableau Kanban à 5 colonnes (`Backlog`, `À faire`, `En cours`, `À vérifier`, `Terminé`), des issues assignées liées aux commits et des bilans hebdomadaires dans [`docs/suivi/`](docs/suivi/).
 
 | Jalon / échéance | Date (2026) | Attendu |
 |:---|:---|:---|
@@ -112,7 +112,7 @@ Projet_ThreeJS_Morin_Chabalier/
 │   ├── MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md      # Auto-évaluation avant soutenance
 │   ├── PROTOCOLE-TESTS.md                # Protocole, résultats (4 testeurs) et correctifs
 │   ├── SOUTENANCE.md                     # Plan minuté (20 min), script démo et plan B
-│   └── suivi-hebdo/                      # Fiches hebdomadaires SEMAINE-01.md à SEMAINE-05.md
+│   └── suivi/                            # Fiches hebdomadaires SEMAINE-01.md à SEMAINE-06.md
 ├── src/
 │   ├── main.js                           # Scène WebGL, éclairage, boucle FPS et orchestration
 │   ├── welcome.js                        # Écran d'accueil introductif
