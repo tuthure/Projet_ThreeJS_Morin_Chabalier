@@ -36,7 +36,8 @@ export const step8 = {
       color: '#10b981',
       title: 'Gares = Nœuds / Mineurs du réseau',
       desc: 'Chaque gare correspond à un serveur du réseau pair-à-pair : il stocke une copie complète du registre et vérifie chaque nouveau bloc.',
-      midPos: new THREE.Vector3(0.15, 2.95, -2.05)
+      midPos: new THREE.Vector3(0.25, 3.15, -3.4),
+      below: true
     },
     {
       id: 'block',
@@ -44,7 +45,7 @@ export const step8 = {
       color: '#38bdf8',
       title: 'Wagon = Bloc numérique',
       desc: 'Un wagon scellé joue le même rôle qu’un bloc informatique : un conteneur transparent qui regroupe un lot horodaté d’opérations.',
-      midPos: new THREE.Vector3(0.25, 2.15, 0.85)
+      midPos: new THREE.Vector3(0.75, 2.72, 1.6)
     },
     {
       id: 'tx',
@@ -52,7 +53,7 @@ export const step8 = {
       color: '#facc15',
       title: 'Caisses = Transactions / Virements',
       desc: 'À l’intérieur, les caisses de marchandises laissent place à des jetons numériques et des lignes de virements (ex. Bitcoin ou Ethereum).',
-      midPos: new THREE.Vector3(0.35, 0.95, 1.35)
+      midPos: new THREE.Vector3(0.75, 1.38, 1.85)
     },
     {
       id: 'hash',
@@ -60,8 +61,7 @@ export const step8 = {
       color: '#a855f7',
       title: 'Attelage SHA-256 = Chaînage cryptographique',
       desc: 'Comme le crochet magnétique entre deux wagons, l’empreinte SHA-256 soude mathématiquement chaque bloc au bloc précédent.',
-      midPos: new THREE.Vector3(-0.9, -0.05, 1.45),
-      below: true
+      midPos: new THREE.Vector3(-0.35, -0.55, 2.75)
     }
   ],
 
@@ -82,7 +82,7 @@ export const step8 = {
     this.activePairId = null;
 
     if (cameraController) {
-      cameraController.setViewOffset(210);
+      cameraController.setViewOffset(235);
     }
 
     if (environment) {
@@ -107,8 +107,8 @@ export const step8 = {
 
     if (cameraController) {
       cameraController.moveTo(
-        new THREE.Vector3(0.35, 3.85, 10.9),
-        new THREE.Vector3(0.25, 0.95, -0.35),
+        new THREE.Vector3(0.0, 6.4, 11.6),
+        new THREE.Vector3(0.0, 0.75, -0.6),
         1.2
       );
     }
@@ -275,8 +275,8 @@ export const step8 = {
     // =========================================================================
     // 1. CÔTÉ GAUCHE : UNIVERS FERROVIAIRE (Wagon + Attelage + Petite gare)
     // =========================================================================
-    const trackZ = 0.85;
-    const wagonX = -2.25;
+    const trackZ = 1.6;
+    const wagonX = -2.1;
 
     // Socle discret côté ferroviaire
     const railBaseMat = new THREE.MeshStandardMaterial({
@@ -284,9 +284,9 @@ export const step8 = {
       roughness: 0.85,
       metalness: 0.1
     });
-    const ballastGeo = new THREE.BoxGeometry(5.2, 0.08, 1.35);
+    const ballastGeo = new THREE.BoxGeometry(4.4, 0.08, 1.35);
     const ballast = new THREE.Mesh(ballastGeo, railBaseMat);
-    ballast.position.set(-2.9, -0.02, trackZ);
+    ballast.position.set(-2.75, -0.02, trackZ);
     this.comparisonGroup.add(ballast);
 
     const railMat = new THREE.MeshStandardMaterial({
@@ -295,14 +295,14 @@ export const step8 = {
       roughness: 0.25
     });
     const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.9 });
-    for (let sx = -5.2; sx <= -0.6; sx += 0.45) {
+    for (let sx = -4.75; sx <= -0.75; sx += 0.45) {
       const sleeper = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.05, 1.05), sleeperMat);
       sleeper.position.set(sx, 0.03, trackZ);
       this.comparisonGroup.add(sleeper);
     }
     [-0.36, 0.36].forEach((rz) => {
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(5.1, 0.05, 0.07), railMat);
-      rail.position.set(-2.9, 0.07, trackZ + rz);
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(4.3, 0.05, 0.07), railMat);
+      rail.position.set(-2.75, 0.07, trackZ + rz);
       this.comparisonGroup.add(rail);
     });
 
@@ -333,15 +333,15 @@ export const step8 = {
 
     // Module d'extrémité du wagon précédent (#1) à gauche pour illustrer l'attelage magnétique SHA-256
     const prevEndGroup = new THREE.Group();
-    prevEndGroup.position.set(-4.75, 0.37, trackZ);
+    prevEndGroup.position.set(-4.35, 0.37, trackZ);
     const prevStub = new THREE.Mesh(
-      new THREE.BoxGeometry(0.95, 0.72, 1.02),
+      new THREE.BoxGeometry(0.85, 0.72, 1.02),
       new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.65, metalness: 0.3 })
     );
     prevStub.position.set(0, 0.42, 0);
     prevEndGroup.add(prevStub);
     const prevChassis = new THREE.Mesh(
-      new THREE.BoxGeometry(1.05, 0.16, 1.12),
+      new THREE.BoxGeometry(0.95, 0.16, 1.12),
       new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.7, metalness: 0.4 })
     );
     prevChassis.position.set(0, 0.02, 0);
@@ -355,7 +355,7 @@ export const step8 = {
       })
     );
     prevRearRing.rotation.y = Math.PI / 2;
-    prevRearRing.position.set(0.56, 0.02, 0);
+    prevRearRing.position.set(0.5, 0.02, 0);
     prevEndGroup.add(prevRearRing);
     this.comparisonGroup.add(prevEndGroup);
 
@@ -365,9 +365,9 @@ export const step8 = {
       emissive: 0xa855f7,
       emissiveIntensity: 1.8
     });
-    const couplerBar = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.6, 16), couplerMat);
+    const couplerBar = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.56, 16), couplerMat);
     couplerBar.rotation.z = Math.PI / 2;
-    couplerBar.position.set(-3.92, 0.39, trackZ);
+    couplerBar.position.set(-3.55, 0.39, trackZ);
     this.comparisonGroup.add(couplerBar);
 
     const couplerRing = new THREE.Mesh(
@@ -375,19 +375,20 @@ export const step8 = {
       new THREE.MeshBasicMaterial({ color: 0xc084fc, transparent: true, opacity: 0.75 })
     );
     couplerRing.rotation.y = Math.PI / 2;
-    couplerRing.position.set(-3.92, 0.39, trackZ);
+    couplerRing.position.set(-3.55, 0.39, trackZ);
     this.comparisonGroup.add(couplerRing);
     this.pulseRings.push(couplerRing);
 
-    // Petite gare miniature à l'arrière gauche
+    // Petite gare miniature reculée à l'arrière gauche (dégagée au-dessus du wagon)
     const stationGroup = this.createMiniStationMesh();
-    stationGroup.position.set(-2.55, 0.0, -2.1);
+    stationGroup.position.set(-3.2, 0.0, -3.35);
+    stationGroup.scale.setScalar(1.18);
     this.comparisonGroup.add(stationGroup);
 
     // =========================================================================
     // 2. CÔTÉ DROIT : UNIVERS BLOCKCHAIN / CRYPTOMONNAIE
     // =========================================================================
-    const cryptoCenterX = 2.95;
+    const cryptoCenterX = 3.9;
 
     // Plateforme numérique hexagonale discrète sous le bloc crypto
     const cryptoPad = new THREE.Mesh(
@@ -413,7 +414,7 @@ export const step8 = {
 
     // Bloc numérique précédent (cube plus petit à gauche du bloc principal)
     const prevCryptoGroup = new THREE.Group();
-    prevCryptoGroup.position.set(0.9, 0.92, trackZ);
+    prevCryptoGroup.position.set(1.65, 0.92, trackZ);
     const prevCubeGeo = new THREE.BoxGeometry(0.92, 0.92, 0.92);
     const prevCubeMat = new THREE.MeshPhysicalMaterial({
       color: 0x0ea5e9,
@@ -446,8 +447,8 @@ export const step8 = {
 
     // Chaîne lumineuse (Hash) entre le bloc crypto précédent et le bloc principal
     const chainGroup = new THREE.Group();
-    const chainStartX = 1.42;
-    const chainEndX = 2.08;
+    const chainStartX = 2.15;
+    const chainEndX = 3.0;
     const hashChainMat = new THREE.MeshStandardMaterial({
       color: 0xa855f7,
       emissive: 0xa855f7,
@@ -467,7 +468,7 @@ export const step8 = {
         new THREE.TorusGeometry(0.14, 0.03, 10, 20),
         hashChainMat
       );
-      linkRing.position.set(chainStartX + 0.12 + i * 0.21, 0.92, trackZ);
+      linkRing.position.set(chainStartX + 0.16 + i * 0.26, 0.92, trackZ);
       linkRing.rotation.x = i % 2 === 0 ? 0.35 : -0.35;
       linkRing.rotation.y = Math.PI / 2;
       chainGroup.add(linkRing);
@@ -539,15 +540,16 @@ export const step8 = {
 
     this.comparisonGroup.add(mainCryptoGroup);
 
-    // 3 Nœuds serveurs connectés en réseau à l'arrière droit
+    // 3 Nœuds serveurs connectés en réseau, bien espacés et reculés à l'arrière droit
     const nodePositions = [
-      new THREE.Vector3(1.75, 0.0, -2.05),
-      new THREE.Vector3(3.15, 0.0, -2.85),
-      new THREE.Vector3(4.45, 0.0, -1.85)
+      new THREE.Vector3(1.75, 0.0, -3.15),
+      new THREE.Vector3(3.75, 0.0, -3.95),
+      new THREE.Vector3(5.65, 0.0, -2.95)
     ];
     nodePositions.forEach((pos, idx) => {
       const serverNode = this.createServerNodeMesh(idx + 1);
       serverNode.position.copy(pos);
+      serverNode.scale.setScalar(1.08);
       this.comparisonGroup.add(serverNode);
     });
 
@@ -591,28 +593,28 @@ export const step8 = {
     // =========================================================================
     this.anchors = {
       nodes: {
-        left: new THREE.Vector3(-1.75, 0.92, -2.1),
-        right: new THREE.Vector3(1.75, 0.92, -2.05)
+        left: new THREE.Vector3(-2.35, 1.35, -3.35),
+        right: new THREE.Vector3(3.75, 1.38, -3.75)
       },
       block: {
-        left: new THREE.Vector3(wagonX + 0.95, 1.32, trackZ),
-        right: new THREE.Vector3(cryptoCenterX - 0.85, 1.52, trackZ)
+        left: new THREE.Vector3(wagonX + 0.55, 1.48, trackZ),
+        right: new THREE.Vector3(cryptoCenterX - 0.1, 1.74, trackZ)
       },
       tx: {
-        left: new THREE.Vector3(wagonX + 0.35, 0.76, trackZ + 0.35),
-        right: new THREE.Vector3(cryptoCenterX - 0.45, 0.72, trackZ + 0.45)
+        left: new THREE.Vector3(wagonX + 0.45, 0.92, trackZ + 0.25),
+        right: new THREE.Vector3(cryptoCenterX - 0.05, 1.12, trackZ + 0.25)
       },
       hash: {
-        left: new THREE.Vector3(-3.92, 0.39, trackZ),
-        right: new THREE.Vector3(1.75, 0.92, trackZ)
+        left: new THREE.Vector3(-3.55, 0.39, trackZ),
+        right: new THREE.Vector3(2.58, 0.78, trackZ + 0.14)
       }
     };
 
     const beamSpecs = [
-      { key: 'nodes', color: 0x10b981, arcY: 0.45 },
-      { key: 'block', color: 0x38bdf8, arcY: 0.55 },
-      { key: 'tx', color: 0xfacc15, arcY: -0.15 },
-      { key: 'hash', color: 0xa855f7, arcY: -0.45 }
+      { key: 'nodes', color: 0x10b981, arcY: 0.35 },
+      { key: 'block', color: 0x38bdf8, arcY: 0.45 },
+      { key: 'tx', color: 0xfacc15, arcY: 0.05 },
+      { key: 'hash', color: 0xa855f7, arcY: -0.55 }
     ];
 
     beamSpecs.forEach(({ key, color, arcY }, idx) => {
@@ -626,12 +628,12 @@ export const step8 = {
       const curveMat = new THREE.LineBasicMaterial({
         color,
         transparent: true,
-        opacity: 0.7
+        opacity: 0.28
       });
       this.comparisonGroup.add(new THREE.Line(curveGeo, curveMat));
 
       const beamDot = new THREE.Mesh(
-        new THREE.SphereGeometry(0.085, 14, 14),
+        new THREE.SphereGeometry(0.08, 14, 14),
         new THREE.MeshBasicMaterial({ color })
       );
       this.comparisonGroup.add(beamDot);
@@ -639,7 +641,7 @@ export const step8 = {
         mesh: beamDot,
         curve,
         t: (idx * 0.27) % 1,
-        speed: 0.36
+        speed: 0.34
       });
     });
 
@@ -792,10 +794,10 @@ export const step8 = {
     const svgLines = this.pairsConfig
       .map(
         (pair) => `
-        <line id="s8-line-${pair.id}-l" stroke="${pair.color}" stroke-width="1.8" stroke-dasharray="4 4" stroke-linecap="round" opacity="0.88" />
-        <circle id="s8-dot-${pair.id}-l" r="4" fill="${pair.color}" />
-        <line id="s8-line-${pair.id}-r" stroke="${pair.color}" stroke-width="1.8" stroke-dasharray="4 4" stroke-linecap="round" opacity="0.88" />
-        <circle id="s8-dot-${pair.id}-r" r="4" fill="${pair.color}" />
+        <line id="s8-line-${pair.id}-l" stroke="${pair.color}" stroke-width="2.6" stroke-dasharray="7 4" stroke-linecap="round" opacity="0.96" />
+        <circle id="s8-dot-${pair.id}-l" r="5.5" fill="${pair.color}" stroke="#0f172a" stroke-width="1.6" />
+        <line id="s8-line-${pair.id}-r" stroke="${pair.color}" stroke-width="2.6" stroke-dasharray="7 4" stroke-linecap="round" opacity="0.96" />
+        <circle id="s8-dot-${pair.id}-r" r="5.5" fill="${pair.color}" stroke="#0f172a" stroke-width="1.6" />
       `
       )
       .join('');
