@@ -1307,16 +1307,54 @@ body {
   font-weight: 600;
   cursor: pointer;
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  transition: all 0.2s ease;
+}
+
+.station-node-top {
+  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 5px;
-  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.station-node-status {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.63rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-align: left;
+  color: #6ee7b7;
 }
 
 .station-node-btn:hover {
   background: rgba(16, 185, 129, 0.22);
   border-color: #34d399;
   transform: translateY(-1px);
+}
+
+.station-node-btn.isolated {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.55);
+  color: #fef3c7;
+}
+
+.station-node-btn.isolated:hover {
+  background: rgba(245, 158, 11, 0.24);
+  border-color: #fbbf24;
+}
+
+.station-node-btn.isolated .station-node-status {
+  color: #fbbf24;
+}
+
+.station-node-btn.isolated .station-node-dot {
+  background: #f59e0b;
+  box-shadow: 0 0 6px #f59e0b;
 }
 
 .station-node-btn.offline {
@@ -1328,6 +1366,10 @@ body {
 .station-node-btn.offline:hover {
   background: rgba(239, 68, 68, 0.24);
   border-color: #f87171;
+}
+
+.station-node-btn.offline .station-node-status {
+  color: #fca5a5;
 }
 
 .station-node-dot {
@@ -2475,4 +2517,67 @@ body {
   font-size: 0.71rem;
   color: #94a3b8;
   text-align: right;
+}
+
+/* Encadré et bandeau d'aide aux contrôles caméra 3D (Étape 0) */
+.step-card.camera-controls-hint-card {
+  background: rgba(14, 116, 144, 0.14);
+  border: 1px solid rgba(56, 189, 248, 0.38);
+  padding: 12px 15px;
+  gap: 6px;
+}
+
+.step-card.camera-controls-hint-card .clean-bullet-list {
+  color: #e2e8f0;
+  font-size: 0.78rem;
+  line-height: 1.48;
+}
+
+.step-card.camera-controls-hint-card .clean-bullet-list strong {
+  color: #7dd3fc;
+}
+
+.scene-camera-controls-banner {
+  position: absolute;
+  bottom: 18px;
+  left: calc(50% + 220px);
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.86);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  font-size: 0.76rem;
+  color: #e2e8f0;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.scene-camera-controls-banner .camera-banner-title {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #38bdf8;
+}
+
+.scene-camera-controls-banner .camera-banner-sep {
+  color: rgba(148, 163, 184, 0.45);
+}
+
+.scene-camera-controls-banner strong {
+  color: #ffffff;
+}
+
+@media (max-width: 900px) {
+  .scene-camera-controls-banner {
+    display: none;
+  }
 }

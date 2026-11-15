@@ -1046,7 +1046,7 @@ export const step5 = {
         <article class="step-card context-card animate-fade">
           <h3 class="card-title">À quoi sert le minage (la molette du Nonce) ?</h3>
           <p>
-            Dans une blockchain, il n'y a pas d'administrateur central : ce sont les ordinateurs des gares (les mineurs) qui valident les wagons.
+            <strong>Qui tourne la molette du Nonce ?</strong> Ce sont les ordinateurs des gares (appelés <strong>mineurs</strong>) qui exécutent des milliards de calculs automatiques pour trouver le bon numéro. Ici, vous prenez la place de l'opérateur d'une gare pour tester manuellement ou automatiquement cette recherche.
           </p>
           <div class="share-meaning-banner" style="border-left-color: #f59e0b; margin: 8px 0 10px 0;">
             L'objectif n'est pas de créer de l'argent, mais de <strong>rendre la validation mathématiquement coûteuse</strong> pour empêcher les tricheurs de réécrire l'historique.

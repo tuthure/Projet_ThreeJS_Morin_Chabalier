@@ -421,6 +421,9 @@ export const step2 = {
           <p>
             Regardez les attaches entre deux wagons : chaque liaison a sa propre couleur. L'anneau arrière d'un wagon et le crochet avant du wagon suivant ont toujours la même couleur.
           </p>
+          <div class="share-meaning-banner" style="margin-top: 10px; margin-bottom: 0;">
+            <strong>Pourquoi les wagons s'attachent-ils progressivement ?</strong> Dans une vraie blockchain, les transactions ne sont pas enregistrées une par une à la milliseconde : le réseau regroupe toutes les opérations réalisées pendant un intervalle de temps (par exemple toutes les 10 minutes sur Bitcoin) dans un nouveau wagon. Une fois validé, ce wagon s'attelle à l'arrière du convoi, prolongeant l'historique chronologique depuis le Bloc Genesis (la motrice).
+          </div>
         </article>
 
         <article class="step-card action-card animate-fade">

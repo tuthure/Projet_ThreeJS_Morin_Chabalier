@@ -2040,9 +2040,12 @@ export const step6 = {
 
       <div class="step-panel-scroll">
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Comment choisir la gare gagnante ?</h3>
+          <h3 class="card-title">Pourquoi un mécanisme de consensus (PoW ou PoS) ?</h3>
+          <div class="share-meaning-banner" style="margin-top: 2px; margin-bottom: 8px;">
+            <strong>Pourquoi faut-il un mécanisme de consensus (PoW ou PoS) ?</strong> Comme il n'y a pas de chef central, plusieurs gares veulent ajouter le prochain wagon en même temps. Le consensus est la règle du jeu qui permet au réseau de désigner une seule gare gagnante de manière équitable et d'empêcher un tricheur de prendre le contrôle. Deux grandes règles existent : la course de calcul (<strong>PoW</strong>) ou le tirage au sort selon la caution déposée (<strong>PoS</strong>).
+          </div>
           <p>
-            Le convoi roule en arrière-plan. Au premier plan, les <strong>Gares A, B et C</strong> préparent chacune leur wagon candidat avec leurs propres caisses. Comparez les deux mécanismes de consensus : <strong>POW (Proof Of Work)</strong> et le <strong>Proof of Stake (PoS)</strong>.
+            Le convoi roule en arrière-plan. Au premier plan, les <strong>Gares A, B et C</strong> préparent chacune leur wagon candidat avec leurs propres caisses pour remporter l'attelage suivant.
           </p>
         </article>
 

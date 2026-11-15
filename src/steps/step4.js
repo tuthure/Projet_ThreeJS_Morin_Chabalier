@@ -305,6 +305,10 @@ export const step4 = {
       borderColor = '#ef4444';
       dotColor = '#ef4444';
       statusText = 'EN PANNE (Cliquer)';
+    } else if (st.state === 'isolated') {
+      borderColor = '#f59e0b';
+      dotColor = '#f59e0b';
+      statusText = 'ISOLEE (Hors reseau)';
     } else if (st.state === 'emitting') {
       borderColor = '#facc15';
       dotColor = '#facc15';
@@ -356,7 +360,7 @@ export const step4 = {
     ctx.arc(44, 76, 8, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = st.online ? '#cbd5e1' : '#fca5a5';
+    ctx.fillStyle = !st.online ? '#fca5a5' : st.state === 'isolated' ? '#fde68a' : '#cbd5e1';
     ctx.font = 'bold 20px Consolas, monospace';
     ctx.textAlign = 'left';
     ctx.fillText(statusText, 62, 83);
@@ -732,18 +736,40 @@ export const step4 = {
           st.beaconMat.emissiveIntensity = 2.4;
           st.ringMat.color.setHex(0xfacc15);
           st.ringMat.opacity = 0.85;
+          if (st.ledgerMat) {
+            st.ledgerMat.color.setHex(0xfacc15);
+            st.ledgerMat.emissive.setHex(0xca8a04);
+          }
         } else if (st.state === 'waiting') {
           st.beaconMat.color.setHex(0x38bdf8);
           st.beaconMat.emissive.setHex(0x0284c7);
           st.beaconMat.emissiveIntensity = 1.0;
           st.ringMat.color.setHex(0x38bdf8);
           st.ringMat.opacity = 0.45;
+          if (st.ledgerMat) {
+            st.ledgerMat.color.setHex(0x38bdf8);
+            st.ledgerMat.emissive.setHex(0x0284c7);
+          }
+        } else if (st.state === 'isolated') {
+          st.beaconMat.color.setHex(0xf59e0b);
+          st.beaconMat.emissive.setHex(0xd97706);
+          st.beaconMat.emissiveIntensity = 1.6;
+          st.ringMat.color.setHex(0xf59e0b);
+          st.ringMat.opacity = 0.65;
+          if (st.ledgerMat) {
+            st.ledgerMat.color.setHex(0xf59e0b);
+            st.ledgerMat.emissive.setHex(0xb45309);
+          }
         } else {
           st.beaconMat.color.setHex(0x10b981);
           st.beaconMat.emissive.setHex(0x059669);
           st.beaconMat.emissiveIntensity = 2.0;
           st.ringMat.color.setHex(0x10b981);
           st.ringMat.opacity = 0.7;
+          if (st.ledgerMat) {
+            st.ledgerMat.color.setHex(0x10b981);
+            st.ledgerMat.emissive.setHex(0x059669);
+          }
         }
       }
       this.updateStationLabelSprite(st);
@@ -775,6 +801,99 @@ export const step4 = {
   },
 
   /**
+   * Retourne les indices des gares voisines directes d'une gare donnée.
+   * @param {number} stationIdx
+   * @returns {number[]}
+   */
+  getNeighborIndices(stationIdx) {
+    const neighbors = new Set();
+    [...this.primaryEdges, ...this.backupEdges].forEach(([a, b]) => {
+      if (a === stationIdx) neighbors.add(b);
+      else if (b === stationIdx) neighbors.add(a);
+    });
+    return [...neighbors];
+  },
+
+  /**
+   * Construit un message explicite indiquant quelles gares allumées sont isolées du réseau.
+   * @param {Array} isolatedStations
+   * @returns {string}
+   */
+  buildIsolationMessage(isolatedStations) {
+    if (!isolatedStations || isolatedStations.length === 0) return '';
+
+    if (isolatedStations.length === 1) {
+      const iso = isolatedStations[0];
+      const offlineNeighborCodes = this.getNeighborIndices(iso.index)
+        .filter((idx) => !this.stations[idx].online)
+        .map((idx) => this.stations[idx].code);
+      const causeCodes = offlineNeighborCodes.length > 0
+        ? offlineNeighborCodes
+        : this.stations.filter((s) => !s.online).map((s) => s.code);
+
+      let causeText = 'les pannes sur le réseau';
+      if (causeCodes.length === 1) {
+        causeText = `la panne de ${causeCodes[0]}`;
+      } else if (causeCodes.length > 1) {
+        causeText = `les pannes de ${causeCodes.slice(0, -1).join(', ')} et ${causeCodes[causeCodes.length - 1]}`;
+      }
+
+      return `La ${iso.name} est allumée mais coupée du réseau par ${causeText} : elle ne peut pas recevoir le nouveau wagon tant qu'un chemin n'est pas rétabli.`;
+    }
+
+    const isoNames = isolatedStations.map((s) => s.name).join(', ');
+    return `Les gares ${isoNames} sont allumées mais coupées du réseau par les gares en panne : elles ne peuvent pas recevoir le nouveau wagon tant qu'un chemin n'est pas rétabli.`;
+  },
+
+  /**
+   * Construit le résumé lisible du chemin de propagation actif.
+   * @param {object} sourceStation
+   * @param {Array} waves
+   * @param {Array} isolatedStations
+   * @returns {string}
+   */
+  buildRouteSummary(sourceStation, waves, isolatedStations = []) {
+    if (!sourceStation) return 'Aucune gare active';
+    const waveNames = [`Gare ${sourceStation.code}`];
+    waves.forEach((w) => {
+      const codes = w.targets.map((idx) => this.stations[idx].code).join(', ');
+      waveNames.push(w.targets.length > 1 ? `Gares ${codes}` : `Gare ${codes}`);
+    });
+    let summary = waveNames.join(' -> ');
+    if (isolatedStations.length > 0) {
+      summary += ` (hors réseau : ${isolatedStations.map((s) => s.name).join(', ')})`;
+    }
+    return summary;
+  },
+
+  /**
+   * Recalcule l'accessibilité réseau par BFS depuis la gare source active
+   * et passe les gares en ligne inatteignables à l'état 'isolated'.
+   */
+  recomputeNetworkIsolation() {
+    const sourceStation = this.stations.find((s) => s.online);
+    if (!sourceStation) {
+      return { sourceStation: null, visited: new Set(), waves: [], isolatedStations: [] };
+    }
+
+    const { waves, visited } = this.computeGossipWaves(sourceStation.index);
+    const isolatedStations = [];
+
+    this.stations.forEach((st) => {
+      if (!st.online) {
+        st.state = 'offline';
+      } else if (!visited.has(st.index)) {
+        st.state = 'isolated';
+        isolatedStations.push(st);
+      } else {
+        st.state = 'synced';
+      }
+    });
+
+    return { sourceStation, visited, waves, isolatedStations };
+  },
+
+  /**
    * Permet d'éteindre ou de rallumer une gare (simulation de panne d'un nœud).
    * @param {number} stationIdx
    */
@@ -790,6 +909,10 @@ export const step4 = {
       return;
     }
 
+    const previouslyIsolatedIds = new Set(
+      this.stations.filter((s) => s.online && s.state === 'isolated').map((s) => s.index)
+    );
+
     st.online = !st.online;
     st.state = st.online ? 'synced' : 'offline';
 
@@ -798,7 +921,21 @@ export const step4 = {
       l.activeRoute = false;
     });
 
-    if (!st.online) {
+    const { sourceStation, waves, isolatedStations } = this.recomputeNetworkIsolation();
+    this.lastRouteSummary = this.buildRouteSummary(sourceStation, waves, isolatedStations);
+
+    const newlyResynced = this.stations.filter(
+      (s) => s.online && s.state === 'synced' && previouslyIsolatedIds.has(s.index)
+    );
+
+    if (isolatedStations.length > 0) {
+      this.statusFeedbackMessage = this.buildIsolationMessage(isolatedStations);
+    } else if (st.online && newlyResynced.length === 1) {
+      this.statusFeedbackMessage = `Connexion rétablie via ${st.name} : la ${newlyResynced[0].name} n'est plus isolée et a récupéré le registre à jour.`;
+    } else if (st.online && newlyResynced.length > 1) {
+      const recoveredNames = newlyResynced.map((s) => s.name).join(', ');
+      this.statusFeedbackMessage = `Connexion rétablie via ${st.name} : les gares ${recoveredNames} ne sont plus isolées et ont récupéré le registre à jour.`;
+    } else if (!st.online) {
       this.statusFeedbackMessage = `${st.name} éteinte (en panne). Envoyez une transaction pour voir comment le message passe par une autre voie.`;
     } else {
       this.statusFeedbackMessage = `${st.name} rallumée : elle met sa copie à jour avec les autres gares.`;
@@ -806,6 +943,7 @@ export const step4 = {
 
     this.refreshNetworkVisuals();
     this.renderLeftPanel();
+    this.updateFeedbackDOM();
   },
 
   /**
@@ -858,7 +996,7 @@ export const step4 = {
       currentWaveNodes = nextWaveNodes;
     }
 
-    return { waves, reachableCount: visited.size };
+    return { waves, visited, reachableCount: visited.size };
   },
 
   /**
@@ -875,23 +1013,19 @@ export const step4 = {
     if (!sourceStation) return;
 
     const sourceIdx = sourceStation.index;
-    const { waves } = this.computeGossipWaves(sourceIdx);
+    const { waves, visited } = this.computeGossipWaves(sourceIdx);
+    const isolatedStations = this.stations.filter((s) => s.online && !visited.has(s.index));
 
     this.isPropagating = true;
     this.hasBroadcasted = true;
     this.txCount += 1;
     this.lastTxLabel = txLabel || `Bon d'expédition #${100 + this.txCount} (${sourceStation.name})`;
-
-    // Construit le résumé lisible du chemin de propagation
-    const waveNames = [`Gare ${sourceStation.code}`];
-    waves.forEach((w) => {
-      const codes = w.targets.map((idx) => this.stations[idx].code).join(', ');
-      waveNames.push(w.targets.length > 1 ? `Gares ${codes}` : `Gare ${codes}`);
-    });
-    this.lastRouteSummary = waveNames.join(' -> ');
+    this.lastRouteSummary = this.buildRouteSummary(sourceStation, waves, isolatedStations);
 
     const offlineNames = this.stations.filter((s) => !s.online).map((s) => s.name);
-    if (offlineNames.length > 0) {
+    if (isolatedStations.length > 0) {
+      this.statusFeedbackMessage = this.buildIsolationMessage(isolatedStations);
+    } else if (offlineNames.length > 0) {
       this.statusFeedbackMessage = `Contournement de ${offlineNames.join(', ')} : chaque gare active reçoit sa copie par ${this.lastRouteSummary}.`;
     } else {
       this.statusFeedbackMessage = `Envoi de gare en gare : ${this.lastRouteSummary}.`;
@@ -904,7 +1038,11 @@ export const step4 = {
 
     this.stations.forEach((st, idx) => {
       if (!st.online) return;
-      st.state = idx === sourceIdx ? 'emitting' : 'waiting';
+      if (!visited.has(idx)) {
+        st.state = 'isolated';
+      } else {
+        st.state = idx === sourceIdx ? 'emitting' : 'waiting';
+      }
     });
     this.refreshNetworkVisuals();
 
@@ -962,11 +1100,14 @@ export const step4 = {
     if (this.packets.length === 0) {
       this.isPropagating = false;
       sourceStation.state = 'synced';
-      this.statusFeedbackMessage = `${sourceStation.name} est isolée car ses gares voisines sont éteintes.`;
+      this.statusFeedbackMessage = isolatedStations.length > 0
+        ? this.buildIsolationMessage(isolatedStations)
+        : `${sourceStation.name} est isolée car ses gares voisines sont éteintes.`;
       this.refreshNetworkVisuals();
     }
 
     this.renderLeftPanel();
+    this.updateFeedbackDOM();
   },
 
   /**
@@ -1051,10 +1192,17 @@ export const step4 = {
           this.isPropagating = false;
           this.packets = [];
           this.stations.forEach((st) => {
-            if (st.online) st.state = 'synced';
+            if (st.online && st.state !== 'isolated') {
+              st.state = 'synced';
+            }
           });
+          const isolatedStations = this.stations.filter((s) => s.online && s.state === 'isolated');
+          if (isolatedStations.length > 0) {
+            this.statusFeedbackMessage = this.buildIsolationMessage(isolatedStations);
+          }
           this.refreshNetworkVisuals();
           this.renderLeftPanel('.keypoint-card');
+          this.updateFeedbackDOM();
         }
       }
 
@@ -1146,17 +1294,69 @@ export const step4 = {
   },
 
   /**
-   * Met à jour en direct le compteur de synchronisation dans le DOM.
+   * Formate le récapitulatif de synchronisation des gares actives et isolées.
+   * @returns {{ summaryText: string, hasIsolated: boolean }}
+   */
+  formatSyncSummary() {
+    const onlineStations = this.stations.filter((s) => s.online);
+    const syncedStations = onlineStations.filter((s) => s.state === 'synced');
+    const isolatedStations = onlineStations.filter((s) => s.state === 'isolated');
+    const offlineCount = this.stations.length - onlineStations.length;
+
+    const details = [];
+    if (isolatedStations.length > 0) {
+      details.push(`${isolatedStations.length} isolée${isolatedStations.length > 1 ? 's' : ''}`);
+    }
+    if (offlineCount > 0) {
+      details.push(`${offlineCount} en panne`);
+    }
+
+    const suffix = details.length > 0 ? ` (${details.join(', ')})` : '';
+    return {
+      summaryText: `${syncedStations.length} / ${onlineStations.length} gares actives à jour${suffix}`,
+      hasIsolated: isolatedStations.length > 0
+    };
+  },
+
+  /**
+   * Retourne l'état visuel et le libellé texte d'une gare pour les boutons du panneau gauche.
+   * @param {object} st
+   * @returns {{ btnClass: string, statusLabel: string }}
+   */
+  getStationButtonState(st) {
+    if (!st.online) {
+      return { btnClass: 'offline', statusLabel: 'En panne' };
+    }
+    if (st.state === 'isolated') {
+      return { btnClass: 'isolated', statusLabel: 'Isolée' };
+    }
+    return { btnClass: 'online', statusLabel: 'Active' };
+  },
+
+  /**
+   * Met à jour en direct le compteur de synchronisation et l'état des boutons dans le DOM.
    */
   updateFeedbackDOM() {
+    const { summaryText } = this.formatSyncSummary();
     const syncEl = document.getElementById('step4-sync-val');
     if (syncEl) {
-      const onlineStations = this.stations.filter((s) => s.online);
-      const syncedStations = onlineStations.filter((s) => s.state === 'synced');
-      const offlineCount = this.stations.length - onlineStations.length;
-      const offlineSuffix = offlineCount > 0 ? ` (${offlineCount} en panne)` : '';
-      syncEl.textContent = `${syncedStations.length} / ${onlineStations.length} gares actives à jour${offlineSuffix}`;
+      syncEl.textContent = summaryText;
     }
+
+    document.querySelectorAll('.station-node-btn').forEach((btn) => {
+      const idx = parseInt(btn.dataset.stationIdx, 10);
+      const st = this.stations[idx];
+      if (!st) return;
+
+      const { btnClass, statusLabel } = this.getStationButtonState(st);
+      btn.classList.remove('online', 'offline', 'isolated');
+      btn.classList.add(btnClass);
+
+      const statusEl = btn.querySelector('.station-node-status');
+      if (statusEl) {
+        statusEl.textContent = statusLabel;
+      }
+    });
   },
 
   renderLeftPanel(scrollTargetSelector = null) {
@@ -1168,20 +1368,21 @@ export const step4 = {
     const inner = document.createElement('div');
     inner.className = 'step-panel-inner';
 
-    const onlineStations = this.stations.filter((s) => s.online);
-    const syncedStations = onlineStations.filter((s) => s.state === 'synced');
-    const offlineCount = this.stations.length - onlineStations.length;
-    const offlineSuffix = offlineCount > 0 ? ` (${offlineCount} en panne)` : '';
+    const { summaryText, hasIsolated } = this.formatSyncSummary();
 
     const stationsButtonsHTML = this.stations
-      .map(
-        (st) => `
-        <button class="station-node-btn ${st.online ? 'online' : 'offline'}" data-station-idx="${st.index}" ${this.isPropagating ? 'disabled' : ''} title="Cliquer pour simuler une panne">
-          <span>${st.name}</span>
-          <span class="station-node-dot"></span>
+      .map((st) => {
+        const { btnClass, statusLabel } = this.getStationButtonState(st);
+        return `
+        <button class="station-node-btn ${btnClass}" data-station-idx="${st.index}" ${this.isPropagating ? 'disabled' : ''} title="Cliquer pour simuler une panne">
+          <span class="station-node-top">
+            <span>${st.name}</span>
+            <span class="station-node-dot"></span>
+          </span>
+          <span class="station-node-status">${statusLabel}</span>
         </button>
-      `
-      )
+      `;
+      })
       .join('');
 
     inner.innerHTML = `
@@ -1228,11 +1429,11 @@ export const step4 = {
             : ''
           }
 
-          <div class="action-feedback-box ${!this.isPropagating ? 'success' : ''}" style="margin-top: 10px;">
+          <div class="action-feedback-box ${!this.isPropagating && !hasIsolated ? 'success' : ''}" style="margin-top: 10px;">
             <div class="feedback-row">
               <span class="feedback-label">Copies dans les gares :</span>
-              <span id="step4-sync-val" class="feedback-val ${!this.isPropagating ? 'success-val' : 'hash-val'}">
-                ${syncedStations.length} / ${onlineStations.length} gares à jour${offlineSuffix}
+              <span id="step4-sync-val" class="feedback-val ${!this.isPropagating && !hasIsolated ? 'success-val' : 'hash-val'}">
+                ${summaryText}
               </span>
             </div>
             <div class="feedback-row">

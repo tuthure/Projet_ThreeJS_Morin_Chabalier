@@ -15,6 +15,7 @@ export const step0 = {
 
   // Phase de lecture actuelle dans l'étape 0 (0: Convoi, 1: Locomotive, 2: Wagons vitrés)
   subStep: 0,
+  cameraBannerEl: null,
 
   /**
    * Initialise le module avec le contexte global de l'application.
@@ -55,8 +56,8 @@ export const step0 = {
       environment.setSpeed(4.5);
     }
 
-    // 3. Ferme le tiroir d'inspection droit s'il était ouvert
-    
+    // 3. Bandeau discret d'aide aux contrôles caméra dans la scène 3D
+    this.renderSceneCameraBanner();
 
     // 4. Lance la première phase de découverte
     this.goToSubStep(0);
@@ -66,11 +67,42 @@ export const step0 = {
    * Quitte l'étape 0 et nettoie les éléments DOM.
    */
   exit() {
+    if (this.cameraBannerEl) {
+      this.cameraBannerEl.remove();
+      this.cameraBannerEl = null;
+    }
+
     const panel = document.getElementById('step-panel-left');
     if (panel) {
       const inner = panel.querySelector('.step-panel-inner');
       if (inner) inner.remove();
     }
+  },
+
+  /**
+   * Affiche un bandeau discret au bas de la scène 3D pour guider les contrôles souris.
+   */
+  renderSceneCameraBanner() {
+    if (this.cameraBannerEl) {
+      this.cameraBannerEl.remove();
+      this.cameraBannerEl = null;
+    }
+
+    const hud = document.getElementById('hud');
+    if (!hud) return;
+
+    const banner = document.createElement('div');
+    banner.id = 'step0-camera-banner';
+    banner.className = 'scene-camera-controls-banner animate-fade';
+    banner.innerHTML = `
+      <span class="camera-banner-title">Caméra 3D</span>
+      <span class="camera-banner-sep">|</span>
+      <span><strong>Clic gauche + glisser</strong> pour pivoter</span>
+      <span class="camera-banner-sep">|</span>
+      <span><strong>Molette</strong> pour zoomer / dézoomer</span>
+    `;
+    hud.appendChild(banner);
+    this.cameraBannerEl = banner;
   },
 
   /**
@@ -130,7 +162,10 @@ export const step0 = {
     if (this.subStep === 0) {
       subStepContentHTML = `
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Un réseau ferroviaire public</h3>
+          <h3 class="card-title">À quoi sert concrètement une blockchain ?</h3>
+          <div class="share-meaning-banner" style="margin-top: 2px; margin-bottom: 8px;">
+            <strong>Un registre sans tiers de confiance :</strong> Sur Internet, lorsque vous envoyez de l'argent ou signez un contrat, il faut d'habitude passer par une banque ou un tiers de confiance qui tient les comptes. La blockchain permet à des milliers d'ordinateurs de tenir ensemble un registre public infalsifiable, sans aucun chef central. Pour rendre ce mécanisme visible, nous le représentons ici sous la forme d'un convoi ferroviaire blindé.
+          </div>
           <p>
             Imaginez un réseau ferroviaire public. Aucune compagnie centrale ou chef de gare unique ne contrôle ces rails. Le réseau est géré et vérifié collectivement par tous ceux qui se trouvent sur le quai.
           </p>
@@ -149,9 +184,9 @@ export const step0 = {
     } else if (this.subStep === 1) {
       subStepContentHTML = `
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">La tête du convoi : le Bloc #0 (Genesis)</h3>
+          <h3 class="card-title">La tête du convoi : le Bloc Genesis (Bloc #0)</h3>
           <p>
-            En tête du train se trouve le tout premier bloc de l'histoire : le <strong>Bloc #0 (Genesis)</strong>. C'est le point de départ d'origine auquel le premier wagon est venu s'accrocher.
+            La motrice représente le <strong>Bloc Genesis (Bloc #0)</strong> : c'est le tout premier bloc créé au démarrage du réseau (par exemple le 3 janvier 2009 pour Bitcoin). Contrairement aux wagons suivants, il n'a aucun bloc parent avant lui : il sert de point d'ancrage fixe et immuable auquel tout le reste du train vient s'attacher.
           </p>
           <p>
             Aucun chef unique ne conduit ce train : ce sont les gares du réseau qui vérifient et accrochent chaque nouveau wagon en suivant les mêmes règles mathématiques.
@@ -198,12 +233,26 @@ export const step0 = {
       `;
     }
 
+    const cameraControlsBoxHTML = `
+      <article class="step-card camera-controls-hint-card animate-fade">
+        <div class="card-header-tag">
+          <span class="card-tag-dot"></span>
+          <span>Contrôles de la caméra 3D</span>
+        </div>
+        <ul class="clean-bullet-list" style="margin: 2px 0 0 16px;">
+          <li><strong>Pivoter la caméra</strong> : maintenez le clic gauche enfoncé et déplacez la souris pour tourner autour de la scène.</li>
+          <li><strong>Zoomer / Dézoomer</strong> : utilisez la molette de la souris pour vous rapprocher ou vous éloigner des éléments.</li>
+        </ul>
+      </article>
+    `;
+
     inner.innerHTML = `
       <header class="step-panel-header">
         <h2 class="step-panel-title">Le Principe du Convoi</h2>
       </header>
 
       <div class="step-panel-scroll">
+        ${cameraControlsBoxHTML}
         ${subStepContentHTML}
       </div>
     `;
