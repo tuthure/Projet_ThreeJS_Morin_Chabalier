@@ -15,7 +15,8 @@ export const step0 = {
 
   // Phase de lecture actuelle dans l'étape 0 (0: Convoi, 1: Locomotive, 2: Wagons vitrés)
   subStep: 0,
-  cameraBannerEl: null,
+  hasShownCameraModal: false,
+  cameraModalEl: null,
 
   /**
    * Initialise le module avec le contexte global de l'application.
@@ -56,21 +57,21 @@ export const step0 = {
       environment.setSpeed(4.5);
     }
 
-    // 3. Bandeau discret d'aide aux contrôles caméra dans la scène 3D
-    this.renderSceneCameraBanner();
-
-    // 4. Lance la première phase de découverte
+    // 3. Lance la première phase de découverte
     this.goToSubStep(0);
+
+    // 4. Affiche la pop-up modale d'aide caméra une seule fois par session
+    if (!this.hasShownCameraModal) {
+      this.hasShownCameraModal = true;
+      this.showCameraModal();
+    }
   },
 
   /**
    * Quitte l'étape 0 et nettoie les éléments DOM.
    */
   exit() {
-    if (this.cameraBannerEl) {
-      this.cameraBannerEl.remove();
-      this.cameraBannerEl = null;
-    }
+    this.closeCameraModal();
 
     const panel = document.getElementById('step-panel-left');
     if (panel) {
@@ -80,29 +81,61 @@ export const step0 = {
   },
 
   /**
-   * Affiche un bandeau discret au bas de la scène 3D pour guider les contrôles souris.
+   * Affiche la pop-up modale centrale expliquant les contrôles souris (une seule fois par session).
    */
-  renderSceneCameraBanner() {
-    if (this.cameraBannerEl) {
-      this.cameraBannerEl.remove();
-      this.cameraBannerEl = null;
-    }
+  showCameraModal() {
+    this.closeCameraModal();
 
     const hud = document.getElementById('hud');
     if (!hud) return;
 
-    const banner = document.createElement('div');
-    banner.id = 'step0-camera-banner';
-    banner.className = 'scene-camera-controls-banner animate-fade';
-    banner.innerHTML = `
-      <span class="camera-banner-title">Caméra 3D</span>
-      <span class="camera-banner-sep">|</span>
-      <span><strong>Clic gauche + glisser</strong> pour pivoter</span>
-      <span class="camera-banner-sep">|</span>
-      <span><strong>Molette</strong> pour zoomer / dézoomer</span>
+    const overlay = document.createElement('div');
+    overlay.id = 'camera-modal-overlay';
+    overlay.className = 'camera-modal-overlay animate-fade';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'camera-modal-title');
+    overlay.innerHTML = `
+      <div class="camera-modal-dialog">
+        <h3 id="camera-modal-title" class="camera-modal-title">Navigation dans la scène 3D</h3>
+        <ul class="camera-modal-list">
+          <li>
+            <strong>Pivoter la caméra :</strong> Maintenez le clic gauche et déplacez la souris pour faire pivoter la caméra et observer la scène sous tous les angles.
+          </li>
+          <li>
+            <strong>Zoomer / Dézoomer :</strong> Utilisez la molette de la souris pour zoomer et dézoomer.
+          </li>
+        </ul>
+        <div class="camera-modal-actions">
+          <button id="btn-camera-modal-ok" type="button" class="btn-panel-primary">
+            <span>Compris / Commencer</span>
+          </button>
+        </div>
+      </div>
     `;
-    hud.appendChild(banner);
-    this.cameraBannerEl = banner;
+
+    hud.appendChild(overlay);
+    this.cameraModalEl = overlay;
+
+    const closeHandler = () => {
+      this.closeCameraModal();
+    };
+
+    document.getElementById('btn-camera-modal-ok')?.addEventListener('click', closeHandler);
+  },
+
+  /**
+   * Ferme et supprime immédiatement la pop-up modale d'aide caméra.
+   */
+  closeCameraModal() {
+    if (this.cameraModalEl) {
+      this.cameraModalEl.remove();
+      this.cameraModalEl = null;
+    }
+    const existing = document.getElementById('camera-modal-overlay');
+    if (existing) {
+      existing.remove();
+    }
   },
 
   /**
@@ -233,26 +266,12 @@ export const step0 = {
       `;
     }
 
-    const cameraControlsBoxHTML = `
-      <article class="step-card camera-controls-hint-card animate-fade">
-        <div class="card-header-tag">
-          <span class="card-tag-dot"></span>
-          <span>Contrôles de la caméra 3D</span>
-        </div>
-        <ul class="clean-bullet-list" style="margin: 2px 0 0 16px;">
-          <li><strong>Pivoter la caméra</strong> : maintenez le clic gauche enfoncé et déplacez la souris pour tourner autour de la scène.</li>
-          <li><strong>Zoomer / Dézoomer</strong> : utilisez la molette de la souris pour vous rapprocher ou vous éloigner des éléments.</li>
-        </ul>
-      </article>
-    `;
-
     inner.innerHTML = `
       <header class="step-panel-header">
         <h2 class="step-panel-title">Le Principe du Convoi</h2>
       </header>
 
       <div class="step-panel-scroll">
-        ${cameraControlsBoxHTML}
         ${subStepContentHTML}
       </div>
     `;

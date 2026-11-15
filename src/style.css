@@ -2519,65 +2519,67 @@ body {
   text-align: right;
 }
 
-/* Encadré et bandeau d'aide aux contrôles caméra 3D (Étape 0) */
-.step-card.camera-controls-hint-card {
-  background: rgba(14, 116, 144, 0.14);
-  border: 1px solid rgba(56, 189, 248, 0.38);
-  padding: 12px 15px;
-  gap: 6px;
+/* Pop-up modale unique d'aide à la navigation 3D (Étape 0) */
+.camera-modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(2, 6, 23, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  pointer-events: auto;
+  z-index: 60;
 }
 
-.step-card.camera-controls-hint-card .clean-bullet-list {
-  color: #e2e8f0;
-  font-size: 0.78rem;
-  line-height: 1.48;
+.camera-modal-dialog {
+  width: 100%;
+  max-width: 460px;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(56, 189, 248, 0.42);
+  border-radius: 14px;
+  padding: 24px 26px;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.65),
+    0 0 24px rgba(56, 189, 248, 0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: #f1f5f9;
 }
 
-.step-card.camera-controls-hint-card .clean-bullet-list strong {
+.camera-modal-title {
+  margin: 0;
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.camera-modal-list {
+  margin: 0 0 2px 18px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: #cbd5e1;
+}
+
+.camera-modal-list strong {
   color: #7dd3fc;
 }
 
-.scene-camera-controls-banner {
-  position: absolute;
-  bottom: 18px;
-  left: calc(50% + 220px);
-  transform: translateX(-50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.86);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(56, 189, 248, 0.35);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
-  font-size: 0.76rem;
-  color: #e2e8f0;
-  white-space: nowrap;
-  pointer-events: none;
-  z-index: 20;
+.camera-modal-actions {
+  margin-top: 4px;
+  display: flex;
+  justify-content: flex-end;
 }
 
-.scene-camera-controls-banner .camera-banner-title {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #38bdf8;
-}
-
-.scene-camera-controls-banner .camera-banner-sep {
-  color: rgba(148, 163, 184, 0.45);
-}
-
-.scene-camera-controls-banner strong {
-  color: #ffffff;
-}
-
-@media (max-width: 900px) {
-  .scene-camera-controls-banner {
-    display: none;
-  }
+.camera-modal-actions .btn-panel-primary {
+  width: auto;
+  min-width: 200px;
 }
