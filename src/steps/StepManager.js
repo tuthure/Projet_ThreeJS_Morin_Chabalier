@@ -6,6 +6,7 @@ import { step4 } from './step4.js';
 import { step5 } from './step5.js';
 import { step6 } from './step6.js';
 import { step7 } from './step7.js';
+import { step8 } from './step8.js';
 
 /**
  * Gestionnaire modulaire des etapes de la visualisation (Introduction + 7 notions).
@@ -28,7 +29,7 @@ export class StepManager {
     this.currentStep = null;
     this.currentStepNum = 0;
 
-    // Enregistrement des modules d'etape (Etape 0 d'accueil + Etapes 1 a 7)
+    // Enregistrement des modules d'etape (Etape 0 d'accueil + Etapes 1 a 8)
     this.registerStep(step0);
     this.registerStep(step1);
     this.registerStep(step2);
@@ -37,6 +38,7 @@ export class StepManager {
     this.registerStep(step5);
     this.registerStep(step6);
     this.registerStep(step7);
+    this.registerStep(step8);
 
     this.setupNavigationUI();
   }
@@ -98,6 +100,7 @@ export class StepManager {
         <button class="step-tab-btn" data-step="5" title="Notion 5 : Minage">5</button>
         <button class="step-tab-btn" data-step="6" title="Notion 6 : Consensus">6</button>
         <button class="step-tab-btn" data-step="7" title="Notion 7 : Attaque des 51%">7</button>
+        <button class="step-tab-btn" data-step="8" title="Épilogue : Du train à la cryptomonnaie">8</button>
       `;
       panel.appendChild(tabsNav);
       this.setupNavigationUI();
@@ -109,7 +112,7 @@ export class StepManager {
    * @param {number} stepNumber
    */
   goToStep(stepNumber) {
-    const targetNum = Math.max(0, Math.min(stepNumber, 7));
+    const targetNum = Math.max(0, Math.min(stepNumber, 8));
     if (targetNum === this.currentStepNum && this.currentStep) return;
 
     // 0. Ferme l'ecran d'accueil s'il etait actif
@@ -128,7 +131,7 @@ export class StepManager {
 
     // 3. Regle le mouvement du convoi selon l'etape (en marche sur 0, 1, 2, 6 ; arret progressif sur 3, 4, 5, 7)
     if (this.ctx.environment) {
-      const movingSteps = [0, 1, 2, 6];
+      const movingSteps = [0, 1, 2, 6, 8];
       this.ctx.environment.setSpeed(movingSteps.includes(targetNum) ? 4.5 : 0, false);
     }
 
@@ -152,14 +155,14 @@ export class StepManager {
     const btnPrev = document.getElementById('btn-prev');
     const btnNext = document.getElementById('btn-next');
     if (btnPrev) btnPrev.disabled = targetNum === 0;
-    if (btnNext) btnNext.disabled = targetNum === 7;
+    if (btnNext) btnNext.disabled = targetNum === 8;
   }
 
   /**
    * Passe a l'etape suivante.
    */
   next() {
-    if (this.currentStepNum < 7) {
+    if (this.currentStepNum < 8) {
       this.goToStep(this.currentStepNum + 1);
     }
   }

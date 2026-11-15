@@ -4,7 +4,7 @@
 
 ### Protocole et résultats des tests utilisateurs
 
-> **Statut :** Campagne de tests structurée en 2 phases — Phase 1 terminée (4 testeurs externes : Testeur 1 à Testeur 4) et Phase 2 en cours après application des premiers correctifs (Testeur 2.1).
+> **Statut :** Campagne de tests clôturée en 2 phases -- Phase 1 (4 testeurs externes : Testeur 1 à Testeur 4) et Phase 2 après application des correctifs (2 testeurs externes : Testeur 2.1 et Testeur 2.2).
 
 Ce document présente le cadre méthodologique utilisé par le binôme (Arthur Morin & Alban Chabalier) pour évaluer l'application **Le Convoi Ferroviaire Blindé** auprès d'utilisateurs extérieurs en totale autonomie à distance, ainsi que les résultats complets recueillis sur les deux phases et les correctifs apportés.
 
@@ -16,7 +16,7 @@ Ce document présente le cadre méthodologique utilisé par le binôme (Arthur M
 Vérifier qu'un utilisateur non initié parvient à comprendre en autonomie les 7 notions obligatoires de la blockchain grâce à la métaphore du convoi ferroviaire, sans aucune explication préalable ni intervention extérieure, et identifier les éventuels points de friction ergonomiques, visuels ou pédagogiques.
 
 ### 1.2 Profil cible (Critères du sujet officiel)
-- **Nombre minimum requis** : Au moins **2 personnes extérieures au groupe** (5 testeurs externes interrogés au total : 4 en Phase 1 et 1 en Phase 2 après correctifs).
+- **Nombre minimum requis** : Au moins **2 personnes extérieures au groupe** (6 testeurs externes interrogés au total : 4 en Phase 1 et 2 en Phase 2 après correctifs).
 - **Profil** : Personnes n'ayant pas suivi le cours R507 et ne disposant pas de connaissances techniques préalables sur le fonctionnement d'une blockchain.
 - **Matériel de test** : Ordinateur personnel standard équipé d'un navigateur web récent, en accédant directement au site déployé sur GitHub Pages.
 
@@ -114,32 +114,34 @@ Le tableau suivant rassemble les réponses recueillies lors de la première camp
 
 ---
 
-### 6.2 Phase 2 (En cours — Validation après correctifs : Testeur 2.1)
+### 6.2 Phase 2 (Clôturée -- Validation après correctifs : Testeur 2.1 et Testeur 2.2)
 
-Une deuxième phase de tests est engagée sur la version mise à jour suite aux 5 premiers correctifs. Le tableau ci-dessous synthétise le retour complet et anonymisé du premier testeur de cette phase (**Testeur 2.1**).
+Une deuxième phase de tests a été menée sur la version mise à jour suite aux premiers correctifs. Le tableau ci-dessous synthétise les retours complets et anonymisés des deux participants de cette phase (**Testeur 2.1** et **Testeur 2.2**).
 
-| Question / Critère | Réponse de Testeur 2.1 |
-|:---|:---|
-| **Avant cette expérience, quel était votre niveau sur la blockchain ?** | En avait entendu parler sans savoir comment ça marche (Découverte) |
-| **Votre tranche d'âge** | 18 - 25 ans |
-| **Sur quel support avez-vous fait le test ?** | Ordinateur (PC / Mac) |
-| **D'après vous, à quoi sert l'empreinte numérique (ou Hash) d'un bloc ?** | **Juste** : *"C'est une signature unique qui change dès que le contenu du bloc est modifié"* |
-| **Que se passe-t-il si quelqu'un tente de modifier une transaction passée ?** | **Juste** : *"Le lien avec les blocs suivants se brise et la falsification est visible par tout le monde"* |
-| **Où les informations de la blockchain sont-elles enregistrées ?** | **Juste** : *"Dans une multitude de copies synchronisées et réparties sur tout le réseau (les gares / nœuds)"* (100 % de réussite sur la décentralisation en Phase 2 contre 50 % en Phase 1) |
-| **Quel est le rôle principal du minage ?** | **Juste** : *"Rendre la validation coûteuse en calcul pour empêcher la triche"* |
-| **En une ou deux phrases avec vos propres mots : comment décririez-vous la blockchain à un proche ?** | *"C'est un ensemble de blocs reliés entre eux, chacun possède un code unique calculé pour empêcher toute tentative de fraude."* |
-| **La métaphore du convoi ferroviaire vous a-t-elle aidé à visualiser le fonctionnement ?** | *"Oui, cela rend les notions très concrètes"* |
-| **Concernant les codes couleurs : les avez-vous compris ?** | *"Je les ai compris spontanément"* |
-| **Avez-vous essayé d'interagir avec la scène 3D ?** | *"Oui, j'ai manipulé les éléments et testé les boutons"* |
-| **Y a-t-il une étape ou une animation qui vous a particulièrement marqué(e) ou paru très claire ?** | Étape 4 : *"L'étape où on voit les 6 gares reliées et comment elles se transfèrent les informations lorsqu'un nouveau bloc est créé"* |
-| **À l'inverse, y a-t-il un moment où vous vous êtes senti(e) perdu(e), confus(e) ou bloqué(e) ?** | Étape 5 : *"Je n'ai pas super bien compris le minage, il faudrait plus expliquer au début que c'est fait par les utilisateurs eux-mêmes et ce qu'ils doivent vraiment faire"* |
-| **Facilité à comprendre ce qu'il faut faire dès l'arrivée sur le site (Note de 1 à 5)** | **5 / 5** |
-| **Clarté et lisibilité des textes dans le volet d'explication (Note de 1 à 5)** | **5 / 5** |
-| **Équilibre entre le texte explicatif et l'animation 3D (Note de 1 à 5)** | **5 / 5** |
-| **Fluidité de l'animation 3D sur votre écran** | Parfaitement fluide |
-| **Pensez-vous avoir une meilleure compréhension de la blockchain après ce test ? (Note de 1 à 5)** | **4 / 5** |
-| **Combien de temps avez-vous passé sur le site environ ?** | Entre 8 et 15 minutes |
-| **Si vous aviez une seule chose à améliorer ou modifier en priorité sur le site, ce serait quoi ?** | *"Quand on clique sur un bouton pour lancer une action, la barre sur le côté où apparaît le texte remonte tout en haut, ça serait plus pratique si elle restait à la position où elle était quand on a cliqué (sur les pages 4 et 5)"* |
+| Question / Critère | Réponse de Testeur 2.1 | Réponse de Testeur 2.2 |
+|:---|:---|:---|
+| **Avant cette expérience, quel était votre niveau sur la blockchain ?** | En avait entendu parler sans savoir comment ça marche (Découverte) | Débutant complet |
+| **Votre tranche d'âge** | 18 - 25 ans | 18 - 25 ans |
+| **Sur quel support avez-vous fait le test ?** | Ordinateur (PC / Mac) | Ordinateur (PC / Mac) |
+| **D'après vous, à quoi sert l'empreinte numérique (ou Hash) d'un bloc ?** | **Juste** : *"C'est une signature unique qui change dès que le contenu du bloc est modifié"* | **Juste** : *"Elle permet de vérifier que le contenu du bloc n'a pas été modifié."* |
+| **Que se passe-t-il si quelqu'un tente de modifier une transaction passée ?** | **Juste** : *"Le lien avec les blocs suivants se brise et la falsification est visible par tout le monde"* | **Juste** : *"La chaîne se casse parce que le lien avec les blocs suivants ne correspond plus."* |
+| **Où les informations de la blockchain sont-elles enregistrées ?** | **Juste** : *"Dans une multitude de copies synchronisées et réparties sur tout le réseau (les gares / nœuds)"* | **Juste** : *"En de multiples copies sur tous les nœuds (gares) du réseau."* |
+| **Quel est le rôle principal du minage ?** | **Juste** : *"Rendre la validation coûteuse en calcul pour empêcher la triche"* | **Juste** : *"Rendre l'ajout de blocs coûteux en calcul pour empêcher la fraude."* |
+| **En une ou deux phrases avec vos propres mots : comment décririez-vous la blockchain à un proche ?** | *"C'est un ensemble de blocs reliés entre eux, chacun possède un code unique calculé pour empêcher toute tentative de fraude."* | *"Chaque wagon = un bloc avec sa propre empreinte qui permet de relier les blocs entre eux."* |
+| **La métaphore du convoi ferroviaire vous a-t-elle aidé à visualiser le fonctionnement ?** | *"Oui, cela rend les notions très concrètes"* | *"Oui, beaucoup"* |
+| **Concernant les codes couleurs : les avez-vous compris ?** | *"Je les ai compris spontanément"* | *"Oui, ils étaient clairs"* |
+| **Avez-vous essayé d'interagir avec la scène 3D ?** | *"Oui, j'ai manipulé les éléments et testé les boutons"* | *"Oui, un peu"* |
+| **Y a-t-il une étape ou une animation qui vous a particulièrement marqué(e) ou paru très claire ?** | Étape 4 : *"L'étape où on voit les 6 gares reliées et comment elles se transfèrent les informations lorsqu'un nouveau bloc est créé"* | Étape 7 : *"L'explication des attaques 51 %"* |
+| **À l'inverse, y a-t-il un moment où vous vous êtes senti(e) perdu(e), confus(e) ou bloqué(e) ?** | Étape 5 : *"Je n'ai pas super bien compris le minage, il faudrait plus expliquer au début que c'est fait par les utilisateurs eux-mêmes et ce qu'ils doivent vraiment faire"* | Étape 6 (PoW) : *"Dans le test en PoW à l'étape 6, je n'avais pas vu la gare gagnante qui devenait verte à côté du texte donc j'étais un peu perdu. Sinon tout était clair et intuitif"* |
+| **Facilité à comprendre ce qu'il faut faire dès l'arrivée sur le site (Note de 1 à 5)** | **5 / 5** | **5 / 5** |
+| **Clarté et lisibilité des textes dans le volet d'explication (Note de 1 à 5)** | **5 / 5** | **5 / 5** |
+| **Équilibre entre le texte explicatif et l'animation 3D (Note de 1 à 5)** | **5 / 5** | **4 / 5** |
+| **Fluidité de l'animation 3D sur votre écran** | Parfaitement fluide | Plutôt fluide |
+| **Pensez-vous avoir une meilleure compréhension de la blockchain après ce test ? (Note de 1 à 5)** | **4 / 5** | **5 / 5** |
+| **Combien de temps avez-vous passé sur le site environ ?** | Entre 8 et 15 minutes | Entre 5 et 8 minutes |
+| **Si vous aviez une seule chose à améliorer ou modifier en priorité sur le site, ce serait quoi ?** | *"Quand on clique sur un bouton pour lancer une action, la barre sur le côté où apparaît le texte remonte tout en haut, ça serait plus pratique si elle restait à la position où elle était quand on a cliqué (sur les pages 4 et 5)"* | *"Peut être mentionner au moins à la fin du parcours la crypto monnaie qui est aujourd'hui une utilisation principale de la blockchain"* |
+
+**Conclusion de la Phase 2 :** Sur l'ensemble de la Phase 2 (`Testeur 2.1` et `Testeur 2.2`, dont un profil débutant complet), **100 % des réponses aux questions techniques (QCM hash, immuabilité, décentralisation, minage) sont exactes**, l'ergonomie et la lisibilité des textes obtiennent une moyenne maximale de **5 / 5**, et le sentiment de progression pédagogique passe à **4,5 / 5**. Les deux points d'amélioration signalés par `Testeur 2.2` (visibilité de la gare gagnante en PoW à l'étape 6 et ouverture finale sur les cryptomonnaies) ont été immédiatement traités en fin de semaine 8 avec l'allongement de la pause visuelle vert/rouge à l'étape 6 et l'ajout de l'épilogue étape 8 (`src/steps/step8.js`).
 
 ---
 
@@ -147,7 +149,7 @@ Une deuxième phase de tests est engagée sur la version mise à jour suite aux 
 
 L'analyse des 4 retours de la **Phase 1** avait mis en évidence **une moyenne de compréhension globale de 4,25 / 5** et permis de déployer **5 premiers correctifs** (mention d'absence de serveur central à l'étape 4, épuration de l'intérieur des wagons, encadré sur le rôle du minage à l'étape 5, simplification de l'étape 7 et vulgarisation générale).
 
-Les premiers retours de la **Phase 2 (`Testeur 2.1`)** confirment l'efficacité de ces corrections — avec **4 / 4 (100 %) aux questions techniques QCM**, **5 / 5 en ergonomie et clarté des textes** et **100 % de réussite sur la notion de décentralisation** — tout en permettant d'apporter **2 nouveaux correctifs ciblés** :
+La **Phase 2 (`Testeur 2.1` et `Testeur 2.2`)** confirme la progression pédagogique -- **8 / 8 (100 %) de réponses justes aux questions techniques**, **5 / 5 en prise en main et clarté des textes**, **100 % de réussite sur la notion de décentralisation** et **4,5 / 5 de compréhension perçue** -- et a donné lieu aux derniers correctifs de clôture :
 
 | Constat issu des tests | Phase / Testeurs concernés | Correctif implémenté dans l'application |
 |:---|:---|:---|
@@ -158,3 +160,5 @@ Les premiers retours de la **Phase 2 (`Testeur 2.1`)** confirment l'efficacité 
 | **Termes jugés trop abstraits ou techniques** sur certaines notions. | Phase 1 : Testeur 1, Testeur 2 | **Étapes 1 à 7 (`src/steps/`)** : passe de vulgarisation globale sur l'ensemble des textes pour adopter un vocabulaire courant accessible à un public collège. |
 | **Acteurs du minage pas assez explicites au début de l'étape 5.** | Phase 2 : Testeur 2.1 | **Étape 5 (`step5.js`)** : ajout dès la première phrase explicative d'une précision indiquant que le minage est réalisé directement par les gares du réseau (via leurs ordinateurs) qui font tourner leur molette pour tester des milliers de combinaisons jusqu'à verrouiller le wagon. |
 | **Remontée en haut du volet latéral gauche lors du clic sur un bouton d'action** (étapes 4 et 5). | Phase 2 : Testeur 2.1 | **Navigation et volet gauche (`StepManager.js`, `step2.js` à `step7.js`)** : sauvegarde et restauration automatique de la position de défilement (`scrollTop`) du panneau latéral lors des clics sur les boutons d'action, avec défilement fluide vers le bloc de résultat. |
+| **Gare gagnante en PoW insuffisamment repérée à l'étape 6** à côté du panneau gauche. | Phase 2 : Testeur 2.2 | **Étape 6 (`step6.js`, `cameraController.js`)** : cadrage recentré pour que la gare élue reste bien visible dans l'espace utile de droite et maintien explicite de la coloration verte (gagnante) et rouge (perdantes) avant le fondu et l'attelage. |
+| **Absence de lien final vers l'application aux cryptomonnaies.** | Phase 2 : Testeur 2.2 | **Épilogue (`step8.js`, `StepManager.js`, `index.html`)** : création de l'étape 8 (*"Épilogue : Du train à la cryptomonnaie"*) synthétisant le passage du convoi ferroviaire aux transactions Bitcoin / Ethereum sans banque centrale. |

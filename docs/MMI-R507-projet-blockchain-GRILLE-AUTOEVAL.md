@@ -71,7 +71,7 @@
 | 4.2 | Textes lisibles et contrastés. | 3 | Les typographies, contrastes sur fond sombre et zones de diagnostic offrent une bonne lisibilité sur poste standard, même si certains panneaux restent denses sur des résolutions plus réduites. |
 | 4.3 | Rythme des animations compréhensible. | 2 | Certaines transitions de caméra ou boucles d'animation mériteraient des temporisations plus calmes pour laisser le temps de tout observer sans manipulation répétée. |
 | 4.4 | Au moins 30 FPS sur ordinateur standard type poste de TP. | 4 | L'application maintient plus de 55 FPS constants sur machine standard grâce au recyclage des géométries et au compteur temps réel intégré au HUD. |
-| 4.5 | Aucun bug bloquant le parcours principal. | 4 | Le parcours complet de l'accueil jusqu'à la conclusion de l'étape 7 s'exécute sans interruption ni erreur en console, validé par `npm run build`. |
+| 4.5 | Aucun bug bloquant le parcours principal. | 4 | Le parcours complet de l'accueil jusqu'à l'étape 7 puis l'épilogue étape 8 (`step8.js`) s'exécute sans interruption ni erreur en console, validé par `npm run build`. |
 | 4.6 | Déploiement en ligne réalisé. | 4 | Le projet est déployé et actualisé en continu via GitHub Pages à l'adresse : https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/ |
 
 *Sous-total Partie 4 : 20 / 24*
@@ -80,14 +80,14 @@
 
 | # | Critère | Score 0-4 | Justification / preuve |
 |:---|:---|:---:|:---|
-| 5.1 | Démo répétée et plan B prévu. | 3 | Démonstration répétée et Plan B prévu : build statique local prêt, captures d'écran et vidéo de secours en cas de coupure réseau. |
+| 5.1 | Démo répétée et plan B prévu. | 2 | Plan B opérationnel (build statique local, captures d'écran et vidéo de secours prêts) ; la répétition générale chronométrée (#25) reste à réaliser le 19 novembre à 9h30 avant le passage oral. |
 | 5.2 | Chaque membre justifie tous les choix. | 4 | Chaque membre justifie tous les choix en s'appuyant sur `CHOIX-MODELISATION.md` et `CADRAGE.md`, relus et maîtrisés par le binôme. |
-| 5.3 | Chaque membre explique les 7 notions. | 4 | Chaque membre maîtrise et explique les 7 notions obligatoires ainsi que l'architecture du code Three.js. |
-| 5.4 | Bilan du projet appuyé sur des preuves. | 4 | Bilan appuyé sur des preuves concrètes : historique Git, board Kanban, vrai calcul SHA-256 et 5 retours de tests utilisateurs documentés sur 2 phases. |
+| 5.3 | Chaque membre explique les 7 notions. | 4 | Chaque membre maîtrise et explique les 7 notions obligatoires, l'épilogue cryptomonnaie ainsi que l'architecture du code Three.js. |
+| 5.4 | Bilan du projet appuyé sur des preuves. | 4 | Bilan appuyé sur des preuves concrètes : historique Git, board Kanban, fiches de suivi (`SEMAINE-01.md` à `SEMAINE-08.md`), vrai calcul SHA-256 et 6 retours de tests utilisateurs documentés sur 2 phases. |
 | 5.5 | Temps de parole réparti dans les 20 minutes imparties. | 3 | Temps de parole réparti de manière équilibrée dans les 20 minutes imparties selon le plan minuté `SOUTENANCE.md`. |
-| 5.6 | Support dans le temps imparti. | 3 | Le support diaporama et la navigation directe par étapes 0 à 7 sont calibrés pour respecter les 20 minutes, sous réserve du chronométrage final lors de la répétition générale (#25). |
+| 5.6 | Support dans le temps imparti. | 3 | Le support diaporama et la navigation directe par étapes 0 à 8 sont calibrés pour respecter les 20 minutes, sous réserve du chronométrage final lors de la répétition générale (#25). |
 
-*Sous-total Partie 5 : 21 / 24 (estimation provisoire avant passage oral : 12 / 24)*
+*Sous-total Partie 5 : 20 / 24 (estimation provisoire avant passage oral et répétition générale : 11 / 24)*
 
 ## Estimation de votre note
 
@@ -100,19 +100,19 @@ Détail pondéré par partie :
 - **Partie 2 (25 %)** : `(24 / 28) × 5 = 4,29 / 5`
 - **Partie 3 (20 %)** : `(32 / 40) × 4 = 3,20 / 4`
 - **Partie 4 (15 %)** : `(20 / 24) × 3 = 2,50 / 3`
-- **Partie 5 (15 %)** : base provisoire avant passage oral `(12 / 24) × 3 = 1,50 / 3` (projection préparée après soutenance à `21 / 24` : `(21 / 24) × 3 = 2,63 / 3`)
+- **Partie 5 (15 %)** : base provisoire avant répétition générale et passage oral `(11 / 24) × 3 = 1,38 / 3` (projection préparée après soutenance à `20 / 24` : `(20 / 24) × 3 = 2,50 / 3`)
 
-Note provisoire globale (avant passage de la soutenance) = `4,11 + 4,29 + 3,20 + 2,50 + 1,50` = **15,60 / 20** (projection avec Partie 5 à `21 / 24` : **16,72 / 20**).
+Note provisoire globale (avant passage de la soutenance) = `4,11 + 4,29 + 3,20 + 2,50 + 1,38` = **15,48 / 20** (calcul exact sans arrondi intermédiaire : **15,47 / 20** ; projection avec Partie 5 à `20 / 24` : **16,60 / 20**).
 
 ## Bilan individuel et actions
 
 | Nom / prénom | Contribution, apprentissages, usage de l'IA, difficulté pour la soutenance |
 |:---|:---|
-| Arthur Morin | Architecture technique Three.js, modélisation procédurale 3D (locomotive, wagons vitrés, archipel de 6 gares, aiguillage en Y), raycasting 3D, animations des étapes 0 à 7 et intégration Vite. |
-| Alban Chabalier | Gestion de projet (GitHub Projects, suivis hebdomadaires S1 à S5), conception UX/UI, scénarisation pédagogique, rédaction de `CHOIX-MODELISATION.md` et du `README.md`, création du formulaire Google Forms et du protocole de tests utilisateurs. |
+| Arthur Morin | Architecture technique Three.js, modélisation procédurale 3D (locomotive, wagons vitrés, archipel de 6 gares, aiguillage en Y), raycasting 3D, animations des étapes 0 à 8 et intégration Vite. |
+| Alban Chabalier | Gestion de projet (GitHub Projects, suivis hebdomadaires S1 à S8 dont `SEMAINE-08.md`), conception UX/UI, scénarisation pédagogique, rédaction de `CADRAGE.md`, `CHOIX-MODELISATION.md` et du `README.md`, conduite des tests utilisateurs (6 testeurs sur 2 phases) et synthèse `PROTOCOLE-TESTS.md`. |
 
-| Les 3 actions prioritaires pour la semaine 6 | Responsable | Échéance |
+| Les 3 actions de clôture avant la soutenance | Responsable | Échéance |
 |:---|:---|:---|
-| Finaliser les répétitions orales en binôme et préparer la démo de secours (capture vidéo) | Arthur Morin & Alban Chabalier | Avant la soutenance |
-| Vérifier la parfaite conformité des supports de présentation avec le timing de 20 minutes | Alban Chabalier | Avant la soutenance |
-| Clôturer la grille d'auto-évaluation et le bilan individuel à l'issue de l'oral | Binôme | Jour de la soutenance |
+| Réaliser la répétition générale chronométrée en binôme (`#25`) et valider le timing de 20 minutes | Arthur Morin & Alban Chabalier | 19 novembre 2026 (9h30) |
+| Vérifier le bon fonctionnement de la démo de secours (build local + vidéo Plan B) | Arthur Morin & Alban Chabalier | Avant la soutenance |
+| Finaliser la grille d'auto-évaluation et le bilan individuel à l'issue de l'oral | Binôme | Jour de la soutenance |

@@ -1046,8 +1046,8 @@ export const step7 = {
             <span class="btn-arrow">&larr;</span>
             <span>Étape 6 : Consensus</span>
           </button>
-          <button id="btn-step7-restart" class="btn-panel-primary">
-            <span>Accueil (Étape 0)</span>
+          <button id="btn-step7-action-next" class="btn-panel-primary">
+            <span>Épilogue : Crypto</span>
             <span class="btn-arrow">&rarr;</span>
           </button>
         </nav>
@@ -1077,9 +1077,9 @@ export const step7 = {
       }
     });
 
-    document.getElementById('btn-step7-restart')?.addEventListener('click', () => {
-      if (typeof this.ctx.onGoToStep === 'function') {
-        this.ctx.onGoToStep(0);
+    document.getElementById('btn-step7-action-next')?.addEventListener('click', () => {
+      if (typeof this.ctx.onNextStep === 'function') {
+        this.ctx.onNextStep();
       }
     });
   }
