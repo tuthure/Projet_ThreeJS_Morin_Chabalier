@@ -63,8 +63,8 @@
 
 | Membre | Tâches / issues | Issues traitées | Commits |
 |:---|:---|:---:|:---:|
-| Arthur Morin | Finalisation des scènes 3D des étapes 4, 6 et 7 (nettoyage de l'étape 4, animations de quais et transitions PoW/PoS, aiguillage de l'étape 7), conception de la scène 3D comparative de l'étape 8 et vérification du maintien au-dessus de 60 FPS. | #13, #18, #19, #24 | Commits sur `step4.js`, `step6.js`, `step7.js`, `step8.js` et `cameraController.js` |
-| Alban Chabalier | Conduite et analyse des deux vagues de tests utilisateurs (`PROTOCOLE-TESTS.md`), intégration des textes de l'étape 8, rédaction de `CADRAGE.md`, finalisation de `CHOIX-MODELISATION.md`, réajustement réaliste de `GRILLE-AUTOEVAL.md`, clôture du Kanban et fiche `SEMAINE-06.md`. | #17, #18, #20, #21, #22, #23 | Commits sur `PROTOCOLE-TESTS.md`, `CADRAGE.md`, `CHOIX-MODELISATION.md`, `GRILLE-AUTOEVAL.md`, `SEMAINE-06.md` et `README.md` |
+| Arthur Morin | Finalisation des scènes 3D des étapes 4, 6 et 7 (nettoyage de l'étape 4, animations de quais et transitions PoW/PoS, aiguillage de l'étape 7) et vérification du maintien au-dessus de 60 FPS. | #13, #18, #19, #24 | Commits sur `step4.js`, `step6.js`, `step7.js`, `step8.js` et `cameraController.js` |
+| Alban Chabalier | Analyse des deux vagues de tests utilisateurs (`PROTOCOLE-TESTS.md`), intégration de l'étape 8 complète suite à la réponse de l'utilisateur 2.2, rédaction de `CADRAGE.md`, finalisation de `CHOIX-MODELISATION.md`, réajustement de `GRILLE-AUTOEVAL.md`, clôture du Kanban et fiche `SEMAINE-06.md`. | #17, #18, #20, #21, #22, #23 | Commits sur `PROTOCOLE-TESTS.md`, `CADRAGE.md`, `CHOIX-MODELISATION.md`, `GRILLE-AUTOEVAL.md`, `SEMAINE-06.md` et `README.md` |
 
 ## 3. GitHub Projects
 
