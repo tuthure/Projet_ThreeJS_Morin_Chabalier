@@ -996,12 +996,26 @@ export const step7 = {
 
     inner.innerHTML = `
       <header class="step-panel-header">
-        <h2 class="step-panel-title">Attaque des 51 %</h2>
+        <h2 class="step-panel-title">Cycle de vie &amp; Attaque des 51 %</h2>
       </header>
 
       <div class="step-panel-scroll">
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Une course sur deux voies</h3>
+          <h3 class="card-title">Les 5 étapes d'une transaction</h3>
+          <p>
+            Avant d'être gravée dans la chaîne, chaque opération parcourt 5 étapes :
+          </p>
+          <ul class="clean-bullet-list">
+            <li><strong>1. Création :</strong> un utilisateur prépare son opération (une caisse à expédier).</li>
+            <li><strong>2. Propagation :</strong> l'opération est diffusée de gare en gare (étape 4).</li>
+            <li><strong>3. Validation :</strong> les gares vérifient l'opération et cherchent le Nonce (étapes 5 et 6).</li>
+            <li><strong>4. Inclusion dans un bloc :</strong> la caisse est scellée dans un wagon validé (étape 1).</li>
+            <li><strong>5. Confirmation :</strong> chaque nouveau wagon attelé derrière renforce son irréversibilité (étape 2).</li>
+          </ul>
+        </article>
+
+        <article class="step-card context-card animate-fade">
+          <h3 class="card-title">Une course sur deux voies (Attaque des 51 %)</h3>
           <p>
             Sur la voie du haut, les <strong>gares honnêtes</strong> ajoutent la suite normale du train.
           </p>

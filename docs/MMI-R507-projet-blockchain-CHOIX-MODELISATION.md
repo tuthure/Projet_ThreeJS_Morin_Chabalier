@@ -17,7 +17,7 @@ Ce document constitue le livrable officiel de cadrage et de justification des ch
 | Lien vers GitHub Projects | https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier/projects |
 | Lien du formulaire de test | https://forms.gle/SrQx1cJVSrnMt7sc9 |
 | Livrables associés | [`PROTOCOLE-TESTS.md`](PROTOCOLE-TESTS.md) · [`SOUTENANCE.md`](SOUTENANCE.md) · [`MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md`](MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md) · [`docs/suivi/`](suivi/) |
-| Version et date de mise à jour | v1.1 — 13/11/2026 (densification complète des 7 fiches notions, synthèse des tests utilisateurs à 4,25/5 et bibliographie primaire annotée) |
+| Version et date de mise à jour | v1.2 — 15/11/2026 (version finale consolidée : 7 fiches notions + outro comparative étape 8, synthèse des 6 tests utilisateurs en 2 phases et bibliographie primaire annotée) |
 
 ---
 
@@ -41,9 +41,10 @@ Nous avons retenu la métaphore d'un **convoi ferroviaire blindé à parois vitr
 - **La locomotive de tête (Bloc Genesis #0 et protocole)** : Elle ouvre la marche sur le rail principal et impose les règles mathématiques partagées du réseau.
 - **Chaque wagon vitré représente un bloc** : Ses parois translucides laissent voir les caisses de marchandises (les transactions) afin de rappeler que la blockchain est un registre public lisible par tous, tout en empêchant une modification discrète de son chargement.
 - **L'attelage magnétique coloré représente le chaînage cryptographique** : L'anneau arrière du wagon parent porte la couleur et le code de son Hash, tandis que le crochet avant du wagon suivant porte ce même code en tant que `previousHash`. L'attelage ne reste verrouillé que si les deux empreintes et les deux couleurs concordent.
-- **La rupture mécanique d'attelage illustre la détection de falsification** : Altérer une cargaison dans un wagon déjà attelé recalcule immédiatement son Hash. Sa couleur d'anneau arrière change (jaune ambre), créant une discordance évidente avec le crochet avant du wagon suivant resté sur l'ancienne signature cyan : l'attelage décroche physiquement et les wagons suivants basculent en alerte rouge.
-- **L'archipel de gares autonomes modélise la décentralisation** : Six gares ferroviaires de taille identique réparties sur le territoire maintiennent chacune sur leur quai une copie complète du train et se relaient les nouveautés de proche en proche, sans gare centrale.
+- **La rupture mécanique d'attelage illustre la détection de falsification** : Altérer une cargaison dans un wagon déjà attelé recalcule immédiatement son Hash. Sa couleur d'anneau arrière change (du vert émeraude au violet/magenta), créant une discordance évidente avec le crochet avant du wagon suivant resté sur l'ancienne signature émeraude : l'attelage se décroche et les wagons suivants basculent en alerte rouge.
+- **L'archipel de gares autonomes modélise la décentralisation** : Six gares ferroviaires de taille identique réparties sur un plateau isolé maintiennent chacune leur propre registre synchronisé et se relaient les nouveautés de proche en proche, sans gare centrale.
 - **La molette latérale crantée du Nonce figure le minage (PoW)** : Pour gagner le droit d'atteler un wagon candidat, la gare-atelier doit faire tourner la molette crantée du Nonce cran par cran jusqu'à trouver un Hash respectant le nombre de zéros imposé par la difficulté.
+- **L'Étape 8 — Outro comparative (`step8.js`)** : Une scène 3D comparative côte à côte relie directement les organes ferroviaires (wagon, caisses, attelage, gare) à leurs équivalents dans une blockchain de cryptomonnaie (bloc numérique, jetons/virements, chaînage SHA-256, nœuds serveurs).
 
 ### 2.3 Justification pédagogique et limites
 | Question | Réponse et analyse |
@@ -92,13 +93,14 @@ Nous avons retenu la métaphore d'un **convoi ferroviaire blindé à parois vitr
 | Notion officielle | Étape | Module source | Interaction 3D et calcul réel | Sources associées |
 |:---|:---:|:---|:---|:---|
 | *Introduction et cadrage* | **0** | `welcome.js`, `step0.js` | Découverte panoramique du convoi et des 3 piliers | `[S1]`, `[S3]`, `[S10]` |
-| **1. Structure d'un bloc** | **1** | `step1.js`, `Block.js` | Inspection 360°, modification de cargaison et molette Nonce (`sha256Sync`) | `[S1]`, `[S2]`, `[S9]`, `[S10]` |
+| **1. Structure d'un bloc** | **1** | `step1.js`, `Block.js` | Inspection 360° avec 4 infobulles SVG, focus caméra par pièce et schéma SHA-256 en 3 lignes (`sha256Sync`) | `[S1]`, `[S2]`, `[S9]`, `[S10]` |
 | **2. Chaînage cryptographique** | **2** | `step2.js`, `Blockchain.js` | Vérification multi-jonctions et attelage de nouveaux wagons | `[S1]`, `[S2]`, `[S4]`, `[S9]` |
-| **3. Immutabilité et détection de falsification** | **3** | `step3.js`, `Blockchain.js` | Falsification du Wagon #1, changement d'anneau et décrochage en cascade (`getBlockValidityList`) | `[S1]`, `[S2]`, `[S7]` |
-| **4. Réseau et décentralisation** | **4** | `step4.js` | Propagation Gossip séquentielle sur 6 gares, panne au clic et rejet de copie pirate | `[S1]`, `[S3]`, `[S4]`, `[S7]` |
+| **3. Immutabilité et détection de falsification** | **3** | `step3.js`, `Blockchain.js` | Falsification du Wagon #1, changement d'anneau (émeraude -> violet) et décrochage en cascade (`getBlockValidityList`) | `[S1]`, `[S2]`, `[S7]` |
+| **4. Réseau et décentralisation** | **4** | `step4.js` | Propagation Gossip en 3 vagues sur 6 gares isolées, panne au clic 3D et re-synchronisation | `[S1]`, `[S3]`, `[S4]`, `[S7]` |
 | **5. Validation et minage (PoW)** | **5** | `step5.js`, `Block.js` | Clic sur molette 3D (`+1` cran = `+1` essai) et boucle réelle `mineBlock()` avec stats | `[S1]`, `[S4]`, `[S5]` |
-| **6. Comparaison PoW vs PoS** | **6** | `step6.js` | Course simultanée des 3 gares (PoW) vs loterie pondérée + validation unique (PoS) | `[S4]`, `[S5]`, `[S6]` |
-| **7. Cycle de vie et attaque des 51 %** | **7** | `step7.js` | Aiguillage en Y : course 20 % vs 80 % puis 60 % vs 40 % (règle de la chaîne la plus longue) | `[S1]`, `[S4]`, `[S5]`, `[S9]` |
+| **6. Comparaison PoW vs PoS** | **6** | `step6.js` | Chargement sur quais, course des 3 gares (PoW) vs loterie pondérée + zoom et validation unique (PoS) | `[S4]`, `[S5]`, `[S6]` |
+| **7. Cycle de vie et attaque des 51 %** | **7** | `step7.js` | Rappel des 5 étapes du cycle de vie + aiguillage en Y : course 20 % vs 80 % puis 60 % vs 40 % | `[S1]`, `[S4]`, `[S5]`, `[S9]` |
+| *Outro : Du train à la cryptomonnaie* | **8** | `step8.js` | Scène 3D comparative côte à côte (train & gare vs bloc numérique & nœuds serveurs) | `[S1]`, `[S5]`, `[S10]` |
 
 ---
 
@@ -120,8 +122,8 @@ Nous avons retenu la métaphore d'un **convoi ferroviaire blindé à parois vitr
 | Taille et échelle | Cadrage rapproché sur le Wagon #1 isolé avec la locomotive (#0) visible en amorce à sa gauche. | Évite la surcharge visuelle en concentrant l'attention sur l'anatomie d'un seul bloc. |
 | Couleur / matériau / texture | Parois en verre physique translucide (`MeshPhysicalMaterial`) laissant apparaître deux caisses de fret épurées, anneau arrière prenant dynamiquement la couleur issue du Hash réel (`hashToColorHex`). | Illustre la visibilité publique d'un bloc tout en donnant une traduction visuelle immédiate aux changements de signature hexadécimale. |
 | Position | Wagon #1 centré face à la caméra avec orbite libre à 360 degrés. | Encourage l'utilisateur à inspecter l'avant (crochet), le flanc (molette) et l'arrière (anneau). |
-| Mouvement / animation | Modification visuelle des caisses lors d'un changement de fret et rotation crantée de 45 degrés de la molette lors de l'incrémentation du Nonce. | Établit une correspondance immédiate entre l'action utilisateur et le composant concerné. |
-| Interaction et retour visuel | Boutons directs dans le volet gauche (« Modifier la cargaison » et « Tourner la molette du Nonce (+1) »), clic sur les pièces 3D et affichage en direct de l'équation `SHA-256(Index + Parent + Cargaison + Nonce)`. | Prouve par l'expérimentation que le Hash agit comme un sceau d'intégrité déterministe : les mêmes entrées redonnent toujours la même empreinte. |
+| Mouvement / animation | Recadrage caméra ciblé sur chaque pièce sélectionnée (`focusPart`) et projection vectorielle en temps réel des pointeurs SVG. | Établit une correspondance immédiate entre l'action utilisateur et le composant concerné. |
+| Interaction et retour visuel | 5 boutons d'inspection anatomique dans le volet gauche (`Tout voir`, `Attache avant`, `Cargaison`, `Molette Nonce`, `Empreinte Hash`) synchronisés avec les 4 infobulles 3D et le schéma visuel en 3 lignes du calcul `SHA-256`. | Prouve visuellement que le Hash agit comme un sceau d'intégrité déterministe réunissant les trois autres composants du bloc. |
 | Son, si utilisé | Aucun. | Sobriété et concentration sur les valeurs affichées. |
 | Texte d'accompagnement | Explication directe dans le volet gauche (expliquant explicitement que le Hash agit comme un sceau numérique), encadré de formule SHA-256 et 4 infobulles anatomiques. | Harmonise le vocabulaire entre la métaphore ferroviaire et les termes cryptographiques officiels. |
 
@@ -219,9 +221,9 @@ Pour isoler la notion de chaînage dans cette étape 2, `addBlock()` mine automa
 |:---|:---|:---|
 | Forme / géométrie | Cadrage sur la Locomotive (#0), le Wagon #1 (cible) et le Wagon #2 (témoin), avec 2 infobulles 3D reliées en SVG à la plaque centrale + anneau arrière du Wagon #1 d'une part, et au crochet avant décroché du Wagon #2 d'autre part. | Localise exactement le point de fracture entre la nouvelle empreinte émise et l'ancienne empreinte attendue. |
 | Taille et échelle | Plan moyen englobant le maillon intact (`#0 <-> #1`) et le maillon rompu (`#1 <-> #2`). | Démontre que la falsification n'affecte pas le passé avant le bloc altéré, uniquement la suite de la chaîne. |
-| Couleur / matériau / texture | Lors de l'altération (`corruptBlock(1, ...)`): le Wagon #1 passe en jaune ambre et son anneau arrière change explicitement de couleur (ex. du cyan valide vers une nouvelle signature jaune corrompue), tandis que le crochet avant du Wagon #2 reste sur l'ancien cyan attendu ; cette discordance visuelle déclenche le décrochage puis le passage en rouge alerte (`#ef4444`) de la suite du convoi. | Rend la cause du détachement immédiatement lisible sans même avoir à lire les lignes de texte. |
-| Position | Le Wagon #2 recule physiquement sur les rails au moment de la fraude pour matérialiser un espace vide de rupture. | Traduit l'invalidité cryptographique par une rupture spatiale nette. |
-| Mouvement / animation | Recul mécanique amorti du Wagon #2 lors de la falsification, puis ré-accrochage lumineux lorsque l'utilisateur restaure le chargement d'origine. | Matérialise le lien causal direct entre intégrité des données et solidarité du train. |
+| Couleur / matériau / texture | Lors de l'altération (`corruptBlock(1, ...)`): le gyrophare du Wagon #1 passe en orange et son anneau arrière change explicitement de couleur (du vert émeraude valide vers une nouvelle signature violet/magenta corrompue), tandis que le crochet avant du Wagon #2 reste sur l'ancien vert émeraude attendu ; cette discordance visuelle déclenche le décrochage de la barre d'attelage puis le passage en rouge alerte (`#ef4444`) de la suite du convoi. | Rend la cause du détachement immédiatement lisible sans même avoir à lire les lignes de texte. |
+| Position | La barre d'attelage entre le Wagon #1 et le Wagon #2 s'incline et se décroche physiquement au moment de la fraude pour matérialiser la rupture. | Traduit l'invalidité cryptographique par une rupture mécanique nette. |
+| Mouvement / animation | Décrochage mécanique de l'attelage du Wagon #2 lors de la falsification, puis ré-accrochage lumineux lorsque l'utilisateur restaure le chargement d'origine. | Matérialise le lien causal direct entre intégrité des données et solidarité du train. |
 | Interaction et retour visuel | Choix de cargaisons falsifiées (détournement de cargaison, modification frauduleuse) et bouton « Restaurer le chargement légitime ». | L'utilisateur déclenche lui-même l'incident et compare état sain / état corrompu. |
 | Son, si utilisé | Aucun. | Sobriété visuelle. |
 | Texte d'accompagnement | Texte neutre avant le clic pour ne pas divulgâcher l'effet, suivi du diagnostic comparant le nouveau `Hash #1` et l'`Attache #2` devenue incompatible. | Laisse l'observation précéder la règle théorique. |
@@ -267,12 +269,12 @@ Dans cette étape 3, la falsification modifie uniquement le Wagon #1 sans que le
 #### c) Représentation choisie
 | Dimension | Choix | Pourquoi ce choix sert la compréhension |
 |:---|:---|:---|
-| Forme / géométrie | **Territoire séparé de 6 gares ferroviaires complètes** (Gare A à Gare F : quai, bâtiment de brique/verre, horloge, signalisation), reliées par un maillage de lignes de communication et exposant chacune sa propre copie miniature du convoi sur quai. | Dissocie spatialement le réseau décentralisé d'un convoi linéaire unique et rend concret le statut de nœud complet (*full node*). |
+| Forme / géométrie | **Territoire isolé de 6 gares ferroviaires complètes** (Gare A à Gare F : quai, bâtiment de brique/verre, horloge, signalisation), reliées par un maillage de lignes de communication et exposant chacune son propre registre lumineux synchronisé. | Dissocie spatialement le réseau décentralisé d'un convoi linéaire unique et rend concret le statut de nœud complet (*full node*). |
 | Taille et échelle | Vue aérienne dégagée embrassant les 6 gares simultanément, toutes de taille et d'architecture strictement équivalentes. | Supprime visuellement toute hiérarchie ou notion de gare centrale dominante. |
-| Couleur / matériau / texture | Gares actives éclairées en vert émeraude, câbles actifs parcourus par des signaux lumineux cyan séquentiels, gare mise hors-ligne assombrie en gris, gare isolée clignotant en rouge lors d'une tricherie rejetée. | Permet de lire d'un seul coup d'œil l'état synchronisé, déconnecté ou rejeté de chaque nœud. |
+| Couleur / matériau / texture | Gares actives éclairées en vert émeraude, câbles actifs parcourus par des signaux lumineux cyan séquentiels, gare mise hors-ligne assombrie en gris puis resynchronisée en vert à sa reconnexion. | Permet de lire d'un seul coup d'œil l'état synchronisé ou déconnecté de chaque nœud. |
 | Position | Topologie maillée dans le plan XZ offrant plusieurs chemins alternatifs entre A et F sans aucun nœud central. | Indispensable pour prouver visuellement le contournement d'une panne par d'autres voies. |
-| Mouvement / animation | **Propagation séquentielle claire (Gossip)** : la transaction part de la Gare A, voyage lentement vers ses voisines immédiates (B et C), puis seulement après réception, B et C relaient vers D et E jusqu'à F. | Remplace une diffusion simultanée confuse par une propagation étape par étape fidèle au routage pair-à-pair. |
-| Interaction et retour visuel | 1) **Émettre et propager une transaction** de proche en proche.<br>2) **Cliquer directement en 3D sur une gare** (Raycaster) ou via le panneau pour la mettre en panne et vérifier le contournement automatique.<br>3) **Simuler une tricherie locale sur une gare** et constater son rejet par les 5 autres gares. | Fait expérimenter les 3 piliers d'un réseau pair-à-pair : propagation Gossip, tolérance aux pannes et consensus majoritaire face à une fraude locale. |
+| Mouvement / animation | **Propagation séquentielle claire en 3 vagues (Gossip)** : la transaction part de la Gare A, voyage vers ses voisines immédiates (B et C), puis seulement après réception, B et C relaient vers D et E jusqu'à F. | Remplace une diffusion simultanée confuse par une propagation étape par étape fidèle au routage pair-à-pair. |
+| Interaction et retour visuel | 1) **Envoyer une transaction sur le réseau** pour observer sa propagation de proche en proche.<br>2) **Cliquer directement en 3D sur une gare** (Raycaster) pour la mettre hors-ligne (panne), vérifier le contournement automatique, puis la rallumer pour voir sa re-synchronisation auprès de ses voisines. | Fait expérimenter les piliers d'un réseau pair-à-pair : propagation Gossip, tolérance aux pannes et synchronisation distribuée sans serveur central. |
 | Son, si utilisé | Aucun (un carillon Web Audio initialement testé a été retiré). | Garde l'attention focalisée sur les chemins de propagation. |
 | Texte d'accompagnement | Étiquettes 3D sur chaque gare (nom, statut, copies synchronisées), journal de routage et mention explicite en gras : **« Il n'y a AUCUN serveur central ou entreprise qui gère le réseau. »** | Lève l'ambiguïté majeure détectée lors des tests utilisateurs. |
 
@@ -357,7 +359,7 @@ Sur Bitcoin, la difficulté cible exige de l'ordre de 19 zéros hexadécimaux (e
 
 ---
 
-### 4.6 — Comparaison d'au moins deux mécanismes de consensus : par exemple proof of work (PoW) et proof of stake (PoS), en expliquant leurs différences, avantages et limites
+### 4.6 — Comparaison d'au moins deux mécanismes de consensus : par exemple proof of work (PoW) et proof of stake (PoS), ou proof of authority (PoA), en expliquant leurs différences, avantages et limites
 
 **Issues liées :** #12  
 **Séquence(s) concernée(s) :** Étape 6 (`src/steps/step6.js`)
@@ -410,7 +412,7 @@ Les mécanismes complets du PoS moderne (périodes *epochs/slots*, comités d'at
 
 ---
 
-### 4.7 — Cycle de vie d'une transaction et scénario d'attaque illustré : création, propagation, validation, inclusion dans un bloc, confirmation, puis illustration d'une attaque et de sa détection/limitation
+### 4.7 — Cycle de vie d'une transaction et scénario d'attaque illustré : création, propagation, validation, inclusion dans un bloc, confirmation, puis illustration d'une attaque (par exemple double dépense ou altération d'un bloc) et de sa détection/limitation
 
 **Issues liées :** #13, #17  
 **Séquence(s) concernée(s) :** Étape 7 (`src/steps/step7.js`)
@@ -499,24 +501,27 @@ Toutes les décisions de conception, la métaphore du Convoi Ferroviaire Blindé
 La campagne d'évaluation complète est détaillée dans [`docs/PROTOCOLE-TESTS.md`](PROTOCOLE-TESTS.md).
 
 - **Formulaire public soumis aux testeurs :** https://forms.gle/SrQx1cJVSrnMt7sc9
-- **Échantillon :** **4 testeurs externes** au groupe (tranche 18-25 ans, dont 3 en découverte totale et 1 ayant seulement entendu parler du sujet), soit le double du minimum exigé (2 testeurs).
-- **Protocole de passation à distance en autonomie complète :** aucune explication orale ni guidage préalable pendant la navigation de l'écran d'accueil à l'étape 7, puis remplissage autonome du questionnaire Google Forms et contrôle du compteur FPS (>= 30 FPS).
+- **Échantillon :** **6 testeurs externes** au groupe répartis sur 2 phases (4 testeurs en Phase 1 et 2 testeurs en Phase 2 après correctifs : `Testeur 2.1` et `Testeur 2.2`), soit le triple du minimum exigé (2 testeurs).
+- **Protocole de passation à distance en autonomie complète :** aucune explication orale ni guidage préalable pendant la navigation de l'écran d'accueil à l'étape finale, puis remplissage autonome du questionnaire Google Forms et contrôle du compteur FPS (>= 30 FPS).
 
 ### Bilan chiffré et résultats
-- **Note moyenne de compréhension globale après parcours :** **4,25 / 5** (5/5 pour T1 et T2, 4/5 pour T4, 3/5 pour T3).
-- **Confort de lecture et clarté des textes :** **4,50 / 5** (5/5 pour T1 et T3, 4/5 pour T2 et T4).
-- **Équilibre entre texte et animation 3D :** **5,00 / 5** (les 4 testeurs ont attribué 5/5).
-- **Fluidité 3D ressentie :** **100 % fluide**, aucun ralentissement signalé sur les 4 ordinateurs personnels.
+- **Note moyenne de compréhension globale après parcours :** **4,25 / 5** en Phase 1 (5/5 pour T1 et T2, 4/5 pour T4, 3/5 pour T3), puis **4,50 / 5** en Phase 2 (**100 % de réponses justes (8 / 8)** aux questions techniques en Phase 2).
+- **Facilité de prise en main et clarté des textes :** **4,50 / 5** en Phase 1, puis **5,00 / 5** auprès des deux testeurs de la Phase 2.
+- **Équilibre entre texte et animation 3D :** **5,00 / 5** en Phase 1 et **4,50 / 5** en Phase 2.
+- **Fluidité 3D ressentie :** **100 % fluide**, aucun ralentissement signalé sur les 6 ordinateurs personnels.
 
-### Synthèse des 5 correctifs appliqués suite aux retours
+### Synthèse des 8 correctifs appliqués suite aux retours (Phases 1 et 2)
 
 | Constat issu de la campagne | Testeurs concernés | Correctif implémenté dans le code |
 |:---|:---|:---|
-| 50 % des testeurs ont répondu « serveur central » sur le lieu de stockage de la blockchain. | T3, T4 | **Étape 4 (`step4.js`)** : ajout de la mention explicite en gras (*« Il n'y a AUCUN serveur central ou entreprise qui gère le réseau. »*), séparation spatiale en archipel de 6 gares autonomes et animation séquentielle Gossip. |
-| Intérieur des wagons jugé confus à travers la verrière (« effet tunnel »). | T2 | **Modélisation (`WagonMesh.js`)** : réduction à deux caisses bien espacées à l'intérieur des wagons et allègement de l'opacité du vitrage. |
-| Utilité sécuritaire du minage non comprise par un testeur novice. | T3 | **Étape 5 (`step5.js`)** : encadré pédagogique expliquant que le minage rend la réécriture coûteuse, plus tirage aléatoire réel comparé à la moyenne théorique (`16`, `256`, `4 096`). |
-| Blocage et texte jugé trop dense à l'étape 7 lors de la course sur l'aiguillage. | T4 | **Étape 7 (`step7.js`)** : raccourcissement des textes du volet gauche et ralentissement de la vitesse de course des trains sur l'aiguillage en Y. |
-| Vocabulaire encore trop technique à certains endroits pour un débutant. | T1, T2 | **Étapes 0 à 7 (`src/steps/`)** : passe générale de simplification et d'harmonisation avec la métaphore ferroviaire. |
+| 50 % des testeurs de la Phase 1 ont répondu « serveur central » sur le lieu de stockage de la blockchain. | Phase 1 : T3, T4 | **Étape 4 (`step4.js`)** : ajout de la mention explicite en gras (*« Il n'y a AUCUN serveur central ou entreprise qui gère le réseau. »*), séparation spatiale en archipel isolé de 6 gares autonomes et animation séquentielle Gossip (100 % de réussite en Phase 2). |
+| Intérieur des wagons jugé confus à travers la verrière (« effet tunnel »). | Phase 1 : T2 | **Modélisation (`WagonMesh.js`)** : réduction à deux caisses bien espacées à l'intérieur des wagons et allègement de l'opacité du vitrage. |
+| Utilité sécuritaire du minage non comprise par un testeur novice. | Phase 1 : T3 | **Étape 5 (`step5.js`)** : encadré pédagogique expliquant que le minage rend la réécriture coûteuse, plus tirage aléatoire réel comparé à la moyenne théorique (`16`, `256`, `4 096`). |
+| Blocage et texte jugé trop dense à l'étape 7 lors de la course sur l'aiguillage. | Phase 1 : T4 | **Étape 7 (`step7.js`)** : raccourcissement des textes du volet gauche et ralentissement de la vitesse de course des trains sur l'aiguillage en Y. |
+| Vocabulaire encore trop technique à certains endroits pour un débutant. | Phase 1 : T1, T2 | **Étapes 0 à 7 (`src/steps/`)** : passe générale de simplification et d'harmonisation avec la métaphore ferroviaire. |
+| Acteurs du minage pas assez explicites dès l'introduction de l'étape 5. | Phase 2 : T2.1 | **Étape 5 (`step5.js`)** : précision dès la première phrase que ce sont les gares/utilisateurs du réseau qui font tourner la molette via leurs ordinateurs. |
+| Remontée en haut du panneau latéral gauche lors du clic sur un bouton d'action. | Phase 2 : T2.1 | **Navigation (`StepManager.js`, `step2.js` à `step8.js`)** : sauvegarde et restauration automatique de `scrollTop` avec défilement fluide vers la zone de résultat. |
+| Besoin d'une ouverture finale reliant concrètement le train à la cryptomonnaie. | Phase 2 : T2.2 | **Étape 8 — Outro (`step8.js`, `StepManager.js`, `index.html`)** : création d'une scène 3D comparative côte à côte (wagon & gare face à bloc numérique & nœuds serveurs) avec 4 faisceaux d'équivalence. |
 
 ---
 

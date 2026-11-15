@@ -28,7 +28,7 @@
 | 1.4 | L'ordre est pédagogique et progressif. | 3 | La progression suit une logique ascendante du bloc isolé vers le chaînage, le réseau et les attaques, même si l'enchaînement entre consensus et attaque des 51% pourrait être encore plus explicite. |
 | 1.5 | Le fil rouge est cohérent. | 3 | L'univers ferroviaire (locomotive, wagons vitrés, gares, voies d'évitement) est respecté, avec quelques compromis techniques sur les représentations symboliques du réseau. |
 | 1.6 | Les métaphores ne créent pas de fausse compréhension. | 3 | L'analogie des wagons transparents et des anneaux d'attelage fonctionne bien, complétée par des rappels textuels pour préciser les limites de la comparaison mécanique. |
-| 1.7 | Au moins 2 testeurs extérieurs ont été sollicités et leurs retours intégrés. | 4 | 4 utilisateurs externes ont testé l'application à distance en autonomie complète, avec formulaire Google Forms et synthèse documentée dans `docs/PROTOCOLE-TESTS.md`. |
+| 1.7 | Au moins 2 testeurs extérieurs ont été sollicités et leurs retours intégrés. | 4 | 6 utilisateurs externes (4 en Phase 1 et 2 en Phase 2 après correctifs) ont testé l'application à distance en autonomie complète, avec formulaire Google Forms et synthèse documentée dans `docs/PROTOCOLE-TESTS.md`. |
 
 *Sous-total Partie 1 : 23 / 28*
 

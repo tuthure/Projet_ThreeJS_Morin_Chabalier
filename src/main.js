@@ -201,8 +201,7 @@ window.blockchain = {
     } else {
       trainConvoy.restoreEntireTrain();
     }
-    const block = trainConvoy.getBlock(inspectedBlockIndex);
-    
+    return trainConvoy.getBlock(typeof index === 'number' ? index : 1);
   },
 
   recalculate: (index = 1) => {

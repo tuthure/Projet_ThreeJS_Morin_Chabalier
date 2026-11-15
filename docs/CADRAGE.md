@@ -42,25 +42,26 @@ Faire comprendre le fonctionnement d'une blockchain à un utilisateur non initi�
 | Étape du parcours | Notion R507 | Ce que fait l'utilisateur |
 |:---|:---|:---|
 | 0. Le réseau public | Cadrage introductif | Observe le convoi complet (locomotive, wagons vitrés, attelages) sur un réseau sans gare centrale |
-| 1. Le wagon blindé | 1 — Structure d'un bloc | Inspecte les 4 composants du wagon, modifie la cargaison ou tourne le Nonce et observe le recalcul SHA-256 |
+| 1. Le wagon blindé | 1 — Structure d'un bloc | Inspecte les 4 composants du wagon avec focus caméra et schéma de calcul SHA-256 en 3 lignes |
 | 2. L'attelage magnétique | 2 — Chaînage cryptographique | Compare les jonctions (`Hash` / `Previous Hash`) et ajoute de nouveaux wagons à la suite du convoi |
-| 3. Le wagon falsifié | 3 — Immutabilité et falsification | Altère le chargement du Wagon #1 : l'anneau change de teinte, l'attelage se rompt et les wagons suivants passent au rouge |
-| 4. L'archipel de gares | 4 — Réseau et décentralisation | Propage une transaction de gare en gare (Gossip), coupe une gare au clic et observe le rejet d'un wagon pirate |
+| 3. Le wagon falsifié | 3 — Immutabilité et falsification | Altère le chargement du Wagon #1 : son anneau vire au violet, l'attelage se décroche et les wagons suivants passent au rouge |
+| 4. L'archipel de gares | 4 — Réseau et décentralisation | Propage une transaction de gare en gare en 3 vagues (Gossip), coupe une gare au clic 3D et observe le contournement puis la re-synchronisation |
 | 5. La molette de minage | 5 — Validation et minage (PoW) | Choisit la difficulté (`0`, `00`, `000`), actionne la molette cran par cran ou en auto jusqu'au Nonce valide |
 | 6. PoW vs PoS | 6 — Comparaison de consensus | Compare la course simultanée de 3 gares (PoW) au tirage pondéré sur caution suivi d'un zoom sur la gare élue (PoS) |
-| 7. L'aiguillage en Y | 7 — Cycle de vie et attaque 51 % | Suit le cycle complet d'une transaction puis lance la course sur l'aiguillage en Y (20 % honnête vs 60 % pirate) |
+| 7. L'aiguillage en Y | 7 — Cycle de vie et attaque 51 % | Suit les 5 étapes du cycle de vie d'une transaction puis lance la course sur l'aiguillage en Y (20 % honnête vs 60 % pirate) |
+| 8. Outro comparative | Ouverture — Du train à la crypto | Explore la scène 3D comparative côte à côte reliant chaque organe ferroviaire à une blockchain de cryptomonnaie |
 
 Le détail des justifications visuelles, des alternatives écartées et des limites assumées pour chaque notion est documenté dans [`MMI-R507-projet-blockchain-CHOIX-MODELISATION.md`](MMI-R507-projet-blockchain-CHOIX-MODELISATION.md).
 
 ## 5. Les 7 notions obligatoires
 
-1. Structure d'un bloc (données, hash, hash du bloc précédent, nonce)
-2. Chaînage cryptographique (hash, lien vers le parent, effet avalanche)
-3. Immutabilité et détection de falsification
-4. Réseau et décentralisation (nœuds, copies distribuées, propagation sans centre)
-5. Validation et minage (vérification, recherche du nonce sous difficulté)
-6. Comparaison d'au moins deux mécanismes de consensus (PoW vs PoS)
-7. Cycle de vie d'une transaction et scénario d'attaque illustré (51 %)
+1. Structure d’un bloc : données, hash du bloc, hash du bloc parent et, si pertinent, nonce.
+2. Chaînage cryptographique : hash/empreinte cryptographique, lien avec le bloc parent et effet de la moindre modification.
+3. Immutabilité et détection de falsification : une modification rend les empreintes incohérentes et doit être détectable par les autres nœuds.
+4. Réseau et décentralisation : nœuds, copies distribuées et propagation des transactions/blocs, sans centre unique.
+5. Validation et minage : vérification d’une transaction ou d’un bloc et, dans le cas du proof of work (PoW), recherche d’un nonce sous contrainte de difficulté.
+6. Comparaison d’au moins deux mécanismes de consensus : par exemple proof of work (PoW) et proof of stake (PoS), ou proof of authority (PoA), en expliquant leurs différences, avantages et limites.
+7. Cycle de vie d’une transaction et scénario d’attaque illustré : création, propagation, validation, inclusion dans un bloc, confirmation, puis illustration d’une attaque (par exemple double dépense ou altération d’un bloc) et de sa détection/limitation.
 
 ## 6. Choix techniques
 
