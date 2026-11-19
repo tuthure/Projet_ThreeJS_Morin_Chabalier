@@ -329,6 +329,19 @@ export const step8 = {
       wagonMesh.frontRingMaterial.color.setHex(0xa855f7);
       wagonMesh.frontRingMaterial.emissive.setHex(0xa855f7);
     }
+    if (wagonMesh.couplerSleeveMaterial) {
+      wagonMesh.couplerSleeveMaterial.color.setHex(0xa855f7);
+      wagonMesh.couplerSleeveMaterial.emissive.setHex(0xa855f7);
+      wagonMesh.couplerSleeveMaterial.emissiveIntensity = 0.45;
+    }
+    if (wagonMesh.couplerBeamMaterial) {
+      wagonMesh.couplerBeamMaterial.color.setHex(0xa855f7);
+      wagonMesh.couplerBeamMaterial.emissive.setHex(0xa855f7);
+    }
+    if (wagonMesh.couplerHookMaterial) {
+      wagonMesh.couplerHookMaterial.color.setHex(0xa855f7);
+      wagonMesh.couplerHookMaterial.emissive.setHex(0xa855f7);
+    }
     this.comparisonGroup.add(wagonMesh);
 
     // Module d'extrémité du wagon précédent (#1) à gauche pour illustrer l'attelage magnétique SHA-256

@@ -353,7 +353,13 @@ export const step7 = {
     const linkCenterX = -(1.3 + linkLength / 2);
 
     const sleeveMat = regMat(
-      new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.9, roughness: 0.3 }),
+      new THREE.MeshStandardMaterial({
+        color: 0xef4444,
+        emissive: 0xdc2626,
+        emissiveIntensity: 0.45,
+        metalness: 0.65,
+        roughness: 0.3
+      }),
       1.0
     );
     const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, linkLength, 16), sleeveMat);
@@ -810,6 +816,21 @@ export const step7 = {
               if (isCoupled) {
                 w.couplerGroup.position.copy(w.defaultCouplerPosition);
                 w.couplerGroup.rotation.z = 0;
+                if (w.couplerSleeveMaterial) {
+                  w.couplerSleeveMaterial.color.copy(w.colorPrevHash);
+                  w.couplerSleeveMaterial.emissive.copy(w.colorPrevHash);
+                  w.couplerSleeveMaterial.emissiveIntensity = 0.45;
+                }
+                if (w.couplerBeamMaterial) {
+                  w.couplerBeamMaterial.color.copy(w.colorPrevHash);
+                  w.couplerBeamMaterial.emissive.copy(w.colorPrevHash);
+                  w.couplerBeamMaterial.emissiveIntensity = 1.6;
+                }
+                if (w.couplerHookMaterial) {
+                  w.couplerHookMaterial.color.copy(w.colorPrevHash);
+                  w.couplerHookMaterial.emissive.copy(w.colorPrevHash);
+                  w.couplerHookMaterial.emissiveIntensity = 1.5;
+                }
                 if (!this.wasWinnerCoupled) {
                   this.wasWinnerCoupled = true;
                   this.couplerFlashAlpha = 1.0;
@@ -818,6 +839,21 @@ export const step7 = {
               } else {
                 w.couplerGroup.position.y = w.defaultCouplerPosition.y - 0.12;
                 w.couplerGroup.rotation.z = 0.12;
+                if (w.couplerSleeveMaterial) {
+                  w.couplerSleeveMaterial.color.copy(w.colorPrevHash);
+                  w.couplerSleeveMaterial.emissive.copy(w.colorPrevHash);
+                  w.couplerSleeveMaterial.emissiveIntensity = 0.45;
+                }
+                if (w.couplerBeamMaterial) {
+                  w.couplerBeamMaterial.color.copy(w.colorPrevHash);
+                  w.couplerBeamMaterial.emissive.copy(w.colorPrevHash);
+                  w.couplerBeamMaterial.emissiveIntensity = 0.8;
+                }
+                if (w.couplerHookMaterial) {
+                  w.couplerHookMaterial.color.setHex(0xef4444);
+                  w.couplerHookMaterial.emissive.setHex(0xdc2626);
+                  w.couplerHookMaterial.emissiveIntensity = 2.4;
+                }
               }
             }
 

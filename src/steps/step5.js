@@ -796,9 +796,41 @@ export const step5 = {
           if (!isCoupledPosition) {
             wagon2.couplerGroup.position.y = wagon2.defaultCouplerPosition.y - 0.12;
             wagon2.couplerGroup.rotation.z = 0.12;
+
+            if (wagon2.couplerSleeveMaterial) {
+              wagon2.couplerSleeveMaterial.color.copy(wagon2.colorPrevHash);
+              wagon2.couplerSleeveMaterial.emissive.copy(wagon2.colorPrevHash);
+              wagon2.couplerSleeveMaterial.emissiveIntensity = 0.45;
+            }
+            if (wagon2.couplerBeamMaterial) {
+              wagon2.couplerBeamMaterial.color.copy(wagon2.colorPrevHash);
+              wagon2.couplerBeamMaterial.emissive.copy(wagon2.colorPrevHash);
+              wagon2.couplerBeamMaterial.emissiveIntensity = 0.8;
+            }
+            if (wagon2.couplerHookMaterial) {
+              wagon2.couplerHookMaterial.color.setHex(0xf59e0b);
+              wagon2.couplerHookMaterial.emissive.setHex(0xb45309);
+              wagon2.couplerHookMaterial.emissiveIntensity = 1.6;
+            }
           } else {
             wagon2.couplerGroup.position.copy(wagon2.defaultCouplerPosition);
             wagon2.couplerGroup.rotation.z = 0;
+
+            if (wagon2.couplerSleeveMaterial) {
+              wagon2.couplerSleeveMaterial.color.copy(wagon2.colorPrevHash);
+              wagon2.couplerSleeveMaterial.emissive.copy(wagon2.colorPrevHash);
+              wagon2.couplerSleeveMaterial.emissiveIntensity = 0.45;
+            }
+            if (wagon2.couplerBeamMaterial) {
+              wagon2.couplerBeamMaterial.color.copy(wagon2.colorPrevHash);
+              wagon2.couplerBeamMaterial.emissive.copy(wagon2.colorPrevHash);
+              wagon2.couplerBeamMaterial.emissiveIntensity = 1.6;
+            }
+            if (wagon2.couplerHookMaterial) {
+              wagon2.couplerHookMaterial.color.copy(wagon2.colorPrevHash);
+              wagon2.couplerHookMaterial.emissive.copy(wagon2.colorPrevHash);
+              wagon2.couplerHookMaterial.emissiveIntensity = 1.5;
+            }
           }
         }
 

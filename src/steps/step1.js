@@ -339,6 +339,21 @@ export const step1 = {
           wagon1.frontRingMaterial.emissive.copy(wagon1.colorPrevHash);
           wagon1.frontRingMaterial.emissiveIntensity = pulse;
         }
+        if (wagon1.couplerSleeveMaterial) {
+          wagon1.couplerSleeveMaterial.color.copy(wagon1.colorPrevHash);
+          wagon1.couplerSleeveMaterial.emissive.copy(wagon1.colorPrevHash);
+          wagon1.couplerSleeveMaterial.emissiveIntensity = pulse * 0.35;
+        }
+        if (wagon1.couplerBeamMaterial) {
+          wagon1.couplerBeamMaterial.color.copy(wagon1.colorPrevHash);
+          wagon1.couplerBeamMaterial.emissive.copy(wagon1.colorPrevHash);
+          wagon1.couplerBeamMaterial.emissiveIntensity = pulse;
+        }
+        if (wagon1.couplerHookMaterial) {
+          wagon1.couplerHookMaterial.color.copy(wagon1.colorPrevHash);
+          wagon1.couplerHookMaterial.emissive.copy(wagon1.colorPrevHash);
+          wagon1.couplerHookMaterial.emissiveIntensity = pulse;
+        }
         if (wagon1.rearRingMaterial) {
           wagon1.rearRingMaterial.color.copy(wagon1.colorHash);
           wagon1.rearRingMaterial.emissive.copy(wagon1.colorHash);

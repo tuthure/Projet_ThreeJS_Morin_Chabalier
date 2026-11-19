@@ -1331,6 +1331,15 @@ body {
   color: #6ee7b7;
 }
 
+.station-node-power {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.61rem;
+  font-weight: 600;
+  color: #38bdf8;
+  text-align: left;
+  letter-spacing: 0.02em;
+}
+
 .station-node-btn:hover {
   background: rgba(16, 185, 129, 0.22);
   border-color: #34d399;

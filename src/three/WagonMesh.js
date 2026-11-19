@@ -93,6 +93,9 @@ export class WagonMesh extends THREE.Group {
     // References d'anneaux et d'attelage pour synchronisation visuelle
     this.frontRingMaterial = null;
     this.rearRingMaterial = null;
+    this.couplerSleeve = null;
+    this.couplerSleeveMaterial = null;
+    this.couplerHookMaterial = null;
     this.couplerBeamMaterial = null;
     this.couplerGroup = null;
     this.nonceWheel = null;
@@ -424,14 +427,16 @@ export class WagonMesh extends THREE.Group {
     const linkLength = Math.max(0.6, this.spacing - 2.6);
     const linkCenterX = -(1.3 + linkLength / 2);
 
-    // Tube protecteur mecanique
+    // Tube protecteur mecanique (manchon central) : prend dynamiquement la couleur de l'attache (colorPrevHash)
     const sleeveGeo = new THREE.CylinderGeometry(0.11, 0.11, linkLength, 16);
-    const sleeveMat = new THREE.MeshStandardMaterial({
-      color: 0x334155,
-      metalness: 0.9,
+    this.couplerSleeveMaterial = new THREE.MeshStandardMaterial({
+      color: this.colorPrevHash,
+      emissive: this.colorPrevHash,
+      emissiveIntensity: 0.45,
+      metalness: 0.65,
       roughness: 0.3
     });
-    this.couplerSleeve = new THREE.Mesh(sleeveGeo, sleeveMat);
+    this.couplerSleeve = new THREE.Mesh(sleeveGeo, this.couplerSleeveMaterial);
     this.couplerSleeve.rotation.z = Math.PI / 2;
     this.couplerGroup.add(this.couplerSleeve);
 
@@ -450,6 +455,21 @@ export class WagonMesh extends THREE.Group {
 
     // Anneaux avant (crochet) : prennent la couleur du previousHash
     const frontRingGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.08, 24);
+
+    // ringBase : extrémité / crochet avant qui s'attache au wagon précédent (x = -linkLength / 2)
+    this.couplerHookMaterial = new THREE.MeshStandardMaterial({
+      color: this.colorPrevHash,
+      emissive: this.colorPrevHash,
+      emissiveIntensity: 1.5,
+      metalness: 0.3,
+      roughness: 0.2
+    });
+    const ringBase = new THREE.Mesh(frontRingGeo, this.couplerHookMaterial);
+    ringBase.rotation.z = Math.PI / 2;
+    ringBase.position.x = -linkLength / 2;
+    this.couplerGroup.add(ringBase);
+
+    // ringTip : attache solidaire sur la face avant de ce wagon (x = linkLength / 2)
     this.frontRingMaterial = new THREE.MeshStandardMaterial({
       color: this.colorPrevHash,
       emissive: this.colorPrevHash,
@@ -457,12 +477,6 @@ export class WagonMesh extends THREE.Group {
       metalness: 0.3,
       roughness: 0.2
     });
-
-    const ringBase = new THREE.Mesh(frontRingGeo, this.frontRingMaterial);
-    ringBase.rotation.z = Math.PI / 2;
-    ringBase.position.x = -linkLength / 2;
-    this.couplerGroup.add(ringBase);
-
     const ringTip = new THREE.Mesh(frontRingGeo, this.frontRingMaterial);
     ringTip.rotation.z = Math.PI / 2;
     ringTip.position.x = linkLength / 2;
@@ -840,9 +854,18 @@ export class WagonMesh extends THREE.Group {
         this.frontRingMaterial.color.copy(this.colorPrevHash);
         this.frontRingMaterial.emissive.copy(this.colorPrevHash);
       }
+      if (this.couplerSleeveMaterial) {
+        this.couplerSleeveMaterial.color.copy(this.colorPrevHash);
+        this.couplerSleeveMaterial.emissive.copy(this.colorPrevHash);
+        this.couplerSleeveMaterial.emissiveIntensity = 0.45;
+      }
       if (this.couplerBeamMaterial) {
         this.couplerBeamMaterial.color.copy(this.colorPrevHash);
         this.couplerBeamMaterial.emissive.copy(this.colorPrevHash);
+      }
+      if (this.couplerHookMaterial) {
+        this.couplerHookMaterial.color.copy(this.colorPrevHash);
+        this.couplerHookMaterial.emissive.copy(this.colorPrevHash);
       }
 
       this.renderPlates();
@@ -989,9 +1012,21 @@ export class WagonMesh extends THREE.Group {
         this.couplerGroup.position.copy(this.defaultCouplerPosition);
         this.couplerGroup.rotation.z = 0;
 
+        if (this.couplerSleeveMaterial) {
+          this.couplerSleeveMaterial.color.copy(this.colorPrevHash);
+          this.couplerSleeveMaterial.emissive.copy(this.colorPrevHash);
+          this.couplerSleeveMaterial.emissiveIntensity = 0.45;
+        }
+
         this.couplerBeamMaterial.color.copy(this.colorPrevHash);
         this.couplerBeamMaterial.emissive.copy(this.colorPrevHash);
         this.couplerBeamMaterial.emissiveIntensity = 1.6;
+
+        if (this.couplerHookMaterial) {
+          this.couplerHookMaterial.color.copy(this.colorPrevHash);
+          this.couplerHookMaterial.emissive.copy(this.colorPrevHash);
+          this.couplerHookMaterial.emissiveIntensity = 1.5;
+        }
       }
     } else {
       // 1 & 2. Conteneurs et verriere
@@ -1011,7 +1046,7 @@ export class WagonMesh extends THREE.Group {
         this.rearRingMaterial.emissiveIntensity = 1.4;
       }
 
-      // 5. Anneau avant et attelage : conservent la couleur de leur previousHash attendu
+      // 5. Anneau avant solidaire : conserve la couleur du previousHash attendu par ce wagon
       if (this.frontRingMaterial) {
         this.frontRingMaterial.color.copy(this.colorPrevHash);
         this.frontRingMaterial.emissive.copy(this.colorPrevHash);
@@ -1023,9 +1058,23 @@ export class WagonMesh extends THREE.Group {
         this.couplerGroup.position.y = this.defaultCouplerPosition.y - 0.22;
         this.couplerGroup.rotation.z = 0.18;
 
+        // Le cylindre d'attelage et le faisceau tombent mais conservent la couleur de l'attache solidaire à ce wagon
+        if (this.couplerSleeveMaterial) {
+          this.couplerSleeveMaterial.color.copy(this.colorPrevHash);
+          this.couplerSleeveMaterial.emissive.copy(this.colorPrevHash);
+          this.couplerSleeveMaterial.emissiveIntensity = 0.45;
+        }
+
         this.couplerBeamMaterial.color.copy(this.colorPrevHash);
         this.couplerBeamMaterial.emissive.copy(this.colorPrevHash);
         this.couplerBeamMaterial.emissiveIntensity = 0.8;
+
+        // L'extrémité décrochée (le crochet ringBase qui n'est plus rattaché au wagon précédent) affiche une couleur distincte d'alerte/rupture (rouge #ef4444)
+        if (this.couplerHookMaterial) {
+          this.couplerHookMaterial.color.setHex(0xef4444);
+          this.couplerHookMaterial.emissive.setHex(0xdc2626);
+          this.couplerHookMaterial.emissiveIntensity = 2.4;
+        }
       }
     }
 

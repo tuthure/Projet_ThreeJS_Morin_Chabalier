@@ -281,6 +281,21 @@ export const step3 = {
           wagon1.rearRingMaterial.emissive.copy(wagon1.colorHash);
           wagon1.rearRingMaterial.emissiveIntensity = pulse;
         }
+        if (wagon1.couplerSleeveMaterial) {
+          wagon1.couplerSleeveMaterial.color.copy(wagon1.colorPrevHash);
+          wagon1.couplerSleeveMaterial.emissive.copy(wagon1.colorPrevHash);
+          wagon1.couplerSleeveMaterial.emissiveIntensity = pulse * 0.35;
+        }
+        if (wagon1.couplerBeamMaterial) {
+          wagon1.couplerBeamMaterial.color.copy(wagon1.colorPrevHash);
+          wagon1.couplerBeamMaterial.emissive.copy(wagon1.colorPrevHash);
+          wagon1.couplerBeamMaterial.emissiveIntensity = pulse;
+        }
+        if (wagon1.couplerHookMaterial) {
+          wagon1.couplerHookMaterial.color.copy(wagon1.colorPrevHash);
+          wagon1.couplerHookMaterial.emissive.copy(wagon1.colorPrevHash);
+          wagon1.couplerHookMaterial.emissiveIntensity = pulse;
+        }
         if (wagon1.couplerGroup && wagon1.defaultCouplerPosition) {
           wagon1.couplerGroup.position.copy(wagon1.defaultCouplerPosition);
           wagon1.couplerGroup.rotation.z = 0;
@@ -305,9 +320,43 @@ export const step3 = {
           if (this.isBroken) {
             wagon2.couplerGroup.position.y = wagon2.defaultCouplerPosition.y - 0.22;
             wagon2.couplerGroup.rotation.z = 0.20;
+
+            // Le cylindre d'attelage et le faisceau tombent mais CONSERVENT la couleur de l'attache solidaire (wagon2.colorPrevHash)
+            if (wagon2.couplerSleeveMaterial) {
+              wagon2.couplerSleeveMaterial.color.copy(wagon2.colorPrevHash);
+              wagon2.couplerSleeveMaterial.emissive.copy(wagon2.colorPrevHash);
+              wagon2.couplerSleeveMaterial.emissiveIntensity = 0.45;
+            }
+            if (wagon2.couplerBeamMaterial) {
+              wagon2.couplerBeamMaterial.color.copy(wagon2.colorPrevHash);
+              wagon2.couplerBeamMaterial.emissive.copy(wagon2.colorPrevHash);
+              wagon2.couplerBeamMaterial.emissiveIntensity = 0.8;
+            }
+            // L'extremite decrochee (le crochet ringBase qui s'est decroche du wagon 1) affiche une couleur d'alerte / rupture rouge #ef4444
+            if (wagon2.couplerHookMaterial) {
+              wagon2.couplerHookMaterial.color.setHex(0xef4444);
+              wagon2.couplerHookMaterial.emissive.setHex(0xdc2626);
+              wagon2.couplerHookMaterial.emissiveIntensity = 2.4;
+            }
           } else {
             wagon2.couplerGroup.position.copy(wagon2.defaultCouplerPosition);
             wagon2.couplerGroup.rotation.z = 0;
+
+            if (wagon2.couplerSleeveMaterial) {
+              wagon2.couplerSleeveMaterial.color.copy(wagon2.colorPrevHash);
+              wagon2.couplerSleeveMaterial.emissive.copy(wagon2.colorPrevHash);
+              wagon2.couplerSleeveMaterial.emissiveIntensity = pulse * 0.35;
+            }
+            if (wagon2.couplerBeamMaterial) {
+              wagon2.couplerBeamMaterial.color.copy(wagon2.colorPrevHash);
+              wagon2.couplerBeamMaterial.emissive.copy(wagon2.colorPrevHash);
+              wagon2.couplerBeamMaterial.emissiveIntensity = pulse;
+            }
+            if (wagon2.couplerHookMaterial) {
+              wagon2.couplerHookMaterial.color.copy(wagon2.colorPrevHash);
+              wagon2.couplerHookMaterial.emissive.copy(wagon2.colorPrevHash);
+              wagon2.couplerHookMaterial.emissiveIntensity = pulse;
+            }
           }
         }
 

@@ -39,14 +39,14 @@ export const step4 = {
   // Sauvegarde de visibilité du décor linéaire pour isoler la carte du territoire
   _savedEnvVisibility: null,
 
-  // Coordonnées des 6 gares sur le territoire dégagé (Archipel du Réseau)
+  // Coordonnées des 6 gares sur le territoire dégagé (Archipel du Réseau) avec leur puissance de calcul
   stationCoords: [
-    { code: 'A', name: 'Gare A', region: 'Ouest', pos: new THREE.Vector3(-8.2, 0, 0.0) },
-    { code: 'B', name: 'Gare B', region: 'Nord-Ouest', pos: new THREE.Vector3(-2.6, 0, -4.8) },
-    { code: 'C', name: 'Gare C', region: 'Sud-Ouest', pos: new THREE.Vector3(-2.6, 0, 4.8) },
-    { code: 'D', name: 'Gare D', region: 'Nord-Est', pos: new THREE.Vector3(3.6, 0, -4.8) },
-    { code: 'E', name: 'Gare E', region: 'Sud-Est', pos: new THREE.Vector3(3.6, 0, 4.8) },
-    { code: 'F', name: 'Gare F', region: 'Est', pos: new THREE.Vector3(9.2, 0, 0.0) }
+    { code: 'A', name: 'Gare A', region: 'Ouest', pos: new THREE.Vector3(-8.2, 0, 0.0), power: 28 },
+    { code: 'B', name: 'Gare B', region: 'Nord-Ouest', pos: new THREE.Vector3(-2.6, 0, -4.8), power: 20 },
+    { code: 'C', name: 'Gare C', region: 'Sud-Ouest', pos: new THREE.Vector3(-2.6, 0, 4.8), power: 16 },
+    { code: 'D', name: 'Gare D', region: 'Nord-Est', pos: new THREE.Vector3(3.6, 0, -4.8), power: 14 },
+    { code: 'E', name: 'Gare E', region: 'Sud-Est', pos: new THREE.Vector3(3.6, 0, 4.8), power: 12 },
+    { code: 'F', name: 'Gare F', region: 'Est', pos: new THREE.Vector3(9.2, 0, 0.0), power: 10 }
   ],
 
   // Liaisons primaires (flux direct de gauche à droite sans croisement)
@@ -324,7 +324,7 @@ export const step4 = {
     }
 
     // Fond de carte arrondi
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
     ctx.strokeStyle = borderColor;
     ctx.lineWidth = 4;
 
@@ -348,22 +348,27 @@ export const step4 = {
     ctx.fill();
     ctx.stroke();
 
-    // Titre de la gare
+    // Ligne 1 : Nom de la gare à gauche, Puissance de calcul à droite
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 26px "Segoe UI", Arial, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(`${st.name} (Copie ${st.code})`, canvas.width / 2, 40);
+    ctx.font = 'bold 22px "Segoe UI", Arial, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${st.name} (${st.code})`, 22, 38);
 
-    // Pastille et statut
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = 'bold 20px Consolas, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(`Puis. ${st.power ?? 0} %`, canvas.width - 22, 38);
+
+    // Ligne 2 : Pastille et statut réseau
     ctx.fillStyle = dotColor;
     ctx.beginPath();
-    ctx.arc(44, 76, 8, 0, Math.PI * 2);
+    ctx.arc(30, 76, 7, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = !st.online ? '#fca5a5' : st.state === 'isolated' ? '#fde68a' : '#cbd5e1';
-    ctx.font = 'bold 20px Consolas, monospace';
+    ctx.font = 'bold 19px Consolas, monospace';
     ctx.textAlign = 'left';
-    ctx.fillText(statusText, 62, 83);
+    ctx.fillText(statusText, 46, 83);
 
     st.labelTexture.needsUpdate = true;
   },
@@ -641,6 +646,7 @@ export const step4 = {
         code: info.code,
         name: info.name,
         region: info.region,
+        power: info.power,
         group: stationGroup,
         beaconMat,
         ringMat,
@@ -1380,6 +1386,7 @@ export const step4 = {
             <span class="station-node-dot"></span>
           </span>
           <span class="station-node-status">${statusLabel}</span>
+          <span class="station-node-power">Puissance : ${st.power} %</span>
         </button>
       `;
       })
@@ -1402,6 +1409,9 @@ export const step4 = {
           <p>
             Quand une transaction est envoyée, elle ne passe pas par un serveur unique : elle se transmet de gare en gare, d'une voisine à l'autre, par les câbles du réseau.
           </p>
+          <div class="panel-hint-row" style="margin-top: 10px; border-left: 3px solid #38bdf8; background: rgba(56, 189, 248, 0.08);">
+            <strong>Puissance de calcul des gares :</strong> Chaque gare dispose d'une puissance attribuée (ex. Gare A : 28 %, Gare B : 20 %, etc.). À cette étape, nous nous concentrons sur la diffusion réseau et la synchronisation des copies. <em>Nous verrons concrètement à l'Étape 6 (Consensus PoW / PoS) à quoi servent ces puissances pour élire la gare qui valide le prochain bloc.</em>
+          </div>
           <div class="panel-hint-row" style="margin-top: 10px;">
             <strong>Et si une gare essaie de tricher ?</strong> Les gares voisines comparent aussitôt le message avec <em>leur propre copie</em> et refusent de le transmettre si les données ne collent pas.
           </div>
