@@ -1,0 +1,28 @@
+name: Build modifications-post-soutenance
+
+on:
+  push:
+    branches:
+      - modifications-post-soutenance
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Recuperation du code
+        uses: actions/checkout@v4
+
+      - name: Configuration de Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Installation des dependances
+        run: npm ci
+
+      - name: Compilation du projet Vite
+        run: npm run build
