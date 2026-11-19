@@ -4,38 +4,86 @@ on:
   push:
     branches:
       - main
+  workflow_run:
+    workflows:
+      - "Build modifications-post-soutenance"
+    types:
+      - completed
   workflow_dispatch:
 
 permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read
 
 concurrency:
   group: 'pages'
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Recuperation du code
+      - name: Recuperation de la branche main
         uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main-src
+
+      - name: Recuperation de la branche modifications-post-soutenance
+        uses: actions/checkout@v4
+        with:
+          ref: modifications-post-soutenance
+          path: post-src
 
       - name: Configuration de Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
+          cache-dependency-path: main-src/package-lock.json
 
-      - name: Installation des dependances
-        run: npm ci
+      - name: Installation et compilation (main)
+        working-directory: main-src
+        run: |
+          npm ci
+          npm run build
 
-      - name: Compilation du projet Vite
-        run: npm run build
+      - name: Installation et compilation (modifications-post-soutenance)
+        working-directory: post-src
+        run: |
+          npm ci
+          npm run build
+
+      - name: Assemblage du site GitHub Pages
+        run: |
+          mkdir -p pages-dist/modifications-post-soutenance
+          cp -r main-src/dist/. pages-dist/
+          cp -r post-src/dist/. pages-dist/modifications-post-soutenance/
+          touch pages-dist/.nojekyll
+
+      - name: Attente de la fin de pages-build-deployment (mode legacy)
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Verification d'un eventuel deploiement legacy GitHub Pages pour ${{ github.sha }}..."
+          sleep 8
+          for i in $(seq 1 24); do
+            ACTIVE=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=${{ github.sha }}&per_page=20" \
+              --jq '[.workflow_runs[] | select(.path == "dynamic/pages/pages-build-deployment" and .status != "completed")] | length')
+            echo "Iteration $i : runs pages-build-deployment actifs = $ACTIVE"
+            if [ "$ACTIVE" = "0" ]; then
+              break
+            fi
+            sleep 5
+          done
+          sleep 5
 
       - name: Configuration de GitHub Pages
         uses: actions/configure-pages@v5
@@ -43,7 +91,7 @@ jobs:
       - name: Televersement de l'artefact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'
+          path: './pages-dist'
 
       - name: Deploiement sur GitHub Pages
         id: deployment

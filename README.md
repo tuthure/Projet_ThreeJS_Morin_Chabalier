@@ -21,6 +21,8 @@ Chaque membre maîtrise l'ensemble des 7 notions obligatoires et l'architecture 
 ## Liens et livrables du projet
 
 - **Démo interactive en ligne (GitHub Pages)** : https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/
+- **Diaporama de soutenance (Canva)** : https://canva.link/blockchain-morin-chabalier
+- **Diaporama de soutenance (PDF local de secours si le lien Canva ne fonctionne pas)** : [docs/Diapo - Convoi ferroviaire Blockchain.pdf](docs/Diapo%20-%20Convoi%20ferroviaire%20Blockchain.pdf)
 - **Dépôt GitHub** : https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier
 - **Tableau de bord GitHub Projects (Kanban)** : https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier/projects
 - **Formulaire public de tests utilisateurs** : https://forms.gle/SrQx1cJVSrnMt7sc9
@@ -32,6 +34,7 @@ Chaque membre maîtrise l'ensemble des 7 notions obligatoires et l'architecture 
 | Choix de modélisation (25 % de la note) | [`docs/MMI-R507-projet-blockchain-CHOIX-MODELISATION.md`](docs/MMI-R507-projet-blockchain-CHOIX-MODELISATION.md) | Justification détaillée de chaque notion, correspondance technique, alternatives écartées et limites assumées. |
 | Protocole et bilan des tests | [`docs/PROTOCOLE-TESTS.md`](docs/PROTOCOLE-TESTS.md) | Questionnaire complet, résultats détaillés des 6 testeurs externes sur 2 phases (Phase 1 : 4,25 / 5 ; Phase 2 : 4,50 / 5 et 100 % aux questions techniques) et 8 correctifs appliqués. |
 | Plan de soutenance | [`docs/SOUTENANCE.md`](docs/SOUTENANCE.md) | Répartition minutée (20 min), script de démo en direct (7 min), plan B et réponses aux questions du jury. |
+| Diaporama de soutenance | [Lien Canva](https://canva.link/blockchain-morin-chabalier) · [docs/Diapo - Convoi ferroviaire Blockchain.pdf](docs/Diapo%20-%20Convoi%20ferroviaire%20Blockchain.pdf) | Support visuel de présentation (lien Canva en ligne et copie PDF locale de secours). |
 | Grille d'auto-évaluation | [`docs/MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md`](docs/MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md) | Auto-évaluation factuelle critère par critère avant soutenance. |
 | Fiches de suivi hebdomadaire | [`docs/suivi/`](docs/suivi/) | Suivi hebdomadaire de la progression, des commits et des décisions (`SEMAINE-01.md` à `SEMAINE-06.md`). |
 
@@ -113,6 +116,7 @@ Conformément au protocole décrit dans [`docs/PROTOCOLE-TESTS.md`](docs/PROTOCO
 Projet_ThreeJS_Morin_Chabalier/
 ├── .github/workflows/deploy.yml          # Pipeline de déploiement GitHub Pages
 ├── docs/
+│   ├── Diapo - Convoi ferroviaire Blockchain.pdf         # Diaporama de soutenance (PDF de secours)
 │   ├── CADRAGE.md                        # Document de cadrage initial et jalons
 │   ├── MMI-R507-projet-blockchain-CHOIX-MODELISATION.md   # Livrable officiel (25 %)
 │   ├── MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md      # Auto-évaluation avant soutenance
