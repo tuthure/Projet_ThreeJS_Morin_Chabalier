@@ -32,9 +32,9 @@ export const step7 = {
   honestBranchCount: 1,
   pirateBranchCount: 1,
 
-  // Vrais nonces des wagons #3 et #4 à miner pendant la course sur chaque branche
-  honestNonces: { n3: 40, n4: 28 },
-  pirateNonces: { n3: 24, n4: 20 },
+  // Vrais nonces des wagons #2 (déjà préparé au départ), #3 et #4 à miner pendant la course
+  honestNonces: { n2: 22, n3: 40, n4: 28 },
+  pirateNonces: { n2: 19, n3: 24, n4: 20 },
 
   // Coordonnées des branches de préparation (avant attachement sur le rail central z = 0)
   honestBranchZ: -1.85,
@@ -85,7 +85,7 @@ export const step7 = {
         { lot: 'Fret #109', cargaison: '18 tonnes de cuivre', quai: 'Quai D -> Quai E' }
       ]);
 
-      // Calibre les vrais nonces des Wagons #3 et #4 honnêtes pour que la molette reflète leurs vraies valeurs
+      // Calibre les vrais nonces des Wagons #3 et #4 honnêtes pour que les molettes reflètent leurs vraies valeurs
       const block2 = trainConvoy.getBlock(2);
       const block3 = trainConvoy.getBlock(3);
       const block4 = trainConvoy.getBlock(4);
@@ -94,7 +94,7 @@ export const step7 = {
         const n3 = this.mineBlockInNonceRange(block3, 36, 46, 1);
         block4.previousHash = block3.hash;
         const n4 = this.mineBlockInNonceRange(block4, 22, 34, 1);
-        this.honestNonces = { n3, n4 };
+        this.honestNonces = { n2: block2.nonce, n3, n4 };
         trainConvoy.getWagon(3)?.updateStatus(true);
         trainConvoy.getWagon(4)?.updateStatus(true);
       }
@@ -587,6 +587,7 @@ export const step7 = {
       ? wagon1.colorHash.clone()
       : new THREE.Color(hashToColorHex(prevPirateHash));
 
+    let pirateNonce2 = 19;
     let pirateNonce3 = 24;
     let pirateNonce4 = 20;
 
@@ -599,6 +600,7 @@ export const step7 = {
         pirateNonce4 = this.mineBlockInNonceRange(pirateBlock, 18, 22, 1);
       } else {
         pirateBlock.mineBlock(1);
+        pirateNonce2 = pirateBlock.nonce;
       }
       const ownPirateColor = new THREE.Color(hashToColorHex(pirateBlock.hash));
 
@@ -611,17 +613,20 @@ export const step7 = {
       prevPirateColor = ownPirateColor;
     }
 
-    this.pirateNonces = { n3: pirateNonce3, n4: pirateNonce4 };
+    this.pirateNonces = { n2: pirateNonce2, n3: pirateNonce3, n4: pirateNonce4 };
 
     // Molettes des Gares honnêtes (z = -3.65) et du Pirate (z = +3.65) :
-    // une molette en face du 1er wagon créé (#3), puis une nouvelle en face du wagon suivant (#4)
+    // #2 déjà verrouillée devant le wagon de départ, #3 prête au lancement, #4 ajoutée dès que #3 est trouvé
+    const wheelX2 = 2 * 3.8 + this.branchOffsetX;
     const wheelX3 = 3 * 3.8 + this.branchOffsetX;
     const wheelX4 = 4 * 3.8 + this.branchOffsetX;
     this.honestWheels = [
+      this.createStationWheelNode(wheelX2, -3.65, 0x38bdf8, '#38bdf8', 'WAGON #2'),
       this.createStationWheelNode(wheelX3, -3.65, 0x38bdf8, '#38bdf8', 'WAGON #3'),
       this.createStationWheelNode(wheelX4, -3.65, 0x38bdf8, '#38bdf8', 'WAGON #4')
     ];
     this.pirateWheels = [
+      this.createStationWheelNode(wheelX2, 3.65, 0xef4444, '#ef4444', 'WAGON #2'),
       this.createStationWheelNode(wheelX3, 3.65, 0xef4444, '#ef4444', 'WAGON #3'),
       this.createStationWheelNode(wheelX4, 3.65, 0xef4444, '#ef4444', 'WAGON #4')
     ];
@@ -711,21 +716,27 @@ export const step7 = {
       }
     });
 
-    const resetWheelPair = (wheels, borderHex) => {
+    const resetBranchWheels = (wheels, nonces, borderHex) => {
+      const configs = [
+        { subLabel: 'WAGON #2', crans: nonces.n2, visible: true },
+        { subLabel: 'WAGON #3', crans: 0, visible: true },
+        { subLabel: 'WAGON #4', crans: 0, visible: false }
+      ];
       wheels.forEach((wheelObj, idx) => {
-        const subLabel = idx === 0 ? 'WAGON #3' : 'WAGON #4';
-        wheelObj.currentCrans = 0;
-        wheelObj.currentSubLabel = subLabel;
-        wheelObj.currentAngle = 0;
-        wheelObj.wheelMesh.rotation.set(Math.PI / 2, 0, 0);
-        wheelObj.group.visible = idx === 0;
-        wheelObj.group.scale.setScalar(idx === 0 ? 1.0 : 0.01);
-        this.renderWheelDial(wheelObj.dialCanvas, wheelObj.dialTex, 0, borderHex, subLabel);
+        const cfg = configs[idx];
+        if (!cfg) return;
+        wheelObj.currentCrans = cfg.crans;
+        wheelObj.currentSubLabel = cfg.subLabel;
+        wheelObj.currentAngle = cfg.crans * (Math.PI / 4);
+        wheelObj.wheelMesh.rotation.set(Math.PI / 2, wheelObj.currentAngle, 0);
+        wheelObj.group.visible = cfg.visible;
+        wheelObj.group.scale.setScalar(cfg.visible ? 1.0 : 0.01);
+        this.renderWheelDial(wheelObj.dialCanvas, wheelObj.dialTex, cfg.crans, borderHex, cfg.subLabel);
       });
     };
 
-    resetWheelPair(this.honestWheels, '#38bdf8');
-    resetWheelPair(this.pirateWheels, '#ef4444');
+    resetBranchWheels(this.honestWheels, this.honestNonces, '#38bdf8');
+    resetBranchWheels(this.pirateWheels, this.pirateNonces, '#ef4444');
   },
 
   /**
@@ -926,8 +937,8 @@ export const step7 = {
         };
 
         const syncBranchWheels = (wheels, attempts, nonces, borderColor) => {
-          const w3 = wheels[0];
-          const w4 = wheels[1];
+          const w3 = wheels[1];
+          const w4 = wheels[2];
           const crans3 = Math.min(attempts, nonces.n3);
           updateSingleWheel(w3, crans3, borderColor, 'WAGON #3');
 
