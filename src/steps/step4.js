@@ -458,11 +458,12 @@ export const step4 = {
     const clockTexture = this.createClockTexture();
     const clockMat = new THREE.MeshBasicMaterial({ map: clockTexture });
 
-    // 2. Construction des 6 Gares Ferroviaires (taille et détails modulés modérément selon la puissance)
+    // 2. Construction des 6 Gares Ferroviaires (taille et détails contrastés selon la puissance)
     this.stationCoords.forEach((info, idx) => {
       const powerNorm = (info.power - 10) / (28 - 10);
-      const buildingScale = 0.84 + powerNorm * 0.32; // De 0.84 (10 %) à 1.16 (28 %)
-      const islandScale = 0.91 + powerNorm * 0.18;   // De 0.91 (10 %) à 1.09 (28 %)
+      const buildingScale = 0.68 + powerNorm * 0.64; // De 0.68 (10 %) à 1.32 (28 %)
+      const islandScale = 0.78 + powerNorm * 0.46;   // De 0.78 (10 %) à 1.24 (28 %)
+      const towerScaleY = 0.78 + powerNorm * 0.40;   // De 0.78 (10 %) à 1.18 (28 %)
 
       const stationGroup = new THREE.Group();
       stationGroup.position.copy(info.pos);
@@ -585,23 +586,18 @@ export const step4 = {
       signMesh.position.set(-0.05, 0.89, 0.43);
       buildingGroup.add(signMesh);
 
-      // Tour de l'Horloge (Beffroi de gare) à droite du bâtiment
-      const isCompactTower = info.power <= 12;
+      // Tour de l'Horloge (Beffroi de gare) à droite du bâtiment, modulée selon towerScaleY
       const tower = new THREE.Mesh(towerBodyGeo, brickMat);
-      if (isCompactTower) {
-        tower.scale.y = 0.86;
-        tower.position.set(0.88, 0.74, -0.22);
-      } else {
-        tower.position.set(0.88, 0.85, -0.22);
-      }
+      tower.scale.y = towerScaleY;
+      tower.position.set(0.88, 0.86 * towerScaleY, -0.22);
       buildingGroup.add(tower);
 
       const towerRoof = new THREE.Mesh(towerRoofGeo, slateRoofMat);
-      towerRoof.position.set(0.88, isCompactTower ? 1.78 : 2.01, -0.22);
+      towerRoof.position.set(0.88, 1.72 * towerScaleY + 0.30, -0.22);
       towerRoof.rotation.y = Math.PI / 4;
       buildingGroup.add(towerRoof);
 
-      const clockY = isCompactTower ? 1.20 : 1.36;
+      const clockY = 1.36 * towerScaleY;
       const clockFront = new THREE.Mesh(clockFaceGeo, clockMat);
       clockFront.position.set(0.88, clockY, 0.08);
       buildingGroup.add(clockFront);
@@ -614,10 +610,10 @@ export const step4 = {
       // Détails subtils de puissance : flèche/antenne sur les gares puissantes (>= 20 %)
       if (info.power >= 20) {
         const spire = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.015, 0.03, 0.34, 8),
+          new THREE.CylinderGeometry(0.015, 0.032, 0.40, 8),
           darkMetalMat
         );
-        spire.position.set(0.88, 2.42, -0.22);
+        spire.position.set(0.88, 1.72 * towerScaleY + 0.72, -0.22);
         buildingGroup.add(spire);
       }
 
@@ -638,8 +634,8 @@ export const step4 = {
         });
       }
 
-      // Signalisation ferroviaire (Sémaphore lumineux à gauche du quai, ajusté à la largeur du socle)
-      const sigX = -1.42 * islandScale;
+      // Signalisation ferroviaire (Sémaphore lumineux à gauche du quai, ajusté à la largeur du bâtiment)
+      const sigX = -(1.32 * buildingScale + 0.28);
       const signalMast = new THREE.Mesh(signalMastGeo, darkMetalMat);
       signalMast.position.set(sigX, 1.05, 0.15);
       stationGroup.add(signalMast);
@@ -680,8 +676,10 @@ export const step4 = {
         transparent: true,
         depthTest: false
       });
+      const topLocalY = 1.72 * towerScaleY + (info.power >= 20 ? 0.92 : 0.62);
+      const topWorldY = 0.39 + buildingScale * topLocalY;
       const labelSprite = new THREE.Sprite(labelMat);
-      labelSprite.position.set(0, 2.95 + buildingScale * 0.48, 0);
+      labelSprite.position.set(0, topWorldY + 0.62, 0);
       labelSprite.scale.set(3.4, 1.02, 1);
       stationGroup.add(labelSprite);
 

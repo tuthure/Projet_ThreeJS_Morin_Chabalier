@@ -3,7 +3,7 @@
 > Version 1.0 — 09/10/2026 (jalon M1 — Cadrage, consolidé pour la livraison M2).
 >
 > Dépôt : https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier
-> Démo en ligne : https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/
+> Démo en ligne : https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/modifications-post-soutenance/
 > Board Kanban : https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier/projects
 
 ## 1. Équipe

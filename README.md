@@ -20,7 +20,7 @@ Chaque membre maîtrise l'ensemble des 7 notions obligatoires et l'architecture 
 
 ## Liens et livrables du projet
 
-- **Démo interactive en ligne (GitHub Pages)** : https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/
+- **Démo interactive en ligne (GitHub Pages)** : https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/modifications-post-soutenance/
 - **Diaporama de soutenance (Canva)** : https://canva.link/blockchain-morin-chabalier
 - **Diaporama de soutenance (PDF local de secours si le lien Canva ne fonctionne pas)** : [docs/Diapo - Convoi ferroviaire Blockchain.pdf](docs/Diapo%20-%20Convoi%20ferroviaire%20Blockchain.pdf)
 - **Dépôt GitHub** : https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier

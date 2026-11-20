@@ -24,7 +24,7 @@ Vérifier qu'un utilisateur non initié parvient à comprendre en autonomie les 
 
 ## 2. Liens transmis pour la passation à distance
 
-- **Application en ligne** : https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/
+- **Application en ligne** : https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/modifications-post-soutenance/
 - **Formulaire d'évaluation (Google Forms)** : https://forms.gle/SrQx1cJVSrnMt7sc9
 
 ---

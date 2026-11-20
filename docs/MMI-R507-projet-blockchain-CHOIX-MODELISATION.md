@@ -13,7 +13,7 @@ Ce document constitue le livrable officiel de cadrage et de justification des ch
 | Groupe | Binôme Arthur Morin (`@tuthure`) & Alban Chabalier (`@achabalier14`) |
 | Membres et rôles | **Alban Chabalier** (`@achabalier14`) : Gestion de projet (GitHub Projects, jalons, suivi hebdomadaire), conception UX/UI (HUD latéral, infobulles), ergonomie caméra, narration pédagogique des 7 notions et protocole de tests.<br>**Arthur Morin** (`@tuthure`) : Architecture technique Three.js, modélisation procédurale 3D (locomotive, wagons vitrés, gares, aiguillages), animations mécaniques, logique cryptographique (`Block.js`, `Blockchain.js`) et intégration Vite. |
 | Public cible | Utilisateur non initié (personne extérieure au groupe, n'ayant pas suivi le cours R507 et ne recevant aucune explication orale préalable). |
-| Lien vers la démo en ligne | https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/ |
+| Lien vers la démo en ligne | https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/modifications-post-soutenance/ |
 | Lien vers GitHub Projects | https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier/projects |
 | Lien du formulaire de test | https://forms.gle/SrQx1cJVSrnMt7sc9 |
 | Livrables associés | [`PROTOCOLE-TESTS.md`](PROTOCOLE-TESTS.md) · [`SOUTENANCE.md`](SOUTENANCE.md) · [`MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md`](MMI-R507-projet-blockchain-GRILLE-AUTOEVAL.md) · [`docs/suivi/`](suivi/) |

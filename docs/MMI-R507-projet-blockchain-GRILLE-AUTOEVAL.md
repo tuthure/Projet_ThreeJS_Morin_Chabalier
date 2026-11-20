@@ -72,7 +72,7 @@
 | 4.3 | Rythme des animations compréhensible. | 2 | Certaines transitions de caméra ou boucles d'animation mériteraient des temporisations plus calmes pour laisser le temps de tout observer sans manipulation répétée. |
 | 4.4 | Au moins 30 FPS sur ordinateur standard type poste de TP. | 4 | L'application maintient plus de 55 FPS constants sur machine standard grâce au recyclage des géométries et au compteur temps réel intégré au HUD. |
 | 4.5 | Aucun bug bloquant le parcours principal. | 4 | Le parcours complet de l'accueil jusqu'à l'étape 7 puis l'épilogue étape 8 (`step8.js`) s'exécute sans interruption ni erreur en console, validé par `npm run build`. |
-| 4.6 | Déploiement en ligne réalisé. | 4 | Le projet est déployé et actualisé en continu via GitHub Pages à l'adresse : https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/ |
+| 4.6 | Déploiement en ligne réalisé. | 4 | Le projet est déployé et actualisé en continu via GitHub Pages à l'adresse : https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/modifications-post-soutenance/ |
 
 *Sous-total Partie 4 : 20 / 24*
 

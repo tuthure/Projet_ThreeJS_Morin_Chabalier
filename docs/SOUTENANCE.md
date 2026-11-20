@@ -10,7 +10,7 @@
 
 - **Date et horaires :** Jeudi 19 novembre 2026 à 11h00 (répétition générale le même jour à 9h30).
 - **Durée totale :** 20 minutes (environ 15 minutes de présentation et démonstration interactive, suivies de 5 minutes d'échange et de questions avec le jury, modulables selon le rythme de l'oral : 13-14 min + 6-7 min).
-- **Support :** Présentation sous forme de **diaporama** (cadrage du sujet, justification des choix de modélisation, protocole de tests utilisateurs, gestion de projet et bilan) couplée à la **démonstration en direct** de l'application WebGL déployée sur GitHub Pages : `https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/`.
+- **Support :** Présentation sous forme de **diaporama** (cadrage du sujet, justification des choix de modélisation, protocole de tests utilisateurs, gestion de projet et bilan) couplée à la **démonstration en direct** de l'application WebGL déployée sur GitHub Pages : `https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/modifications-post-soutenance/`.
 - **Règle d'équipe :** Alternance équilibrée de prise de parole entre Arthur Morin et Alban Chabalier sur l'exposé et sur la manipulation en direct. Chaque membre maîtrise l'intégralité des 7 notions blockchain ainsi que l'architecture du code (`Block.js`, `Blockchain.js`, `StepManager.js`, `step0.js` à `step8.js`) pour pouvoir répondre à n'importe quelle question ciblée du jury.
 
 ---
@@ -103,7 +103,7 @@
 
 ## 6. Checklist avant la soutenance (19 novembre 2026)
 
-- [ ] Dépôt GitHub `main` à jour et déploiement GitHub Pages vérifié sur `https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/`.
+- [ ] Dépôt GitHub `main` à jour et déploiement GitHub Pages vérifié sur `https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/modifications-post-soutenance/`.
 - [ ] Clone local à jour sur les deux ordinateurs portables du binôme avec `npm run build` et `npm run preview` testés hors-ligne.
 - [ ] Diaporama finalisé (format de présentation + export PDF de secours sur clé USB et sur les deux PC).
 - [ ] Vidéo de secours (capture complète du parcours 0 à 7 à 60 FPS) enregistrée localement sur les deux PC et copiée sur clé USB.

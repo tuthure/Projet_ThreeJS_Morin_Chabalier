@@ -13,7 +13,7 @@
 | Dates couvertes | 10 octobre au 18 octobre 2026 |
 | Membres presents | Arthur Morin, Alban Chabalier |
 | Lien depot / GitHub Projects | https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier / https://github.com/tuthure/Projet_ThreeJS_Morin_Chabalier/projects |
-| Lien demo en ligne | https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/ |
+| Lien demo en ligne | https://tuthure.github.io/Projet_ThreeJS_Morin_Chabalier/modifications-post-soutenance/ |
 
 ## 1. Avancement
 
