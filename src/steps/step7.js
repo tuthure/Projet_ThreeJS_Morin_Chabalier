@@ -1094,7 +1094,7 @@ export const step7 = {
         <nav class="step-nav-bar animate-fade">
           <button id="btn-step7-action-prev" class="btn-panel-ghost">
             <span class="btn-arrow">&larr;</span>
-            <span>Étape 6 : Consensus</span>
+            <span>Étape 6.2 : Récompenses</span>
           </button>
           <button id="btn-step7-action-next" class="btn-panel-primary">
             <span>Épilogue : Crypto</span>

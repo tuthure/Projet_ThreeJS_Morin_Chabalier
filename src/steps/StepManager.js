@@ -5,6 +5,7 @@ import { step3 } from './step3.js';
 import { step4 } from './step4.js';
 import { step5 } from './step5.js';
 import { step6 } from './step6.js';
+import { step6_2 } from './step6_2.js';
 import { step7 } from './step7.js';
 import { step8 } from './step8.js';
 
@@ -25,11 +26,13 @@ export class StepManager {
       onGoToStep: (num) => this.goToStep(num)
     };
 
+    this.stepOrder = ['0', '1', '2', '3', '4', '5', '6', '6.2', '7', '8'];
     this.steps = new Map();
     this.currentStep = null;
+    this.currentStepId = null;
     this.currentStepNum = 0;
 
-    // Enregistrement des modules d'etape (Etape 0 d'accueil + Etapes 1 a 8)
+    // Enregistrement des modules d'etape (Etape 0 d'accueil + Etapes 1 a 8 dont 6 et 6.2)
     this.registerStep(step0);
     this.registerStep(step1);
     this.registerStep(step2);
@@ -37,6 +40,7 @@ export class StepManager {
     this.registerStep(step4);
     this.registerStep(step5);
     this.registerStep(step6);
+    this.registerStep(step6_2);
     this.registerStep(step7);
     this.registerStep(step8);
 
@@ -48,9 +52,9 @@ export class StepManager {
    * @param {object} stepModule
    */
   registerStep(stepModule) {
-    if (!stepModule || typeof stepModule.id !== 'number') return;
+    if (!stepModule || (typeof stepModule.id !== 'number' && typeof stepModule.id !== 'string')) return;
     stepModule.init(this.ctx);
-    this.steps.set(stepModule.id, stepModule);
+    this.steps.set(String(stepModule.id), stepModule);
   }
 
   /**
@@ -60,9 +64,9 @@ export class StepManager {
     const stepButtons = document.querySelectorAll('.step-tab-btn, .step-btn');
     stepButtons.forEach((btn) => {
       btn.addEventListener('click', () => {
-        const stepNum = parseInt(btn.dataset.step);
-        if (!isNaN(stepNum)) {
-          this.goToStep(stepNum);
+        const stepKey = btn.dataset.step;
+        if (stepKey !== undefined && stepKey !== '') {
+          this.goToStep(stepKey);
         }
       });
     });
@@ -98,7 +102,8 @@ export class StepManager {
         <button class="step-tab-btn" data-step="3" title="Notion 3 : Immuabilité">3</button>
         <button class="step-tab-btn" data-step="4" title="Notion 4 : Réseau distribué">4</button>
         <button class="step-tab-btn" data-step="5" title="Notion 5 : Minage">5</button>
-        <button class="step-tab-btn" data-step="6" title="Notion 6 : Consensus">6</button>
+        <button class="step-tab-btn step-tab-sub" data-step="6" title="Notion 6.1 : Consensus PoW vs PoS">6.1</button>
+        <button class="step-tab-btn step-tab-sub" data-step="6.2" title="Notion 6.2 : Récompenses &amp; ROI">6.2</button>
         <button class="step-tab-btn" data-step="7" title="Notion 7 : Attaque des 51%">7</button>
         <button class="step-tab-btn" data-step="8" title="Épilogue : Du train à la cryptomonnaie">8</button>
       `;
@@ -108,12 +113,13 @@ export class StepManager {
   }
 
   /**
-   * Bascule vers une etape donnee (0 a 7).
-   * @param {number} stepNumber
+   * Bascule vers une etape donnee (0 a 8, y compris 6 et 6.2).
+   * @param {number|string} stepId
    */
-  goToStep(stepNumber) {
-    const targetNum = Math.max(0, Math.min(stepNumber, 8));
-    if (targetNum === this.currentStepNum && this.currentStep) return;
+  goToStep(stepId) {
+    const rawKey = String(stepId);
+    const targetKey = this.stepOrder.includes(rawKey) ? rawKey : '0';
+    if (targetKey === this.currentStepId && this.currentStep) return;
 
     // 0. Ferme l'ecran d'accueil s'il etait actif
     if (this.ctx.welcome && typeof this.ctx.welcome.exit === 'function') {
@@ -125,14 +131,16 @@ export class StepManager {
       this.currentStep.exit();
     }
 
-    // 2. Mise a jour du numero d'etape
-    this.currentStepNum = targetNum;
-    this.currentStep = this.steps.get(targetNum) || null;
+    // 2. Mise a jour de l'identifiant d'etape
+    this.currentStepId = targetKey;
+    const orderIdx = this.stepOrder.indexOf(targetKey);
+    this.currentStepNum = orderIdx;
+    this.currentStep = this.steps.get(targetKey) || null;
 
-    // 3. Regle le mouvement du convoi selon l'etape (en marche sur 0, 1, 2, 6 ; arret progressif sur 3, 4, 5, 7)
+    // 3. Regle le mouvement du convoi selon l'etape (en marche sur 0, 1, 2, 6, 6.2)
     if (this.ctx.environment) {
-      const movingSteps = [0, 1, 2, 6];
-      this.ctx.environment.setSpeed(movingSteps.includes(targetNum) ? 4.5 : 0, false);
+      const movingSteps = ['0', '1', '2', '6', '6.2'];
+      this.ctx.environment.setSpeed(movingSteps.includes(targetKey) ? 4.5 : 0, false);
     }
 
     // 4. Entree dans la nouvelle etape
@@ -144,26 +152,27 @@ export class StepManager {
       this.currentStep.enter();
     }
 
-    // 4. Verifie la presence des marque-pages et met a jour la classe active
+    // 5. Verifie la presence des marque-pages et met a jour la classe active
     this.ensureBookmarkTabs();
 
     const stepButtons = document.querySelectorAll('.step-tab-btn, .step-btn');
     stepButtons.forEach((btn) => {
-      btn.classList.toggle('active', parseInt(btn.dataset.step) === targetNum);
+      btn.classList.toggle('active', String(btn.dataset.step) === targetKey);
     });
 
     const btnPrev = document.getElementById('btn-prev');
     const btnNext = document.getElementById('btn-next');
-    if (btnPrev) btnPrev.disabled = targetNum === 0;
-    if (btnNext) btnNext.disabled = targetNum === 8;
+    if (btnPrev) btnPrev.disabled = orderIdx <= 0;
+    if (btnNext) btnNext.disabled = orderIdx >= this.stepOrder.length - 1;
   }
 
   /**
    * Passe a l'etape suivante.
    */
   next() {
-    if (this.currentStepNum < 8) {
-      this.goToStep(this.currentStepNum + 1);
+    const idx = this.stepOrder.indexOf(this.currentStepId);
+    if (idx >= 0 && idx < this.stepOrder.length - 1) {
+      this.goToStep(this.stepOrder[idx + 1]);
     }
   }
 
@@ -171,8 +180,9 @@ export class StepManager {
    * Revient a l'etape precedente.
    */
   prev() {
-    if (this.currentStepNum > 0) {
-      this.goToStep(this.currentStepNum - 1);
+    const idx = this.stepOrder.indexOf(this.currentStepId);
+    if (idx > 0) {
+      this.goToStep(this.stepOrder[idx - 1]);
     }
   }
 }

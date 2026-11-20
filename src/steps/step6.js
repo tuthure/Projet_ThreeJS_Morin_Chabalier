@@ -60,6 +60,12 @@ export const step6 = {
       speedLabel: '10 crans/s (rapide)',
       tokens: 50,
       coinsMeshCount: 10,
+      buildingScale: 1.08,
+      wheelBaseScale: 1.10,
+      windowCount: 3,
+      hasSpire: true,
+      hasAnnex: true,
+      towerScaleY: 1.06,
       crateColors: [0x2563eb, 0xfacc15, 0x3b82f6, 0xeab308],
       crateLabel: 'caisses bleues et jaunes',
       candidateCargo: {
@@ -80,6 +86,12 @@ export const step6 = {
       speedLabel: '7 crans/s (moyenne)',
       tokens: 35,
       coinsMeshCount: 7,
+      buildingScale: 0.93,
+      wheelBaseScale: 0.98,
+      windowCount: 3,
+      hasSpire: false,
+      hasAnnex: false,
+      towerScaleY: 1.0,
       crateColors: [0x10b981, 0xf97316, 0x22c55e, 0xfb923c],
       crateLabel: 'caisses vertes et orange',
       candidateCargo: {
@@ -100,6 +112,12 @@ export const step6 = {
       speedLabel: '3 crans/s (lente)',
       tokens: 15,
       coinsMeshCount: 3,
+      buildingScale: 0.78,
+      wheelBaseScale: 0.86,
+      windowCount: 2,
+      hasSpire: false,
+      hasAnnex: false,
+      towerScaleY: 0.86,
       crateColors: [0x8b5cf6, 0xef4444, 0xa855f7, 0xf87171],
       crateLabel: 'caisses violettes et rouges',
       candidateCargo: {
@@ -526,8 +544,8 @@ export const step6 = {
    */
   createStationBuildingMesh(v, shared, stationMats) {
     const buildingGroup = new THREE.Group();
-    buildingGroup.position.set(-0.12, 0.20, -0.82);
-    buildingGroup.scale.setScalar(0.92);
+    buildingGroup.position.set(-0.12, 0.09, -0.82);
+    buildingGroup.scale.setScalar(v.buildingScale || 0.92);
 
     const plinth = new THREE.Mesh(shared.plinthGeo, stationMats.stoneTrimMat);
     plinth.position.set(-0.10, 0.07, 0);
@@ -553,7 +571,8 @@ export const step6 = {
       emissiveIntensity: 1.0,
       roughness: 0.2
     });
-    [-0.44, -0.10, 0.24].forEach((wx) => {
+    const winXs = v.windowCount === 2 ? [-0.30, 0.10] : [-0.44, -0.10, 0.24];
+    winXs.forEach((wx) => {
       const win = new THREE.Mesh(shared.winGeo, windowMat);
       win.position.set(wx, 0.42, 0.31);
       buildingGroup.add(win);
@@ -581,18 +600,40 @@ export const step6 = {
     signMesh.position.set(-0.10, 0.88, 0.485);
     buildingGroup.add(signMesh);
 
+    const tScaleY = v.towerScaleY || 1.0;
     const tower = new THREE.Mesh(shared.towerBodyGeo, stationMats.brickMat);
-    tower.position.set(-0.66, 0.80, -0.14);
+    tower.scale.y = tScaleY;
+    tower.position.set(-0.66, 0.02 + 0.78 * tScaleY, -0.14);
     buildingGroup.add(tower);
 
+    const towerRoofY = 0.22 + 1.56 * tScaleY;
     const towerRoof = new THREE.Mesh(shared.towerRoofGeo, stationMats.slateRoofMat);
-    towerRoof.position.set(-0.66, 1.78, -0.14);
+    towerRoof.position.set(-0.66, towerRoofY, -0.14);
     towerRoof.rotation.y = Math.PI / 4;
     buildingGroup.add(towerRoof);
 
     const clockFront = new THREE.Mesh(shared.clockFaceGeo, stationMats.clockMat);
-    clockFront.position.set(-0.66, 1.44, 0.08);
+    clockFront.position.set(-0.66, 0.14 + 1.30 * tScaleY, 0.08);
     buildingGroup.add(clockFront);
+
+    if (v.hasSpire) {
+      const spire = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.012, 0.025, 0.28, 8),
+        stationMats.darkMetalMat
+      );
+      spire.position.set(-0.66, towerRoofY + 0.30, -0.14);
+      buildingGroup.add(spire);
+    }
+
+    if (v.hasAnnex) {
+      const annex = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.56, 0.48), stationMats.brickMat);
+      annex.position.set(0.70, 0.28, -0.06);
+      buildingGroup.add(annex);
+
+      const annexRoof = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.07, 0.54), stationMats.slateRoofMat);
+      annexRoof.position.set(0.70, 0.595, -0.06);
+      buildingGroup.add(annexRoof);
+    }
 
     const signalMast = new THREE.Mesh(shared.signalMastGeo, stationMats.darkMetalMat);
     signalMast.position.set(-0.90, 0.56, 0.24);
@@ -1140,13 +1181,15 @@ export const step6 = {
       if (isPoW) {
         v.powNodeGroup.position.set(1.16, 0.06, 0.62);
         v.powNodeGroup.visible = true;
-        v.powNodeGroup.scale.setScalar(1);
+        v.powNodeGroup.scale.setScalar(v.data.wheelBaseScale || 1);
         v.posNodeGroup.visible = false;
       } else {
         const showWinnerWheel = showPosWheel && isWinner;
         v.powNodeGroup.position.set(1.38, 0.06, 0.62);
         v.powNodeGroup.visible = showWinnerWheel;
-        v.powNodeGroup.scale.setScalar(showWinnerWheel ? Math.max(0.01, v.wheelScale) : 0.01);
+        v.powNodeGroup.scale.setScalar(
+          showWinnerWheel ? Math.max(0.01, v.wheelScale * (v.data.wheelBaseScale || 1)) : 0.01
+        );
 
         // Pile de jetons strictement fixe : aucune variation de hauteur ni de scale
         v.posNodeGroup.visible = true;
@@ -1703,7 +1746,7 @@ export const step6 = {
 
         if (winnerVal) {
           winnerVal.wheelScale = 1.0;
-          winnerVal.powNodeGroup.scale.setScalar(1.0);
+          winnerVal.powNodeGroup.scale.setScalar(winnerVal.data.wheelBaseScale || 1.0);
 
           const loadP = Math.min(this.simTimer / 0.85, 1.0);
           winnerVal.loadProgress = loadP;
@@ -1855,7 +1898,8 @@ export const step6 = {
         const isZoomedClose = this.simState === 'pos_zoom_in' || this.simState === 'pos_loading';
         let anyBehind = false;
         const pts = this.validators.map((v, idx) => {
-          const worldP = new THREE.Vector3(v.data.x - 0.12, -0.44 + 1.85, v.data.z - 0.82);
+          const topY = -0.44 + 0.09 + 1.98 * (v.data.buildingScale || 0.92);
+          const worldP = new THREE.Vector3(v.data.x - 0.12, topY, v.data.z - 0.82);
           const pr = worldP.project(camera);
           if (pr.z > 1 && (!isZoomedClose || idx === this.winnerIndex)) {
             anyBehind = true;
@@ -2036,6 +2080,16 @@ export const step6 = {
     inner.innerHTML = `
       <header class="step-panel-header">
         <h2 class="step-panel-title">Consensus : PoW vs PoS</h2>
+        <div class="substep-stepper" role="navigation" aria-label="Sous-étapes du consensus">
+          <button type="button" class="substep-pill active">
+            <span class="substep-num">6.1</span>
+            <span>Consensus</span>
+          </button>
+          <button type="button" id="btn-s6-sub-62" class="substep-pill">
+            <span class="substep-num">6.2</span>
+            <span>Récompenses &amp; ROI</span>
+          </button>
+        </div>
       </header>
 
       <div class="step-panel-scroll">
@@ -2083,7 +2137,7 @@ export const step6 = {
             <span>Étape 5 : Minage</span>
           </button>
           <button id="btn-step6-action-next" class="btn-panel-primary">
-            <span>Étape 7 : Attaque 51 %</span>
+            <span>Étape 6.2 : Récompenses &amp; ROI</span>
             <span class="btn-arrow">&rarr;</span>
           </button>
         </nav>
@@ -2095,6 +2149,12 @@ export const step6 = {
   },
 
   setupEvents() {
+    document.getElementById('btn-s6-sub-62')?.addEventListener('click', () => {
+      if (typeof this.ctx.onGoToStep === 'function') {
+        this.ctx.onGoToStep('6.2');
+      }
+    });
+
     document.getElementById('btn-tab-pow')?.addEventListener('click', () => {
       this.setMode('pow');
     });

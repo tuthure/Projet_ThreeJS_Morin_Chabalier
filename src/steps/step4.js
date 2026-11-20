@@ -458,20 +458,29 @@ export const step4 = {
     const clockTexture = this.createClockTexture();
     const clockMat = new THREE.MeshBasicMaterial({ map: clockTexture });
 
-    // 2. Construction des 6 Gares Ferroviaires
+    // 2. Construction des 6 Gares Ferroviaires (taille et détails modulés modérément selon la puissance)
     this.stationCoords.forEach((info, idx) => {
+      const powerNorm = (info.power - 10) / (28 - 10);
+      const buildingScale = 0.84 + powerNorm * 0.32; // De 0.84 (10 %) à 1.16 (28 %)
+      const islandScale = 0.91 + powerNorm * 0.18;   // De 0.91 (10 %) à 1.09 (28 %)
+
       const stationGroup = new THREE.Group();
       stationGroup.position.copy(info.pos);
       stationGroup.userData = { stationIndex: idx };
 
+      // Socle, voie et quai mis à l'échelle uniquement en X/Z pour préserver la hauteur Y
+      const baseGroup = new THREE.Group();
+      baseGroup.scale.set(islandScale, 1, islandScale);
+      stationGroup.add(baseGroup);
+
       // Socle hexagonal de l'îlot
       const island = new THREE.Mesh(islandGeo, islandMat);
       island.position.y = -0.05;
-      stationGroup.add(island);
+      baseGroup.add(island);
 
       const islandTop = new THREE.Mesh(islandTopGeo, islandTopMat);
       islandTop.position.y = 0.12;
-      stationGroup.add(islandTop);
+      baseGroup.add(islandTop);
 
       // Halo lumineux d'état autour de l'îlot
       const ringMat = new THREE.MeshBasicMaterial({
@@ -483,56 +492,62 @@ export const step4 = {
       const ring = new THREE.Mesh(ringGeo, ringMat);
       ring.rotation.x = -Math.PI / 2;
       ring.position.y = 0.02;
-      stationGroup.add(ring);
+      baseGroup.add(ring);
 
       // Voie ferrée passant devant le quai (+Z)
       const ballast = new THREE.Mesh(ballastGeo, ballastMat);
       ballast.position.set(0, 0.2, 0.72);
-      stationGroup.add(ballast);
+      baseGroup.add(ballast);
 
       const rail1 = new THREE.Mesh(railGeo, railMat);
       rail1.position.set(0, 0.25, 0.56);
-      stationGroup.add(rail1);
+      baseGroup.add(rail1);
 
       const rail2 = new THREE.Mesh(railGeo, railMat);
       rail2.position.set(0, 0.25, 0.88);
-      stationGroup.add(rail2);
+      baseGroup.add(rail2);
 
       for (let s = -3; s <= 3; s++) {
         const sleeper = new THREE.Mesh(sleeperGeo, sleeperMat);
         sleeper.position.set(s * 0.42, 0.23, 0.72);
-        stationGroup.add(sleeper);
+        baseGroup.add(sleeper);
       }
 
       // Quai de gare et ligne de sécurité jaune
       const platform = new THREE.Mesh(platformGeo, platformMat);
       platform.position.set(0, 0.28, -0.15);
-      stationGroup.add(platform);
+      baseGroup.add(platform);
 
       const safetyLine = new THREE.Mesh(safetyLineGeo, safetyMat);
       safetyLine.position.set(0, 0.4, 0.34);
-      stationGroup.add(safetyLine);
+      baseGroup.add(safetyLine);
+
+      // Groupe bâtiment voyageurs posé exactement sur le dessus du quai (y = 0.39)
+      const buildingGroup = new THREE.Group();
+      buildingGroup.position.set(0, 0.39, 0);
+      buildingGroup.scale.setScalar(buildingScale);
+      stationGroup.add(buildingGroup);
 
       // Bâtiment voyageurs (soubassement pierre + murs de briques + corniche + toit d'ardoise)
       const plinth = new THREE.Mesh(plinthGeo, stoneTrimMat);
-      plinth.position.set(-0.22, 0.48, -0.22);
-      stationGroup.add(plinth);
+      plinth.position.set(-0.22, 0.09, -0.22);
+      buildingGroup.add(plinth);
 
       const mainHall = new THREE.Mesh(mainHallGeo, brickMat);
-      mainHall.position.set(-0.22, 1.05, -0.22);
-      stationGroup.add(mainHall);
+      mainHall.position.set(-0.22, 0.66, -0.22);
+      buildingGroup.add(mainHall);
 
       const cornice = new THREE.Mesh(corniceGeo, stoneTrimMat);
-      cornice.position.set(-0.22, 1.56, -0.22);
-      stationGroup.add(cornice);
+      cornice.position.set(-0.22, 1.17, -0.22);
+      buildingGroup.add(cornice);
 
       const mainRoof = new THREE.Mesh(roofPrismGeo, slateRoofMat);
-      mainRoof.position.set(-0.22, 1.88, -0.22);
+      mainRoof.position.set(-0.22, 1.49, -0.22);
       mainRoof.rotation.y = Math.PI / 4;
       mainRoof.scale.set(1.25, 1.0, 0.68);
-      stationGroup.add(mainRoof);
+      buildingGroup.add(mainRoof);
 
-      // Baies vitrées cintrées et porte vitrée (matériau dynamique qui s'éteint en cas de panne)
+      // Baies vitrées cintrées (matériau dynamique qui s'éteint en cas de panne)
       const windowMat = new THREE.MeshStandardMaterial({
         color: 0xfef08a,
         emissive: 0xf59e0b,
@@ -541,60 +556,96 @@ export const step4 = {
       });
 
       const winArchGeo = new THREE.BoxGeometry(0.32, 0.48, 0.04);
-      [-0.72, -0.22, 0.28].forEach((wx) => {
+      const winPositions = info.power <= 12 ? [-0.52, 0.08] : [-0.72, -0.22, 0.28];
+      winPositions.forEach((wx) => {
         const winFront = new THREE.Mesh(winArchGeo, windowMat);
-        winFront.position.set(wx, 0.98, 0.21);
-        stationGroup.add(winFront);
+        winFront.position.set(wx, 0.59, 0.21);
+        buildingGroup.add(winFront);
 
         const winBack = new THREE.Mesh(winArchGeo, windowMat);
-        winBack.position.set(wx, 0.98, -0.65);
-        stationGroup.add(winBack);
+        winBack.position.set(wx, 0.59, -0.65);
+        buildingGroup.add(winBack);
       });
 
       // Marquise / auvent métallique de quai et ses piliers
       const canopy = new THREE.Mesh(canopyGeo, darkMetalMat);
-      canopy.position.set(-0.05, 1.12, 0.14);
-      stationGroup.add(canopy);
+      canopy.position.set(-0.05, 0.73, 0.14);
+      buildingGroup.add(canopy);
 
       [-1.0, -0.05, 0.9].forEach((px) => {
         const pillar = new THREE.Mesh(pillarGeo, darkMetalMat);
-        pillar.position.set(px, 0.75, 0.3);
-        stationGroup.add(pillar);
+        pillar.position.set(px, 0.36, 0.3);
+        buildingGroup.add(pillar);
       });
 
       // Panneau nominatif sur le fronton de la marquise
       const signTex = this.createStationSignTexture(info.name);
       const signMat = new THREE.MeshBasicMaterial({ map: signTex });
       const signMesh = new THREE.Mesh(signBoardGeo, signMat);
-      signMesh.position.set(-0.05, 1.28, 0.43);
-      stationGroup.add(signMesh);
+      signMesh.position.set(-0.05, 0.89, 0.43);
+      buildingGroup.add(signMesh);
 
       // Tour de l'Horloge (Beffroi de gare) à droite du bâtiment
+      const isCompactTower = info.power <= 12;
       const tower = new THREE.Mesh(towerBodyGeo, brickMat);
-      tower.position.set(0.88, 1.24, -0.22);
-      stationGroup.add(tower);
+      if (isCompactTower) {
+        tower.scale.y = 0.86;
+        tower.position.set(0.88, 0.74, -0.22);
+      } else {
+        tower.position.set(0.88, 0.85, -0.22);
+      }
+      buildingGroup.add(tower);
 
       const towerRoof = new THREE.Mesh(towerRoofGeo, slateRoofMat);
-      towerRoof.position.set(0.88, 2.4, -0.22);
+      towerRoof.position.set(0.88, isCompactTower ? 1.78 : 2.01, -0.22);
       towerRoof.rotation.y = Math.PI / 4;
-      stationGroup.add(towerRoof);
+      buildingGroup.add(towerRoof);
 
+      const clockY = isCompactTower ? 1.20 : 1.36;
       const clockFront = new THREE.Mesh(clockFaceGeo, clockMat);
-      clockFront.position.set(0.88, 1.75, 0.08);
-      stationGroup.add(clockFront);
+      clockFront.position.set(0.88, clockY, 0.08);
+      buildingGroup.add(clockFront);
 
       const clockBack = new THREE.Mesh(clockFaceGeo, clockMat);
-      clockBack.position.set(0.88, 1.75, -0.52);
+      clockBack.position.set(0.88, clockY, -0.52);
       clockBack.rotation.y = Math.PI;
-      stationGroup.add(clockBack);
+      buildingGroup.add(clockBack);
 
-      // Signalisation ferroviaire (Sémaphore lumineux à gauche du quai)
+      // Détails subtils de puissance : flèche/antenne sur les gares puissantes (>= 20 %)
+      if (info.power >= 20) {
+        const spire = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.015, 0.03, 0.34, 8),
+          darkMetalMat
+        );
+        spire.position.set(0.88, 2.42, -0.22);
+        buildingGroup.add(spire);
+      }
+
+      // Annexe technique et lucarnes de toit sur la gare la plus puissante (>= 26 %)
+      if (info.power >= 26) {
+        const annex = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.58, 0.44), brickMat);
+        annex.position.set(0.88, 0.29, -0.64);
+        buildingGroup.add(annex);
+
+        const annexRoof = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.08, 0.50), slateRoofMat);
+        annexRoof.position.set(0.88, 0.62, -0.64);
+        buildingGroup.add(annexRoof);
+
+        [-0.46, -0.02].forEach((lx) => {
+          const skylight = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.14, 0.16), windowMat);
+          skylight.position.set(lx, 1.42, -0.02);
+          buildingGroup.add(skylight);
+        });
+      }
+
+      // Signalisation ferroviaire (Sémaphore lumineux à gauche du quai, ajusté à la largeur du socle)
+      const sigX = -1.42 * islandScale;
       const signalMast = new THREE.Mesh(signalMastGeo, darkMetalMat);
-      signalMast.position.set(-1.35, 1.05, 0.15);
+      signalMast.position.set(sigX, 1.05, 0.15);
       stationGroup.add(signalMast);
 
       const signalBox = new THREE.Mesh(signalBoxGeo, darkMetalMat);
-      signalBox.position.set(-1.35, 1.65, 0.15);
+      signalBox.position.set(sigX, 1.65, 0.15);
       stationGroup.add(signalBox);
 
       const beaconMat = new THREE.MeshStandardMaterial({
@@ -604,7 +655,7 @@ export const step4 = {
         roughness: 0.2
       });
       const beacon = new THREE.Mesh(beaconGeo, beaconMat);
-      beacon.position.set(-1.35, 1.65, 0.24);
+      beacon.position.set(sigX, 1.65, 0.24);
       stationGroup.add(beacon);
 
       // Registre local flottant (copie complète de la blockchain détenue par la gare)
@@ -616,10 +667,10 @@ export const step4 = {
         opacity: 0.9
       });
       const ledger = new THREE.Mesh(ledgerGeo, ledgerMat);
-      ledger.position.set(-1.35, 2.25, 0.15);
+      ledger.position.set(sigX, 2.25, 0.15);
       stationGroup.add(ledger);
 
-      // Étiquette Sprite 3D haute lisibilité au-dessus de la gare
+      // Étiquette Sprite 3D haute lisibilité au-dessus de la gare (positionnée au-dessus du toit/flèche)
       const labelCanvas = document.createElement('canvas');
       labelCanvas.width = 360;
       labelCanvas.height = 108;
@@ -630,7 +681,7 @@ export const step4 = {
         depthTest: false
       });
       const labelSprite = new THREE.Sprite(labelMat);
-      labelSprite.position.set(0, 3.25, 0);
+      labelSprite.position.set(0, 2.95 + buildingScale * 0.48, 0);
       labelSprite.scale.set(3.4, 1.02, 1);
       stationGroup.add(labelSprite);
 
@@ -1410,7 +1461,7 @@ export const step4 = {
             Quand une transaction est envoyée, elle ne passe pas par un serveur unique : elle se transmet de gare en gare, d'une voisine à l'autre, par les câbles du réseau.
           </p>
           <div class="panel-hint-row" style="margin-top: 10px; border-left: 3px solid #38bdf8; background: rgba(56, 189, 248, 0.08);">
-            <strong>Puissance de calcul des gares :</strong> Chaque gare dispose d'une puissance attribuée (ex. Gare A : 28 %, Gare B : 20 %, etc.). À cette étape, nous nous concentrons sur la diffusion réseau et la synchronisation des copies. <em>Nous verrons concrètement à l'Étape 6 (Consensus PoW / PoS) à quoi servent ces puissances pour élire la gare qui valide le prochain bloc.</em>
+            <strong>Puissance de calcul des gares :</strong> Chaque gare dispose d'une puissance attribuée (ex. Gare A : 28 %, Gare B : 20 %...) visible jusque dans sa taille en 3D (plus grande pour les plus puissantes, plus compacte pour les plus modestes). À cette étape, nous nous concentrons sur la diffusion réseau et la synchronisation des copies. <em>Nous verrons concrètement à l'Étape 6 (Consensus PoW / PoS) à quoi servent ces puissances pour élire la gare qui valide le prochain bloc.</em>
           </div>
           <div class="panel-hint-row" style="margin-top: 10px;">
             <strong>Et si une gare essaie de tricher ?</strong> Les gares voisines comparent aussitôt le message avec <em>leur propre copie</em> et refusent de le transmettre si les données ne collent pas.
