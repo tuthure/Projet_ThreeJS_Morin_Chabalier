@@ -31,6 +31,7 @@ export const step6_2 = {
   hasTestedPoW: false,
   hasTestedPoS: false,
   roundsPlayed: { pow: 0, pos: 0 },
+  lastWinnerByMode: { pow: '', pos: '' },
   ledgers: null,
 
   overviewCamPos: new THREE.Vector3(3.8, 5.15, 14.8),
@@ -47,10 +48,10 @@ export const step6_2 = {
   stations: [],
   tooltipLayer: null,
 
-  // Modeles economiques coherents sur la base des 3 gares (50 % / 35 % / 15 %)
+  // Modeles simplifies en entiers sur la base des 3 gares (50 % / 35 % / 15 %)
   rewardRates: {
-    pow: { total: 12, base: 10, fees: 2 },
-    pos: { total: 4, base: 3, fees: 1 }
+    pow: { total: 10 },
+    pos: { total: 4 }
   },
 
   validatorData: [
@@ -59,10 +60,7 @@ export const step6_2 = {
       name: 'Gare A',
       share: 50,
       weight: 0.50,
-      probLabel: '50 %',
-      hardwareCost: 25,
-      energyPerRound: 4.0,
-      stakeCapital: 50,
+      energyPerRound: 3,
       coinsMeshCount: 10,
       buildingScale: 1.08,
       windowCount: 3,
@@ -77,10 +75,7 @@ export const step6_2 = {
       name: 'Gare B',
       share: 35,
       weight: 0.35,
-      probLabel: '35 %',
-      hardwareCost: 18,
-      energyPerRound: 2.8,
-      stakeCapital: 35,
+      energyPerRound: 2,
       coinsMeshCount: 7,
       buildingScale: 0.93,
       windowCount: 3,
@@ -95,10 +90,7 @@ export const step6_2 = {
       name: 'Gare C',
       share: 15,
       weight: 0.15,
-      probLabel: '15 %',
-      hardwareCost: 8,
-      energyPerRound: 1.2,
-      stakeCapital: 15,
+      energyPerRound: 1,
       coinsMeshCount: 3,
       buildingScale: 0.78,
       windowCount: 2,
@@ -129,6 +121,7 @@ export const step6_2 = {
       ]
     };
     this.roundsPlayed = { pow: 0, pos: 0 };
+    this.lastWinnerByMode = { pow: '', pos: '' };
   },
 
   resetCurrentModeLedger() {
@@ -138,6 +131,7 @@ export const step6_2 = {
       { blocksWon: 0, earned: 0, energySpent: 0 }
     ];
     this.roundsPlayed[this.mode] = 0;
+    this.lastWinnerByMode[this.mode] = '';
     this.lastEventText = ['', '', ''];
     this.lastEventTimer = 0;
     this.syncVisualsFromLedger(true);
@@ -297,15 +291,11 @@ export const step6_2 = {
     const cfg = this.validatorData[idx];
     const row = this.ledgers[this.mode][idx];
     const isPoW = this.mode === 'pow';
-    const capital = isPoW ? cfg.hardwareCost : cfg.stakeCapital;
     const netOps = isPoW ? row.earned - row.energySpent : row.earned;
-    const roiPercent = Math.round((netOps / capital) * 100);
     return {
       cfg,
       row,
-      capital,
-      netOps,
-      roiPercent
+      netOps
     };
   },
 
@@ -849,7 +839,7 @@ export const step6_2 = {
           <button type="button" class="scene-tooltip-pill">
             <span class="scene-tooltip-dot"></span>
             <span class="scene-tooltip-label">
-              <strong>${v.name}</strong> · <span id="s62-pill-status-${idx}" style="color: #cbd5e1;">ROI 0 %</span>
+              <strong>${v.name}</strong> · <span id="s62-pill-status-${idx}" style="color: #cbd5e1;">Prête</span>
             </span>
           </button>
         </div>
@@ -862,7 +852,7 @@ export const step6_2 = {
         <button type="button" class="scene-tooltip-pill">
           <span class="scene-tooltip-dot"></span>
           <span class="scene-tooltip-label">
-            <strong>Wagon validé</strong> · <span id="s62-wagon-status" style="color: #6ee7b7;">Récompense : +12 jetons</span>
+            <strong>Wagon validé</strong> · <span id="s62-wagon-status" style="color: #6ee7b7;">Récompense : +10 jetons</span>
           </span>
         </button>
       </div>
@@ -928,7 +918,7 @@ export const step6_2 = {
       this.hasTestedPoW = true;
       this.validatorData.forEach((v, idx) => {
         this.ledgers.pow[idx].energySpent += v.energyPerRound;
-        this.lastEventText[idx] = `-${this.formatNum(v.energyPerRound)} élec.`;
+        this.lastEventText[idx] = 'Paie l\'électricité';
         this.lastEventColor[idx] = '#fca5a5';
       });
     } else {
@@ -969,6 +959,7 @@ export const step6_2 = {
     row.blocksWon += 1;
     row.earned += rewardAmount;
     this.roundsPlayed[this.mode] += 1;
+    this.lastWinnerByMode[this.mode] = this.validatorData[this.winnerIndex].name;
 
     const winStation = this.stations[this.winnerIndex];
     if (winStation) {
@@ -991,7 +982,7 @@ export const step6_2 = {
       st.powCostGroup.visible = isPoW;
       st.posStakeGroup.visible = !isPoW;
 
-      const { netOps, roiPercent, row } = this.computeStationMetrics(idx);
+      const { netOps, row } = this.computeStationMetrics(idx);
 
       // Pool de pieces d'or pre-allouees (jusqu'a 18 pieces)
       const visibleCoins = Math.min(18, Math.floor(row.earned / 2));
@@ -999,18 +990,18 @@ export const step6_2 = {
         coin.visible = cIdx < visibleCoins;
       });
 
-      // Hauteur cible de la colonne ROI 3D (de 0.14 jusqu'a 1.45)
-      const norm = Math.max(0, roiPercent) / 140;
+      // Hauteur cible de la colonne 3D pilotee directement par le solde net
+      const norm = Math.max(0, netOps) / 24;
       st.targetRoiHeight = Math.min(1.45, Math.max(0.14, 0.18 + norm * 1.15));
       if (snapBarHeight) {
         st.currentRoiHeight = st.targetRoiHeight;
         st.roiBarMesh.scale.y = st.currentRoiHeight;
       }
 
-      if (netOps > 0.05) {
+      if (netOps > 0) {
         st.roiBarMat.color.setHex(0x10b981);
         st.roiBarMat.emissive.setHex(0x059669);
-      } else if (netOps < -0.05) {
+      } else if (netOps < 0) {
         st.roiBarMat.color.setHex(0xef4444);
         st.roiBarMat.emissive.setHex(0xdc2626);
       } else {
@@ -1048,6 +1039,7 @@ export const step6_2 = {
   updateTooltipsDOM() {
     const isPoW = this.mode === 'pow';
     const rewardAmount = this.rewardRates[this.mode].total;
+    const rounds = this.roundsPlayed[this.mode];
 
     this.validatorData.forEach((_, idx) => {
       const statusEl = document.getElementById(`s62-pill-status-${idx}`);
@@ -1056,36 +1048,57 @@ export const step6_2 = {
       const dotInEl = document.getElementById(`s62-dot-in-${idx}`);
       const dotOutEl = document.getElementById(`s62-dot-out-${idx}`);
 
-      const { netOps, roiPercent } = this.computeStationMetrics(idx);
-      const showEvent = this.lastEventTimer > 0 && this.lastEventText[idx];
+      const { netOps } = this.computeStationMetrics(idx);
 
       let spotColor = '#38bdf8';
       let labelText = '';
       let textColor = '#cbd5e1';
 
-      if (showEvent && (this.simState === 'spending' || (this.simState === 'rewarding' && idx === this.winnerIndex))) {
-        labelText = this.lastEventText[idx];
-        textColor = this.lastEventColor[idx];
-        spotColor = idx === this.winnerIndex && this.simState === 'rewarding' ? '#10b981' : isPoW ? '#f97316' : '#facc15';
-      } else if (this.roundsPlayed[this.mode] === 0 && !isPoW && this.simState === 'idle') {
-        labelText = `Caution ${this.validatorData[idx].stakeCapital} · ROI 0 %`;
+      if (this.simState === 'spending') {
+        if (isPoW) {
+          spotColor = '#f97316';
+          labelText = "Paie l'électricité";
+          textColor = '#fca5a5';
+        } else if (idx === this.rouletteHighlightIndex) {
+          spotColor = '#facc15';
+          labelText = 'Tirage...';
+          textColor = '#fde047';
+        } else {
+          spotColor = '#38bdf8';
+          labelText = 'Caution intacte';
+          textColor = '#94a3b8';
+        }
+      } else if (this.simState === 'rewarding' && idx === this.winnerIndex) {
+        spotColor = '#10b981';
+        labelText = `+${rewardAmount} jetons !`;
+        textColor = '#fde047';
+      } else if (rounds === 0) {
         spotColor = '#38bdf8';
+        labelText = isPoW ? 'Prête' : 'Caution intacte';
         textColor = '#cbd5e1';
-      } else if (this.roundsPlayed[this.mode] === 0 && isPoW && this.simState === 'idle') {
-        labelText = `Matériel ${this.validatorData[idx].hardwareCost} · ROI 0 %`;
-        spotColor = '#38bdf8';
-        textColor = '#cbd5e1';
-      } else {
-        labelText = `${this.formatSigned(netOps)} j. (ROI ${roiPercent > 0 ? '+' : ''}${roiPercent} %)`;
-        if (netOps > 0.05) {
+      } else if (isPoW) {
+        if (netOps > 0) {
           spotColor = '#10b981';
+          labelText = `Bénéfice (+${netOps})`;
           textColor = '#34d399';
-        } else if (netOps < -0.05) {
+        } else if (netOps < 0) {
           spotColor = '#ef4444';
+          labelText = `En perte (${netOps})`;
           textColor = '#fca5a5';
         } else {
           spotColor = '#f59e0b';
+          labelText = 'Équilibre (0)';
           textColor = '#fde68a';
+        }
+      } else {
+        if (netOps > 0) {
+          spotColor = '#10b981';
+          labelText = `+${netOps} jetons`;
+          textColor = '#34d399';
+        } else {
+          spotColor = '#38bdf8';
+          labelText = 'Caution intacte';
+          textColor = '#cbd5e1';
         }
       }
 
@@ -1101,31 +1114,65 @@ export const step6_2 = {
 
     const wagonStatusEl = document.getElementById('s62-wagon-status');
     if (wagonStatusEl) {
-      wagonStatusEl.textContent = `+${rewardAmount} jetons (${isPoW ? 'PoW' : 'PoS'})`;
+      wagonStatusEl.textContent = `Récompense : +${rewardAmount} jetons`;
     }
   },
 
   buildRoiCardsHTML() {
     const isPoW = this.mode === 'pow';
+    const rounds = this.roundsPlayed[this.mode];
 
     return this.validatorData
       .map((_, idx) => {
-        const { cfg, row, capital, netOps, roiPercent } = this.computeStationMetrics(idx);
-        const roiClass = netOps > 0.05 ? 'roi-val-pos' : netOps < -0.05 ? 'roi-val-neg' : 'roi-val-warn';
-        const barColor = netOps > 0.05 ? '#10b981' : netOps < -0.05 ? '#ef4444' : '#f59e0b';
-        const barWidth = netOps <= 0 ? 6 : Math.min(100, Math.max(8, roiPercent));
+        const { cfg, netOps } = this.computeStationMetrics(idx);
 
-        const subDetails = isPoW
-          ? `Matériel : <strong>${capital}</strong> · Élec. : <strong class="roi-val-neg">-${this.formatNum(row.energySpent)}</strong> · Gains : <strong class="roi-val-pos">+${this.formatNum(row.earned)}</strong>`
-          : `Caution : <strong>${capital}</strong> (intacte) · Gains : <strong class="roi-val-pos">+${this.formatNum(row.earned)}</strong>`;
+        let statusText = '';
+        let statusClass = 'roi-val-warn';
+        let barColor = '#38bdf8';
+        let barWidth = 0;
+
+        if (isPoW) {
+          if (rounds === 0) {
+            statusText = 'En attente';
+            statusClass = '';
+            barColor = '#38bdf8';
+            barWidth = 0;
+          } else if (netOps > 0) {
+            statusText = `Rentable (+${netOps} jetons)`;
+            statusClass = 'roi-val-pos';
+            barColor = '#10b981';
+            barWidth = Math.min(100, Math.max(16, Math.round((netOps / 20) * 100)));
+          } else if (netOps < 0) {
+            statusText = `En perte (${netOps} jetons)`;
+            statusClass = 'roi-val-neg';
+            barColor = '#ef4444';
+            barWidth = 14;
+          } else {
+            statusText = "À l'équilibre";
+            statusClass = 'roi-val-warn';
+            barColor = '#f59e0b';
+            barWidth = 8;
+          }
+        } else {
+          if (netOps > 0) {
+            statusText = `+${netOps} jetons gagnés`;
+            statusClass = 'roi-val-pos';
+            barColor = '#10b981';
+            barWidth = Math.min(100, Math.max(16, Math.round((netOps / 16) * 100)));
+          } else {
+            statusText = 'Caution intacte (0 perte)';
+            statusClass = '';
+            barColor = '#38bdf8';
+            barWidth = 0;
+          }
+        }
 
         return `
           <div class="roi-station-card" data-roi-idx="${idx}">
             <div class="roi-station-head">
-              <span><strong>${cfg.name}</strong> (${cfg.probLabel}) · ${row.blocksWon} bloc${row.blocksWon > 1 ? 's' : ''}</span>
-              <span class="${roiClass}">Net : ${this.formatSigned(netOps)} · ROI ${roiPercent > 0 ? '+' : ''}${roiPercent} %</span>
+              <span><strong>${cfg.name}</strong></span>
+              <span class="${statusClass}">${statusText}</span>
             </div>
-            <div class="roi-station-metrics">${subDetails}</div>
             <div class="roi-bar-track">
               <div class="roi-bar-fill" style="width: ${barWidth}%; background: ${barColor};"></div>
             </div>
@@ -1135,15 +1182,31 @@ export const step6_2 = {
       .join('');
   },
 
+  buildSummaryHTML() {
+    const rounds = this.roundsPlayed[this.mode];
+    const winnerName = this.lastWinnerByMode[this.mode];
+    if (rounds === 0 || !winnerName) return '';
+
+    const isPoW = this.mode === 'pow';
+    const text = isPoW
+      ? `La dernière récompense revient à la <strong>${winnerName}</strong>. Sur la durée, seules les gares qui gagnent assez compensent leur facture d'électricité.`
+      : `La dernière récompense revient à la <strong>${winnerName}</strong>. Même sans gagner à chaque tour, aucune gare ne perd d'argent.`;
+
+    return `
+      <div class="consensus-result-card ${isPoW ? 'pow-result' : 'pos-result'}">
+        <p class="consensus-result-text">${text}</p>
+      </div>
+    `;
+  },
+
   updateRoiCardsDOM() {
     const board = document.getElementById('s62-roi-board');
     if (board) {
       board.innerHTML = this.buildRoiCardsHTML();
     }
-    const roundsEl = document.getElementById('s62-rounds-badge');
-    if (roundsEl) {
-      const r = this.roundsPlayed[this.mode];
-      roundsEl.textContent = `${r} wagon${r > 1 ? 's' : ''} validé${r > 1 ? 's' : ''}`;
+    const summaryBox = document.getElementById('s62-summary-box');
+    if (summaryBox) {
+      summaryBox.innerHTML = this.buildSummaryHTML();
     }
   },
 
@@ -1209,6 +1272,7 @@ export const step6_2 = {
           if (sweepIdx !== this.rouletteHighlightIndex) {
             this.rouletteHighlightIndex = sweepIdx;
             this.syncVisualsFromLedger(false);
+            this.updateTooltipsDOM();
           }
         }
 
@@ -1410,18 +1474,18 @@ export const step6_2 = {
     const formulaHTML = isPoW
       ? `
         <div class="roi-formula-banner pow-banner">
-          <strong>Modèle PoW : +12 jetons</strong> (10 prime + 2 frais) uniquement pour la gare gagnante. Mais les <strong>3 gares paient l'électricité</strong> à chaque manche (A : -4, B : -2,8, C : -1,2).
+          La gagnante reçoit <strong>+10 jetons</strong>, mais les 3 gares paient leur électricité à chaque tour : celles qui perdent ont dépensé pour rien.
         </div>
       `
       : `
         <div class="roi-formula-banner pos-banner">
-          <strong>Modèle PoS : +4 jetons</strong> (3 prime + 1 frais) pour la gare tirée au sort. <strong>Zéro électricité perdue :</strong> les autres gares conservent intacte leur caution.
+          La gare tirée au sort reçoit <strong>+4 jetons</strong>. Aucune électricité n'est gaspillée : les autres gardent leur caution intacte sans rien perdre.
         </div>
       `;
 
     inner.innerHTML = `
       <header class="step-panel-header">
-        <h2 class="step-panel-title">Récompenses &amp; ROI</h2>
+        <h2 class="step-panel-title">Récompenses des gares</h2>
         <div class="substep-stepper" role="navigation" aria-label="Sous-étapes du consensus">
           <button type="button" id="btn-s62-sub-61" class="substep-pill" ${isBusy ? 'disabled' : ''}>
             <span class="substep-num">6.1</span>
@@ -1429,19 +1493,19 @@ export const step6_2 = {
           </button>
           <button type="button" class="substep-pill active">
             <span class="substep-num">6.2</span>
-            <span>Récompenses &amp; ROI</span>
+            <span>Récompenses</span>
           </button>
         </div>
       </header>
 
       <div class="step-panel-scroll">
         <article class="step-card context-card animate-fade">
-          <h3 class="card-title">Récompense de bloc et Retour sur investissement</h3>
+          <h3 class="card-title">Comment les gares rentabilisent-elles leur travail ?</h3>
           <div class="share-meaning-banner" style="margin-top: 2px; margin-bottom: 8px;">
-            <strong>Comment une gare est-elle payée ?</strong> En PoW comme en PoS, la gare qui valide et attelle un wagon reçoit une <strong>récompense automatique</strong> : de nouveaux jetons créés par le réseau + les frais payés par les utilisateurs.
+            À chaque wagon validé (en PoW comme en PoS), le réseau verse automatiquement une <strong>récompense en jetons</strong> à la gare gagnante.
           </div>
           <p>
-            Mais participer coûte cher : il faut financer les machines et l'électricité (<strong>PoW</strong>) ou immobiliser une caution (<strong>PoS</strong>). Le <strong>Retour sur investissement (ROI)</strong> compare ce qu'une gare gagne net face à sa mise de départ.
+            C'est le principe du <strong>retour sur investissement</strong> : ces récompenses doivent compenser ce que la gare a engagé au départ — ses machines et son électricité en PoW, ou la caution qu'elle a déposée en PoS.
           </p>
         </article>
 
@@ -1467,21 +1531,22 @@ export const step6_2 = {
           </div>
 
           <div class="roi-board-header">
-            <span>Bilan comparé des 3 gares</span>
-            <span id="s62-rounds-badge" class="roi-rounds-badge">${rounds} wagon${rounds > 1 ? 's' : ''} validé${rounds > 1 ? 's' : ''}</span>
-            <button type="button" id="btn-step62-reset" class="roi-reset-link" ${isBusy ? 'disabled' : ''}>Réinitialiser</button>
+            <span>Bilan des 3 gares</span>
+            ${rounds > 0 ? `<button type="button" id="btn-step62-reset" class="roi-reset-link" ${isBusy ? 'disabled' : ''}>Réinitialiser</button>` : ''}
           </div>
 
           <div id="s62-roi-board" class="roi-station-list">
             ${this.buildRoiCardsHTML()}
           </div>
+
+          <div id="s62-summary-box">${this.buildSummaryHTML()}</div>
         </article>
 
         ${(this.hasTestedPoW || this.hasTestedPoS) ? `
           <article class="step-card keypoint-card animate-fade">
             <h4 class="card-title keypoint-title">Point clé : La récompense finance la sécurité sans chef</h4>
             <p class="keypoint-text">
-              En <strong>PoW</strong>, la prime est élevée mais les perdantes brûlent de l'électricité à chaque tour : le ROI est risqué pour une petite gare. En <strong>PoS</strong>, la prime est plus modeste mais sans facture électrique perdue. Dans les deux cas, la récompense incite financièrement les gares à rester honnêtes.
+              La récompense motive les gares à sécuriser le réseau sans chef central. En PoW, la course électrique coûte cher aux perdantes ; en PoS, les gains sont plus modestes mais sans perte d'énergie.
             </p>
           </article>
         ` : ''}

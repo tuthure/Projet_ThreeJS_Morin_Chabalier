@@ -2087,7 +2087,7 @@ export const step6 = {
           </button>
           <button type="button" id="btn-s6-sub-62" class="substep-pill">
             <span class="substep-num">6.2</span>
-            <span>Récompenses &amp; ROI</span>
+            <span>Récompenses</span>
           </button>
         </div>
       </header>
@@ -2137,7 +2137,7 @@ export const step6 = {
             <span>Étape 5 : Minage</span>
           </button>
           <button id="btn-step6-action-next" class="btn-panel-primary">
-            <span>Étape 6.2 : Récompenses &amp; ROI</span>
+            <span>Étape 6.2 : Récompenses</span>
             <span class="btn-arrow">&rarr;</span>
           </button>
         </nav>
