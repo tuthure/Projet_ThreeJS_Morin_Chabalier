@@ -47,8 +47,8 @@ export const step7 = {
 
   attackGroup: null,
   pirateWagons: [],
-  honestWheelObj: null,
-  pirateWheelObj: null,
+  honestWheels: [],
+  pirateWheels: [],
   tooltipLayer: null,
 
   init(context) {
@@ -149,8 +149,8 @@ export const step7 = {
     }
 
     this.pirateWagons = [];
-    this.honestWheelObj = null;
-    this.pirateWheelObj = null;
+    this.honestWheels = [];
+    this.pirateWheels = [];
     this.couplerFlashRing = null;
 
     const panel = document.getElementById('step-panel-left');
@@ -244,7 +244,7 @@ export const step7 = {
   /**
    * Crée un socle avec une molette Nonce 3D à 8 crans.
    */
-  createStationWheelNode(x, z, mainColorHex, borderHexStr) {
+  createStationWheelNode(x, z, mainColorHex, borderHexStr, subLabel = 'WAGON #3') {
     const group = new THREE.Group();
     group.position.set(x, -0.4, z);
 
@@ -301,7 +301,7 @@ export const step7 = {
     dialCanvas.width = 256;
     dialCanvas.height = 256;
     const dialTex = new THREE.CanvasTexture(dialCanvas);
-    this.renderWheelDial(dialCanvas, dialTex, 0, borderHexStr, 'WAGON #3');
+    this.renderWheelDial(dialCanvas, dialTex, 0, borderHexStr, subLabel);
 
     const dialMesh = new THREE.Mesh(
       new THREE.CircleGeometry(0.32, 32),
@@ -317,7 +317,7 @@ export const step7 = {
       dialCanvas,
       dialTex,
       currentCrans: 0,
-      currentSubLabel: 'WAGON #3',
+      currentSubLabel: subLabel,
       currentAngle: 0
     };
   },
@@ -613,11 +613,21 @@ export const step7 = {
 
     this.pirateNonces = { n3: pirateNonce3, n4: pirateNonce4 };
 
-    // Molette des Gares honnêtes (en haut, z = -3.65) et Molette du Pirate (en bas, z = +3.65)
-    this.honestWheelObj = this.createStationWheelNode(8.2, -3.65, 0x38bdf8, '#38bdf8');
-    this.pirateWheelObj = this.createStationWheelNode(8.2, 3.65, 0xef4444, '#ef4444');
-    this.attackGroup.add(this.honestWheelObj.group);
-    this.attackGroup.add(this.pirateWheelObj.group);
+    // Molettes des Gares honnêtes (z = -3.65) et du Pirate (z = +3.65) :
+    // une molette en face du 1er wagon créé (#3), puis une nouvelle en face du wagon suivant (#4)
+    const wheelX3 = 3 * 3.8 + this.branchOffsetX;
+    const wheelX4 = 4 * 3.8 + this.branchOffsetX;
+    this.honestWheels = [
+      this.createStationWheelNode(wheelX3, -3.65, 0x38bdf8, '#38bdf8', 'WAGON #3'),
+      this.createStationWheelNode(wheelX4, -3.65, 0x38bdf8, '#38bdf8', 'WAGON #4')
+    ];
+    this.pirateWheels = [
+      this.createStationWheelNode(wheelX3, 3.65, 0xef4444, '#ef4444', 'WAGON #3'),
+      this.createStationWheelNode(wheelX4, 3.65, 0xef4444, '#ef4444', 'WAGON #4')
+    ];
+    [...this.honestWheels, ...this.pirateWheels].forEach((wheelObj) => {
+      this.attackGroup.add(wheelObj.group);
+    });
 
     // Anneau flash au point d'attelage derrière le Wagon #1 (x = 5.28, z = 0)
     const flashGeo = new THREE.TorusGeometry(0.25, 0.04, 12, 32);
@@ -701,21 +711,21 @@ export const step7 = {
       }
     });
 
-    if (this.honestWheelObj) {
-      this.honestWheelObj.currentCrans = 0;
-      this.honestWheelObj.currentSubLabel = 'WAGON #3';
-      this.honestWheelObj.currentAngle = 0;
-      this.honestWheelObj.wheelMesh.rotation.set(Math.PI / 2, 0, 0);
-      this.renderWheelDial(this.honestWheelObj.dialCanvas, this.honestWheelObj.dialTex, 0, '#38bdf8', 'WAGON #3');
-    }
+    const resetWheelPair = (wheels, borderHex) => {
+      wheels.forEach((wheelObj, idx) => {
+        const subLabel = idx === 0 ? 'WAGON #3' : 'WAGON #4';
+        wheelObj.currentCrans = 0;
+        wheelObj.currentSubLabel = subLabel;
+        wheelObj.currentAngle = 0;
+        wheelObj.wheelMesh.rotation.set(Math.PI / 2, 0, 0);
+        wheelObj.group.visible = idx === 0;
+        wheelObj.group.scale.setScalar(idx === 0 ? 1.0 : 0.01);
+        this.renderWheelDial(wheelObj.dialCanvas, wheelObj.dialTex, 0, borderHex, subLabel);
+      });
+    };
 
-    if (this.pirateWheelObj) {
-      this.pirateWheelObj.currentCrans = 0;
-      this.pirateWheelObj.currentSubLabel = 'WAGON #3';
-      this.pirateWheelObj.currentAngle = 0;
-      this.pirateWheelObj.wheelMesh.rotation.set(Math.PI / 2, 0, 0);
-      this.renderWheelDial(this.pirateWheelObj.dialCanvas, this.pirateWheelObj.dialTex, 0, '#ef4444', 'WAGON #3');
-    }
+    resetWheelPair(this.honestWheels, '#38bdf8');
+    resetWheelPair(this.pirateWheels, '#ef4444');
   },
 
   /**
@@ -900,41 +910,48 @@ export const step7 = {
         const honestAttempts = isNormal ? winnerAttempts : loserAttempts;
         const pirateAttempts = isNormal ? loserAttempts : winnerAttempts;
 
-        const evalBranchProgress = (attempts, nonces) => {
-          if (attempts < nonces.n3) {
-            return { branchCount: 1, dialNonce: attempts, subLabel: 'WAGON #3' };
-          }
-          if (attempts < nonces.n3 + nonces.n4) {
-            return { branchCount: 2, dialNonce: attempts - nonces.n3, subLabel: 'WAGON #4' };
-          }
-          return { branchCount: 3, dialNonce: nonces.n4, subLabel: 'WAGON #4' };
-        };
-
-        const syncWheel = (wheelObj, attempts, state, borderColor) => {
+        const updateSingleWheel = (wheelObj, crans, borderColor, subLabel) => {
           if (!wheelObj) return;
-          if (state.dialNonce !== wheelObj.currentCrans || state.subLabel !== wheelObj.currentSubLabel) {
-            wheelObj.currentCrans = state.dialNonce;
-            wheelObj.currentSubLabel = state.subLabel;
-            this.renderWheelDial(wheelObj.dialCanvas, wheelObj.dialTex, state.dialNonce, borderColor, state.subLabel);
+          if (crans !== wheelObj.currentCrans || subLabel !== wheelObj.currentSubLabel) {
+            wheelObj.currentCrans = crans;
+            wheelObj.currentSubLabel = subLabel;
+            this.renderWheelDial(wheelObj.dialCanvas, wheelObj.dialTex, crans, borderColor, subLabel);
           }
           wheelObj.currentAngle = THREE.MathUtils.lerp(
             wheelObj.currentAngle,
-            attempts * (Math.PI / 4),
+            crans * (Math.PI / 4),
             Math.min(1, dt * 12)
           );
           wheelObj.wheelMesh.rotation.set(Math.PI / 2, wheelObj.currentAngle, 0);
         };
 
-        const honestState = evalBranchProgress(honestAttempts, this.honestNonces);
-        const pirateState = evalBranchProgress(pirateAttempts, this.pirateNonces);
+        const syncBranchWheels = (wheels, attempts, nonces, borderColor) => {
+          const w3 = wheels[0];
+          const w4 = wheels[1];
+          const crans3 = Math.min(attempts, nonces.n3);
+          updateSingleWheel(w3, crans3, borderColor, 'WAGON #3');
 
-        syncWheel(this.honestWheelObj, honestAttempts, honestState, '#38bdf8');
-        syncWheel(this.pirateWheelObj, pirateAttempts, pirateState, '#ef4444');
+          if (w4) {
+            const hasReachedW4 = attempts >= nonces.n3;
+            w4.group.visible = hasReachedW4;
+            if (hasReachedW4) {
+              const crans4 = Math.min(attempts - nonces.n3, nonces.n4);
+              updateSingleWheel(w4, crans4, borderColor, 'WAGON #4');
+            }
+          }
+
+          if (attempts >= nonces.n3 + nonces.n4) return 3;
+          if (attempts >= nonces.n3) return 2;
+          return 1;
+        };
+
+        const newHonest = syncBranchWheels(this.honestWheels, honestAttempts, this.honestNonces, '#38bdf8');
+        const newPirate = syncBranchWheels(this.pirateWheels, pirateAttempts, this.pirateNonces, '#ef4444');
 
         // Assemblage progressif des wagons #3 et #4 au moment exact où leur nonce est trouvé
-        if (honestState.branchCount !== this.honestBranchCount || pirateState.branchCount !== this.pirateBranchCount) {
-          this.honestBranchCount = honestState.branchCount;
-          this.pirateBranchCount = pirateState.branchCount;
+        if (newHonest !== this.honestBranchCount || newPirate !== this.pirateBranchCount) {
+          this.honestBranchCount = newHonest;
+          this.pirateBranchCount = newPirate;
           this.updateTooltipsDOM();
         }
 
@@ -947,6 +964,14 @@ export const step7 = {
           this.renderLeftPanel('#s7-result-box');
         }
       }
+
+      // Animation d'apparition fluide des molettes actives (#3 et #4)
+      [...this.honestWheels, ...this.pirateWheels].forEach((wheelObj) => {
+        if (wheelObj?.group?.visible) {
+          const nextScale = THREE.MathUtils.lerp(wheelObj.group.scale.x, 1.0, Math.min(1, dt * 7.5));
+          wheelObj.group.scale.setScalar(nextScale);
+        }
+      });
 
       // 2. Déplacement et attachement au Wagon #1 de la branche honnête (Wagons #2, #3, #4)
       const honestWins = isDone && isNormal;
