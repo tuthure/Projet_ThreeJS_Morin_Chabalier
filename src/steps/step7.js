@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { Block } from '../blockchain/Block.js';
+import { hashToColorHex } from '../three/WagonMesh.js';
 import { updateLeftPanelPreserveScroll } from './StepManager.js';
 
 /**
@@ -254,8 +256,9 @@ export const step7 = {
   /**
    * Construit un wagon pirate (#2, #3 ou #4) destiné à venir s'attacher après le Wagon #1
    * si la branche pirate remporte la course.
+   * Ses connecteurs avant/arrière suivent la même logique cryptographique que les wagons officiels.
    */
-  createPirateWagonMesh(blockNumber, coupledX) {
+  createPirateWagonMesh(blockNumber, coupledX, colorPrevHash, colorHash) {
     const wGroup = new THREE.Group();
     const materials = [];
 
@@ -347,6 +350,30 @@ export const step7 = {
     plate.position.set(0, 0.62, 0.605);
     wGroup.add(plate);
 
+    // Prise arrière (hash propre de ce wagon pirate) pour chaîner #2 -> #3 -> #4
+    const rearArmMat = regMat(
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9, roughness: 0.3 }),
+      1.0
+    );
+    const rearArm = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.14, 0.18), rearArmMat);
+    rearArm.position.set(1.36, 0, 0);
+    wGroup.add(rearArm);
+
+    const rearRingMat = regMat(
+      new THREE.MeshStandardMaterial({
+        color: colorHash,
+        emissive: colorHash,
+        emissiveIntensity: 1.4,
+        metalness: 0.3,
+        roughness: 0.2
+      }),
+      1.0
+    );
+    const rearRing = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.08, 24), rearRingMat);
+    rearRing.rotation.z = Math.PI / 2;
+    rearRing.position.set(1.48, 0, 0);
+    wGroup.add(rearRing);
+
     // Bras d'attelage avant identique aux wagons officiels (pour s'emboîter dans le Wagon #1 à x = 7.6, z = 0)
     const couplerGroup = new THREE.Group();
     const linkLength = 1.2;
@@ -354,8 +381,8 @@ export const step7 = {
 
     const sleeveMat = regMat(
       new THREE.MeshStandardMaterial({
-        color: 0xef4444,
-        emissive: 0xdc2626,
+        color: colorPrevHash,
+        emissive: colorPrevHash,
         emissiveIntensity: 0.45,
         metalness: 0.65,
         roughness: 0.3
@@ -368,9 +395,11 @@ export const step7 = {
 
     const beamMat = regMat(
       new THREE.MeshStandardMaterial({
-        color: 0xef4444,
-        emissive: 0xdc2626,
-        emissiveIntensity: 1.5
+        color: colorPrevHash,
+        emissive: colorPrevHash,
+        emissiveIntensity: 1.5,
+        metalness: 0.2,
+        roughness: 0.1
       }),
       1.0
     );
@@ -379,10 +408,35 @@ export const step7 = {
     couplerGroup.add(beam);
 
     const ringGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.08, 24);
-    const ringFront = new THREE.Mesh(ringGeo, beamMat);
+    const hookMat = regMat(
+      new THREE.MeshStandardMaterial({
+        color: colorPrevHash,
+        emissive: colorPrevHash,
+        emissiveIntensity: 1.5,
+        metalness: 0.3,
+        roughness: 0.2
+      }),
+      1.0
+    );
+    const ringFront = new THREE.Mesh(ringGeo, hookMat);
     ringFront.rotation.z = Math.PI / 2;
     ringFront.position.x = -linkLength / 2;
     couplerGroup.add(ringFront);
+
+    const frontRingMat = regMat(
+      new THREE.MeshStandardMaterial({
+        color: colorPrevHash,
+        emissive: colorPrevHash,
+        emissiveIntensity: 1.5,
+        metalness: 0.3,
+        roughness: 0.2
+      }),
+      1.0
+    );
+    const ringTip = new THREE.Mesh(ringGeo, frontRingMat);
+    ringTip.rotation.z = Math.PI / 2;
+    ringTip.position.x = linkLength / 2;
+    couplerGroup.add(ringTip);
 
     couplerGroup.position.set(linkCenterX, 0, 0);
     wGroup.add(couplerGroup);
@@ -391,6 +445,7 @@ export const step7 = {
       blockNumber,
       group: wGroup,
       couplerGroup,
+      beamMat,
       materials,
       coupledX,
       currentX: coupledX + this.branchOffsetX,
@@ -454,12 +509,28 @@ export const step7 = {
     });
 
     // Les 3 wagons pirates candidats (#2, #3, #4 aux positions couplées 7.6, 11.4, 15.2)
+    // Pirate #2 se branche sur l'empreinte du Wagon #1 ; #3 et #4 s'enchaînent ensuite par leurs propres hashs.
+    const { trainConvoy } = this.ctx;
+    const block1 = trainConvoy?.getBlock(1);
+    const wagon1 = trainConvoy?.getWagon(1);
+    let prevPirateHash = block1 ? block1.hash : '0'.repeat(64);
+    let prevPirateColor = wagon1?.colorHash
+      ? wagon1.colorHash.clone()
+      : new THREE.Color(hashToColorHex(prevPirateHash));
+
     for (let bNum = 2; bNum <= 4; bNum++) {
       const coupledX = bNum * 3.8;
-      const pw = this.createPirateWagonMesh(bNum, coupledX);
+      const pirateBlock = new Block(bNum, Date.now(), { lot: `Pirate #${bNum}` }, prevPirateHash, 0);
+      pirateBlock.mineBlock(1);
+      const ownPirateColor = new THREE.Color(hashToColorHex(pirateBlock.hash));
+
+      const pw = this.createPirateWagonMesh(bNum, coupledX, prevPirateColor, ownPirateColor);
       pw.group.position.set(pw.currentX, 0, pw.currentZ);
       this.attackGroup.add(pw.group);
       this.pirateWagons.push(pw);
+
+      prevPirateHash = pirateBlock.hash;
+      prevPirateColor = ownPirateColor;
     }
 
     // Molette des Gares honnêtes (en haut, z = -3.65) et Molette du Pirate (en bas, z = +3.65)
@@ -850,9 +921,9 @@ export const step7 = {
                   w.couplerBeamMaterial.emissiveIntensity = 0.8;
                 }
                 if (w.couplerHookMaterial) {
-                  w.couplerHookMaterial.color.setHex(0xef4444);
-                  w.couplerHookMaterial.emissive.setHex(0xdc2626);
-                  w.couplerHookMaterial.emissiveIntensity = 2.4;
+                  w.couplerHookMaterial.color.copy(w.colorPrevHash);
+                  w.couplerHookMaterial.emissive.copy(w.colorPrevHash);
+                  w.couplerHookMaterial.emissiveIntensity = 1.4;
                 }
               }
             }
@@ -887,6 +958,7 @@ export const step7 = {
             if (isCoupled) {
               pw.couplerGroup.position.y = 0;
               pw.couplerGroup.rotation.z = 0;
+              if (pw.beamMat) pw.beamMat.emissiveIntensity = 1.6;
               if (!this.wasWinnerCoupled) {
                 this.wasWinnerCoupled = true;
                 this.couplerFlashAlpha = 1.0;
@@ -895,6 +967,7 @@ export const step7 = {
             } else {
               pw.couplerGroup.position.y = -0.12;
               pw.couplerGroup.rotation.z = 0.12;
+              if (pw.beamMat) pw.beamMat.emissiveIntensity = 0.8;
             }
           }
 
