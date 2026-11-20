@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Block } from '../blockchain/Block.js';
-import { hashToColorHex } from '../three/WagonMesh.js';
+import { getHashHue, hashToColorHex } from '../three/WagonMesh.js';
 import { updateLeftPanelPreserveScroll } from './StepManager.js';
 
 /**
@@ -31,6 +31,10 @@ export const step7 = {
   // Nombre de nouveaux wagons assemblés après le Wagon #1 sur chaque branche (de 1 à 3)
   honestBranchCount: 1,
   pirateBranchCount: 1,
+
+  // Vrais nonces des wagons #3 et #4 à miner pendant la course sur chaque branche
+  honestNonces: { n3: 40, n4: 28 },
+  pirateNonces: { n3: 24, n4: 20 },
 
   // Coordonnées des branches de préparation (avant attachement sur le rail central z = 0)
   honestBranchZ: -1.85,
@@ -80,6 +84,21 @@ export const step7 = {
         { lot: 'Livraison quai B', cargaison: 'Pièces mécaniques', quai: 'Quai B -> Quai D' },
         { lot: 'Fret #109', cargaison: '18 tonnes de cuivre', quai: 'Quai D -> Quai E' }
       ]);
+
+      // Calibre les vrais nonces des Wagons #3 et #4 honnêtes pour que la molette reflète leurs vraies valeurs
+      const block2 = trainConvoy.getBlock(2);
+      const block3 = trainConvoy.getBlock(3);
+      const block4 = trainConvoy.getBlock(4);
+      if (block2 && block3 && block4) {
+        block3.previousHash = block2.hash;
+        const n3 = this.mineBlockInNonceRange(block3, 36, 46, 1);
+        block4.previousHash = block3.hash;
+        const n4 = this.mineBlockInNonceRange(block4, 22, 34, 1);
+        this.honestNonces = { n3, n4 };
+        trainConvoy.getWagon(3)?.updateStatus(true);
+        trainConvoy.getWagon(4)?.updateStatus(true);
+      }
+
       if (cameraController) {
         cameraController.setInteractiveObjects(trainConvoy.getInteractiveObjects());
       }
@@ -142,9 +161,52 @@ export const step7 = {
   },
 
   /**
+   * Mine un bloc avec un vrai hash SHA-256 valide dont le nonce se situe dans [minNonce, maxNonce],
+   * tout en conservant une teinte de hash distincte du bloc précédent.
+   */
+  mineBlockInNonceRange(block, minNonce, maxNonce, difficulty = 1) {
+    const targetPrefix = '0'.repeat(difficulty);
+    const prevHue = getHashHue(block.previousHash);
+    const isHueTooClose = (hash) => {
+      if (!block.previousHash || block.previousHash.length < 6) return false;
+      const hue = getHashHue(hash);
+      const diff = Math.abs(hue - prevHue);
+      return Math.min(diff, 360 - diff) < 75;
+    };
+
+    let bestNonce = 0;
+    let bestHash = '';
+    for (let saltTry = 0; saltTry < 40; saltTry++) {
+      block._miningSalt = `s7-${block.index}-${saltTry}-${Math.random().toString(36).substring(2, 7)}`;
+      for (let n = 1; n <= maxNonce; n++) {
+        block.nonce = n;
+        const h = block.calculateHash();
+        if (h.startsWith(targetPrefix) && !isHueTooClose(h)) {
+          if (n >= minNonce) {
+            block.hash = h;
+            return block.nonce;
+          }
+          bestNonce = n;
+          bestHash = h;
+          break;
+        }
+      }
+    }
+
+    if (bestHash) {
+      block.nonce = bestNonce;
+      block.hash = bestHash;
+      return block.nonce;
+    }
+
+    block.mineBlock(difficulty);
+    return block.nonce;
+  },
+
+  /**
    * Dessine le cadran d'une molette 3D (Gares honnêtes ou Pirate).
    */
-  renderWheelDial(canvas, texture, cranCount, borderColor) {
+  renderWheelDial(canvas, texture, cranCount, borderColor, subLabel = 'WAGON #3') {
     if (!canvas || !texture) return;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -161,14 +223,20 @@ export const step7 = {
     ctx.stroke();
 
     ctx.fillStyle = borderColor;
-    ctx.font = 'bold 26px monospace';
+    ctx.font = 'bold 24px monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('NONCE', 128, 74);
+    ctx.fillText('NONCE', 128, 66);
 
     ctx.fillStyle = '#fef08a';
-    ctx.font = 'bold 68px monospace';
-    ctx.fillText(String(cranCount), 128, 144);
+    ctx.font = 'bold 64px monospace';
+    ctx.fillText(String(cranCount), 128, 128);
+
+    if (subLabel) {
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = 'bold 20px monospace';
+      ctx.fillText(subLabel, 128, 188);
+    }
 
     texture.needsUpdate = true;
   },
@@ -233,7 +301,7 @@ export const step7 = {
     dialCanvas.width = 256;
     dialCanvas.height = 256;
     const dialTex = new THREE.CanvasTexture(dialCanvas);
-    this.renderWheelDial(dialCanvas, dialTex, 0, borderHexStr);
+    this.renderWheelDial(dialCanvas, dialTex, 0, borderHexStr, 'WAGON #3');
 
     const dialMesh = new THREE.Mesh(
       new THREE.CircleGeometry(0.32, 32),
@@ -249,6 +317,7 @@ export const step7 = {
       dialCanvas,
       dialTex,
       currentCrans: 0,
+      currentSubLabel: 'WAGON #3',
       currentAngle: 0
     };
   },
@@ -258,7 +327,7 @@ export const step7 = {
    * si la branche pirate remporte la course.
    * Ses connecteurs avant/arrière suivent la même logique cryptographique que les wagons officiels.
    */
-  createPirateWagonMesh(blockNumber, coupledX, colorPrevHash, colorHash) {
+  createPirateWagonMesh(blockNumber, coupledX, colorPrevHash, colorHash, nonce = 0) {
     const wGroup = new THREE.Group();
     const materials = [];
 
@@ -343,7 +412,7 @@ export const step7 = {
     pCtx.fillText(`PIRATE #${blockNumber}`, 22, 48);
     pCtx.fillStyle = '#ef4444';
     pCtx.font = '18px monospace';
-    pCtx.fillText(blockNumber === 2 ? 'Triche : annule #1' : 'Suite pirate', 22, 90);
+    pCtx.fillText(blockNumber === 2 ? 'Triche : annule #1' : `Suite · Nonce ${nonce}`, 22, 90);
     const pTex = new THREE.CanvasTexture(pCanvas);
     const plateMat = regMat(new THREE.MeshBasicMaterial({ map: pTex }), 1.0);
     const plate = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 0.56), plateMat);
@@ -518,13 +587,22 @@ export const step7 = {
       ? wagon1.colorHash.clone()
       : new THREE.Color(hashToColorHex(prevPirateHash));
 
+    let pirateNonce3 = 24;
+    let pirateNonce4 = 20;
+
     for (let bNum = 2; bNum <= 4; bNum++) {
       const coupledX = bNum * 3.8;
       const pirateBlock = new Block(bNum, Date.now(), { lot: `Pirate #${bNum}` }, prevPirateHash, 0);
-      pirateBlock.mineBlock(1);
+      if (bNum === 3) {
+        pirateNonce3 = this.mineBlockInNonceRange(pirateBlock, 22, 26, 1);
+      } else if (bNum === 4) {
+        pirateNonce4 = this.mineBlockInNonceRange(pirateBlock, 18, 22, 1);
+      } else {
+        pirateBlock.mineBlock(1);
+      }
       const ownPirateColor = new THREE.Color(hashToColorHex(pirateBlock.hash));
 
-      const pw = this.createPirateWagonMesh(bNum, coupledX, prevPirateColor, ownPirateColor);
+      const pw = this.createPirateWagonMesh(bNum, coupledX, prevPirateColor, ownPirateColor, pirateBlock.nonce);
       pw.group.position.set(pw.currentX, 0, pw.currentZ);
       this.attackGroup.add(pw.group);
       this.pirateWagons.push(pw);
@@ -532,6 +610,8 @@ export const step7 = {
       prevPirateHash = pirateBlock.hash;
       prevPirateColor = ownPirateColor;
     }
+
+    this.pirateNonces = { n3: pirateNonce3, n4: pirateNonce4 };
 
     // Molette des Gares honnêtes (en haut, z = -3.65) et Molette du Pirate (en bas, z = +3.65)
     this.honestWheelObj = this.createStationWheelNode(8.2, -3.65, 0x38bdf8, '#38bdf8');
@@ -623,16 +703,18 @@ export const step7 = {
 
     if (this.honestWheelObj) {
       this.honestWheelObj.currentCrans = 0;
+      this.honestWheelObj.currentSubLabel = 'WAGON #3';
       this.honestWheelObj.currentAngle = 0;
       this.honestWheelObj.wheelMesh.rotation.set(Math.PI / 2, 0, 0);
-      this.renderWheelDial(this.honestWheelObj.dialCanvas, this.honestWheelObj.dialTex, 0, '#38bdf8');
+      this.renderWheelDial(this.honestWheelObj.dialCanvas, this.honestWheelObj.dialTex, 0, '#38bdf8', 'WAGON #3');
     }
 
     if (this.pirateWheelObj) {
       this.pirateWheelObj.currentCrans = 0;
+      this.pirateWheelObj.currentSubLabel = 'WAGON #3';
       this.pirateWheelObj.currentAngle = 0;
       this.pirateWheelObj.wheelMesh.rotation.set(Math.PI / 2, 0, 0);
-      this.renderWheelDial(this.pirateWheelObj.dialCanvas, this.pirateWheelObj.dialTex, 0, '#ef4444');
+      this.renderWheelDial(this.pirateWheelObj.dialCanvas, this.pirateWheelObj.dialTex, 0, '#ef4444', 'WAGON #3');
     }
   },
 
@@ -808,44 +890,51 @@ export const step7 = {
         this.raceTimer += dt;
         const p = Math.min(this.raceTimer / this.raceDuration, 1.0);
 
-        const honestMaxCrans = isNormal ? 28 : 14;
-        const pirateMaxCrans = isNormal ? 6 : 21;
+        const winnerNonces = isNormal ? this.honestNonces : this.pirateNonces;
+        const loserNonces = isNormal ? this.pirateNonces : this.honestNonces;
+        const winnerTotal = winnerNonces.n3 + winnerNonces.n4;
+        const winnerAttempts = Math.min(winnerTotal, Math.floor(winnerTotal * p));
+        const loserRatio = isNormal ? 20 / 80 : 40 / 60;
+        const loserAttempts = Math.min(loserNonces.n3 - 1, Math.floor(winnerTotal * loserRatio * p));
 
-        if (this.honestWheelObj) {
-          const hCrans = Math.max(1, Math.floor(honestMaxCrans * p));
-          if (hCrans !== this.honestWheelObj.currentCrans) {
-            this.honestWheelObj.currentCrans = hCrans;
-            this.renderWheelDial(this.honestWheelObj.dialCanvas, this.honestWheelObj.dialTex, hCrans, '#38bdf8');
+        const honestAttempts = isNormal ? winnerAttempts : loserAttempts;
+        const pirateAttempts = isNormal ? loserAttempts : winnerAttempts;
+
+        const evalBranchProgress = (attempts, nonces) => {
+          if (attempts < nonces.n3) {
+            return { branchCount: 1, dialNonce: attempts, subLabel: 'WAGON #3' };
           }
-          this.honestWheelObj.currentAngle = THREE.MathUtils.lerp(
-            this.honestWheelObj.currentAngle,
-            hCrans * (Math.PI / 4),
+          if (attempts < nonces.n3 + nonces.n4) {
+            return { branchCount: 2, dialNonce: attempts - nonces.n3, subLabel: 'WAGON #4' };
+          }
+          return { branchCount: 3, dialNonce: nonces.n4, subLabel: 'WAGON #4' };
+        };
+
+        const syncWheel = (wheelObj, attempts, state, borderColor) => {
+          if (!wheelObj) return;
+          if (state.dialNonce !== wheelObj.currentCrans || state.subLabel !== wheelObj.currentSubLabel) {
+            wheelObj.currentCrans = state.dialNonce;
+            wheelObj.currentSubLabel = state.subLabel;
+            this.renderWheelDial(wheelObj.dialCanvas, wheelObj.dialTex, state.dialNonce, borderColor, state.subLabel);
+          }
+          wheelObj.currentAngle = THREE.MathUtils.lerp(
+            wheelObj.currentAngle,
+            attempts * (Math.PI / 4),
             Math.min(1, dt * 12)
           );
-          this.honestWheelObj.wheelMesh.rotation.set(Math.PI / 2, this.honestWheelObj.currentAngle, 0);
-        }
+          wheelObj.wheelMesh.rotation.set(Math.PI / 2, wheelObj.currentAngle, 0);
+        };
 
-        if (this.pirateWheelObj) {
-          const pCrans = Math.max(1, Math.floor(pirateMaxCrans * p));
-          if (pCrans !== this.pirateWheelObj.currentCrans) {
-            this.pirateWheelObj.currentCrans = pCrans;
-            this.renderWheelDial(this.pirateWheelObj.dialCanvas, this.pirateWheelObj.dialTex, pCrans, '#ef4444');
-          }
-          this.pirateWheelObj.currentAngle = THREE.MathUtils.lerp(
-            this.pirateWheelObj.currentAngle,
-            pCrans * (Math.PI / 4),
-            Math.min(1, dt * 12)
-          );
-          this.pirateWheelObj.wheelMesh.rotation.set(Math.PI / 2, this.pirateWheelObj.currentAngle, 0);
-        }
+        const honestState = evalBranchProgress(honestAttempts, this.honestNonces);
+        const pirateState = evalBranchProgress(pirateAttempts, this.pirateNonces);
 
-        // Assemblage progressif des wagons #2, #3, #4 (de 1 à 3 wagons sur la branche la plus rapide)
-        const newHonest = isNormal ? (p >= 0.8 ? 3 : p >= 0.42 ? 2 : 1) : 1;
-        const newPirate = isNormal ? 1 : (p >= 0.8 ? 3 : p >= 0.42 ? 2 : 1);
+        syncWheel(this.honestWheelObj, honestAttempts, honestState, '#38bdf8');
+        syncWheel(this.pirateWheelObj, pirateAttempts, pirateState, '#ef4444');
 
-        if (newHonest !== this.honestBranchCount || newPirate !== this.pirateBranchCount) {
-          this.honestBranchCount = newHonest;
-          this.pirateBranchCount = newPirate;
+        // Assemblage progressif des wagons #3 et #4 au moment exact où leur nonce est trouvé
+        if (honestState.branchCount !== this.honestBranchCount || pirateState.branchCount !== this.pirateBranchCount) {
+          this.honestBranchCount = honestState.branchCount;
+          this.pirateBranchCount = pirateState.branchCount;
           this.updateTooltipsDOM();
         }
 
