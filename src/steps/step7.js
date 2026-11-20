@@ -74,6 +74,11 @@ export const step7 = {
 
     if (environment) {
       environment.setSpeed(0);
+      if (Array.isArray(environment.passingStations)) {
+        environment.passingStations.forEach((st) => {
+          st.visible = false;
+        });
+      }
     }
 
     // Crée la Locomotive (#0), le Wagon #1 (tronc commun) et les Wagons #2, #3, #4 (branche honnête)
@@ -125,7 +130,12 @@ export const step7 = {
     this.stopAnimationLoop();
 
     // Restaure la position nominale sur le rail central (z = 0) de tous les wagons officiels
-    const { trainConvoy } = this.ctx || {};
+    const { trainConvoy, environment } = this.ctx || {};
+    if (environment && Array.isArray(environment.passingStations)) {
+      environment.passingStations.forEach((st) => {
+        st.visible = true;
+      });
+    }
     if (trainConvoy) {
       for (let i = 1; i <= 4; i++) {
         const w = trainConvoy.getWagon(i);
